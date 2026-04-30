@@ -15,5 +15,5 @@ export type RenderableNodeRow = {
   name: string;
   protocol: string;
   config_json: string;
+  tags: string;
 };
-

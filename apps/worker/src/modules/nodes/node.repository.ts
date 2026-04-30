@@ -1,4 +1,4 @@
-import { parseNodeUri } from "@smagicalsub/clash";
+import { parseNodeUri, type RenderableNode } from "@smagicalsub/clash";
 import type { CreateNodeInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
 import type { NodeRow, RenderableNodeRow } from "./node.types";
 
@@ -105,14 +105,14 @@ export async function deleteNode(db: D1Database, id: string) {
 export async function listEnabledRenderableNodes(db: D1Database) {
   const result = await db
     .prepare(
-      `SELECT id, name, protocol, config_json
+      `SELECT id, name, protocol, config_json, tags
        FROM nodes
        WHERE enabled = 1
        ORDER BY name ASC`
     )
     .all<RenderableNodeRow>();
 
-  return result.results ?? [];
+  return (result.results ?? []).map(toRenderableNode);
 }
 
 function toNodeDto(row: NodeRow): NodeDto {
@@ -141,4 +141,14 @@ function parseGroups(tags: string) {
   }
 
   return [];
+}
+
+function toRenderableNode(row: RenderableNodeRow): RenderableNode {
+  return {
+    id: row.id,
+    name: row.name,
+    protocol: row.protocol,
+    config_json: row.config_json,
+    groups: parseGroups(row.tags)
+  };
 }
