@@ -5,6 +5,7 @@ export {
   findActiveSubscribeToken,
   findSubscribeTokenById,
   listSubscribeTokens,
+  listSubscribeTokenValues,
   listSubscribeTokenValuesByProfileId
 } from "./token-reader.repository";
 

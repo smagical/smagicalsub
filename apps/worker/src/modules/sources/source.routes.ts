@@ -4,6 +4,8 @@ import { createSubscriptionSourceSchema, failure, success, updateSubscriptionSou
 import { z } from "zod";
 import type { Env } from "../../env";
 import { listResponse } from "../../lib/list-response";
+import { deleteGeneratedSubscriptionCaches } from "../subscribe/subscribe-cache";
+import { listSubscribeTokenValues } from "../tokens/token.repository";
 import { createSource, deleteSource, listSources, updateSource } from "./source.repository";
 import { refreshSource } from "./source.service";
 
@@ -39,6 +41,7 @@ sourceRoutes.delete("/:id", zValidator("param", idParamSchema), async (c) => {
     return c.json(failure({ code: "SOURCE_NOT_FOUND", message: "订阅源不存在" }), 404);
   }
 
+  await deleteAllSubscriptionCaches(c.env);
   return c.json(success({ id: c.req.valid("param").id }));
 });
 
@@ -53,5 +56,11 @@ sourceRoutes.post("/:id/refresh", zValidator("param", idParamSchema), async (c) 
     return c.json(failure({ code: "SOURCE_REFRESH_FAILED", message: "订阅源刷新失败" }), 502);
   }
 
+  await deleteAllSubscriptionCaches(c.env);
   return c.json(success(result));
 });
+
+async function deleteAllSubscriptionCaches(env: Env) {
+  const tokenValues = await listSubscribeTokenValues(env.DB);
+  await deleteGeneratedSubscriptionCaches(env.KV, tokenValues);
+}

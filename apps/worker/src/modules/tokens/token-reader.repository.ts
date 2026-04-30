@@ -22,6 +22,11 @@ export async function listSubscribeTokenValuesByProfileId(db: D1Database, profil
   return (result.results ?? []).map((row) => row.token);
 }
 
+export async function listSubscribeTokenValues(db: D1Database) {
+  const result = await db.prepare(`SELECT token FROM subscribe_tokens`).all<{ token: string }>();
+  return (result.results ?? []).map((row) => row.token);
+}
+
 const tokenWithProfileSql = `SELECT subscribe_tokens.id,
                                     subscribe_tokens.owner_id,
                                     subscribe_tokens.profile_id,

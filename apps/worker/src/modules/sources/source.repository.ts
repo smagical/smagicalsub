@@ -67,6 +67,17 @@ export async function updateSource(db: D1Database, id: string, input: UpdateSubs
 }
 
 export async function deleteSource(db: D1Database, id: string) {
-  const result = await db.prepare(`DELETE FROM subscription_sources WHERE id = ?1`).bind(id).run();
-  return result.meta.changes > 0;
+  const current = await findSourceById(db, id);
+
+  if (!current) {
+    return false;
+  }
+
+  // 显式删除源节点，避免外键级联在不同 D1/SQLite 执行环境中未启用时留下孤儿节点。
+  await db.batch([
+    db.prepare(`DELETE FROM nodes WHERE source_id = ?1`).bind(id),
+    db.prepare(`DELETE FROM subscription_sources WHERE id = ?1`).bind(id)
+  ]);
+
+  return true;
 }
