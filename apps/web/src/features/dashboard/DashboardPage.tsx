@@ -1,9 +1,10 @@
 import type { DashboardDto, HealthDto } from "@smagicalsub/shared";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cable, Database, FileSliders, KeyRound, RefreshCw, Server, ShieldCheck } from "lucide-react";
 import { EmptyState } from "../../shared/EmptyState";
 import { MetricCard } from "../../shared/MetricCard";
 import type { SectionId } from "../../app/navigation";
+import { refreshAllSources } from "../sources/api";
 import { getDashboard } from "./api";
 
 const fallbackDashboard: DashboardDto = {
@@ -18,12 +19,13 @@ const fallbackDashboard: DashboardDto = {
 
 const quickActions = [
   { label: "添加订阅源", icon: Cable, target: "sources" },
-  { label: "刷新节点", icon: RefreshCw, target: "nodes" },
+  { label: "刷新节点", icon: RefreshCw, action: "refresh-sources" },
   { label: "生成配置", icon: FileSliders, target: "profiles" }
 ] satisfies Array<{
+  action?: "refresh-sources";
   label: string;
   icon: typeof Cable;
-  target: SectionId;
+  target?: SectionId;
 }>;
 
 type DashboardPageProps = {
@@ -32,13 +34,25 @@ type DashboardPageProps = {
 };
 
 export function DashboardPage({ health, onNavigate }: DashboardPageProps) {
+  const queryClient = useQueryClient();
   const dashboardQuery = useQuery({
     queryKey: ["dashboard"],
     queryFn: getDashboard,
     retry: false
   });
+  const refreshMutation = useMutation({
+    mutationFn: refreshAllSources,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+        queryClient.invalidateQueries({ queryKey: ["sources"] }),
+        queryClient.invalidateQueries({ queryKey: ["nodes"] })
+      ]);
+    }
+  });
 
   const dashboard = dashboardQuery.data ?? fallbackDashboard;
+  const refreshResult = refreshMutation.data;
 
   return (
     <div className="section-stack">
@@ -59,12 +73,14 @@ export function DashboardPage({ health, onNavigate }: DashboardPageProps) {
           </div>
           <div className="action-row">
             {quickActions.map((action) => (
-              <button className="action-button" key={action.label} onClick={() => onNavigate(action.target)} type="button">
+              <button className="action-button" disabled={refreshMutation.isPending} key={action.label} onClick={() => runQuickAction(action, onNavigate, () => refreshMutation.mutate())} type="button">
                 <action.icon size={18} />
                 <span>{action.label}</span>
               </button>
             ))}
           </div>
+          {refreshResult ? <p className="success-text">刷新完成：成功 {refreshResult.success} 个，失败 {refreshResult.failed} 个，解析 {refreshResult.nodeCount} 个节点</p> : null}
+          {refreshMutation.error instanceof Error ? <p className="error-text">{refreshMutation.error.message}</p> : null}
         </div>
 
         <StoragePanel health={health} />
@@ -72,6 +88,17 @@ export function DashboardPage({ health, onNavigate }: DashboardPageProps) {
       </section>
     </div>
   );
+}
+
+function runQuickAction(action: (typeof quickActions)[number], onNavigate: (section: SectionId) => void, onRefresh: () => void) {
+  if (action.action === "refresh-sources") {
+    onRefresh();
+    return;
+  }
+
+  if (action.target) {
+    onNavigate(action.target);
+  }
 }
 
 function StoragePanel({ health }: { health?: HealthDto }) {
