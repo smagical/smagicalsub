@@ -9,6 +9,7 @@ import { LogsTable } from "./LogsTable";
 export function LogsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [tokenFilter, setTokenFilter] = useState("all");
+  const [notice, setNotice] = useState<string | null>(null);
   const query = useQuery({
     queryKey: ["logs"],
     queryFn: listAccessLogs,
@@ -20,6 +21,20 @@ export function LogsPage() {
     [logs, searchQuery, tokenFilter]
   );
   const emptyLabel = logs.length === 0 ? "还没有访问日志" : "没有匹配的访问日志";
+
+  async function copyPath(path: string) {
+    if (!navigator.clipboard) {
+      setNotice("当前浏览器不支持自动复制，请手动复制访问路径");
+      return;
+    }
+
+    await navigator.clipboard.writeText(logUrl(path));
+    setNotice("访问地址已复制");
+  }
+
+  function openPath(path: string) {
+    window.open(logUrl(path), "_blank", "noopener,noreferrer");
+  }
 
   return (
     <section className="panel wide">
@@ -44,11 +59,16 @@ export function LogsPage() {
         </label>
       </div>
 
+      {notice ? <p className="success-text">{notice}</p> : null}
       {query.error instanceof Error ? <p className="error-text">{query.error.message}</p> : null}
 
-      {filteredLogs.length === 0 ? <EmptyState label={emptyLabel} /> : <LogsTable logs={filteredLogs} />}
+      {filteredLogs.length === 0 ? <EmptyState label={emptyLabel} /> : <LogsTable logs={filteredLogs} onCopyPath={(path) => void copyPath(path)} onOpenPath={openPath} />}
     </section>
   );
+}
+
+function logUrl(path: string) {
+  return typeof window === "undefined" ? path : new URL(path, window.location.origin).toString();
 }
 
 function matchesLogTokenState(log: AccessLogDto, tokenFilter: string) {

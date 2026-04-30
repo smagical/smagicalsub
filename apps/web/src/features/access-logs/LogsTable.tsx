@@ -2,9 +2,11 @@ import type { AccessLogDto } from "@smagicalsub/shared";
 
 type LogsTableProps = {
   logs: AccessLogDto[];
+  onCopyPath: (path: string) => void;
+  onOpenPath: (path: string) => void;
 };
 
-export function LogsTable({ logs }: LogsTableProps) {
+export function LogsTable({ logs, onCopyPath, onOpenPath }: LogsTableProps) {
   return (
     <table className="data-table">
       <thead>
@@ -14,6 +16,7 @@ export function LogsTable({ logs }: LogsTableProps) {
           <th>路径</th>
           <th>IP</th>
           <th>User Agent</th>
+          <th>操作</th>
         </tr>
       </thead>
       <tbody>
@@ -24,6 +27,12 @@ export function LogsTable({ logs }: LogsTableProps) {
             <td className="mono-cell">{log.path}</td>
             <td>{log.ip ?? "-"}</td>
             <td className="truncate-cell">{log.user_agent ?? "-"}</td>
+            <td>
+              <div className="table-actions">
+                <button className="secondary-button" onClick={() => onCopyPath(log.path)} type="button">复制</button>
+                <button className="inline-button" onClick={() => onOpenPath(log.path)} type="button">打开</button>
+              </div>
+            </td>
           </tr>
         ))}
       </tbody>
