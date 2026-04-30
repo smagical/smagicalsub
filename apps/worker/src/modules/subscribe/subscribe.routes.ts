@@ -21,6 +21,10 @@ subscribeRoutes.get("/:token", async (c) => {
     return new Response("Subscription token not found", { status: 404 });
   }
 
+  if (tokenRow.profile_id && (!tokenRow.profile_name || tokenRow.profile_enabled !== 1)) {
+    return new Response("Subscription profile not available", { status: 404 });
+  }
+
   // 必须先校验令牌再读 KV，避免停用/删除后的 token 继续命中短期缓存。
   const cacheKey = generatedSubscriptionCacheKey(format, token);
   const cached = await c.env.KV.get(cacheKey);
@@ -31,9 +35,12 @@ subscribeRoutes.get("/:token", async (c) => {
   }
 
   const nodes = await listEnabledRenderableNodes(c.env.DB);
+  const profileName = tokenRow.profile_name ?? tokenRow.name;
+  const defaultStrategy = tokenRow.profile_default_strategy ?? "Proxy";
   const body = renderSubscription({
     format,
-    profileName: tokenRow.name,
+    profileName,
+    defaultStrategy,
     nodes
   });
 

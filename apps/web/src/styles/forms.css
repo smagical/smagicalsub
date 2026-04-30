@@ -20,6 +20,7 @@
 .form-grid input[type="text"],
 .form-grid input[type="url"],
 .form-grid input[type="datetime-local"],
+.form-grid select,
 .filter-row select {
   width: 100%;
   min-height: 40px;
@@ -31,6 +32,7 @@
 }
 
 .form-grid input:focus,
+.form-grid select:focus,
 .filter-row select:focus {
   border-color: #6f9a7a;
   outline: 2px solid #d9f0df;
@@ -45,7 +47,7 @@
 }
 
 .token-form {
-  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr) auto auto;
+  grid-template-columns: minmax(160px, 0.8fr) minmax(180px, 0.8fr) minmax(220px, 1fr) auto auto;
 }
 
 .checkbox-field {

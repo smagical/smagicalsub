@@ -4,6 +4,7 @@ import { createSubscribeTokenSchema, failure, success, updateSubscribeTokenSchem
 import { z } from "zod";
 import type { Env } from "../../env";
 import { listResponse } from "../../lib/list-response";
+import { findProfileById } from "../profiles/profile.repository";
 import { deleteGeneratedSubscriptionCache } from "../subscribe/subscribe-cache";
 import {
   createSubscribeToken,
@@ -24,12 +25,26 @@ tokenRoutes.get("/", async (c) => {
 });
 
 tokenRoutes.post("/", zValidator("json", createSubscribeTokenSchema), async (c) => {
-  const token = await createSubscribeToken(c.env.DB, c.req.valid("json"));
+  const input = c.req.valid("json");
+  const invalidProfile = await validateProfileBinding(c.env.DB, input.profile_id);
+
+  if (invalidProfile) {
+    return invalidProfile;
+  }
+
+  const token = await createSubscribeToken(c.env.DB, input);
   return c.json(success(token), 201);
 });
 
 tokenRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json", updateSubscribeTokenSchema), async (c) => {
-  const token = await updateSubscribeToken(c.env.DB, c.req.valid("param").id, c.req.valid("json"));
+  const input = c.req.valid("json");
+  const invalidProfile = await validateProfileBinding(c.env.DB, input.profile_id);
+
+  if (invalidProfile) {
+    return invalidProfile;
+  }
+
+  const token = await updateSubscribeToken(c.env.DB, c.req.valid("param").id, input);
 
   if (!token) {
     return c.json(failure({ code: "TOKEN_NOT_FOUND", message: "订阅令牌不存在" }), 404);
@@ -60,3 +75,17 @@ tokenRoutes.delete("/:id", zValidator("param", idParamSchema), async (c) => {
   await deleteGeneratedSubscriptionCache(c.env.KV, token.token);
   return c.json(success({ id: token.id }));
 });
+
+async function validateProfileBinding(db: D1Database, profileId: string | null | undefined) {
+  if (!profileId) {
+    return null;
+  }
+
+  const profile = await findProfileById(db, profileId);
+
+  if (!profile) {
+    return Response.json(failure({ code: "PROFILE_NOT_FOUND", message: "配置档不存在" }), { status: 404 });
+  }
+
+  return null;
+}

@@ -4,6 +4,7 @@ import type { TokenFormState } from "./types";
 export function toCreateTokenInput(form: TokenFormState): CreateSubscribeTokenInput {
   return {
     name: form.name.trim(),
+    profile_id: form.profile_id || null,
     enabled: form.enabled,
     expires_at: form.expires_at.trim() || null
   };

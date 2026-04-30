@@ -12,7 +12,8 @@ export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
     .filter((node): node is { proxy: Record<string, unknown>; groups: string[] } => node !== null);
   const proxies = renderableNodes.map((node) => node.proxy);
   const proxyNames = proxies.map((proxy) => String(proxy.name));
-  const proxyGroups = buildProxyGroups(renderableNodes);
+  const primaryProxyGroup = input.defaultStrategy ?? "Proxy";
+  const proxyGroups = buildProxyGroups(renderableNodes, primaryProxyGroup);
 
   const config = {
     "mixed-port": 7890,
@@ -20,15 +21,15 @@ export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
     mode: "rule",
     "log-level": "info",
     proxies,
-    "proxy-groups": proxyGroups.length > 0 ? proxyGroups : [createProxyGroup("Proxy", proxyNames)],
-    rules: ["MATCH,Proxy"]
+    "proxy-groups": proxyGroups.length > 0 ? proxyGroups : [createProxyGroup(primaryProxyGroup, proxyNames)],
+    rules: [`MATCH,${primaryProxyGroup}`]
   };
 
   return `# ${input.profileName}\n${YAML.stringify(config)}`;
 }
 
 // 主 Proxy 组先引用生成的分组选择器，再追加未分组节点，便于客户端快速切换策略。
-function buildProxyGroups(nodes: Array<{ proxy: Record<string, unknown>; groups: string[] }>) {
+function buildProxyGroups(nodes: Array<{ proxy: Record<string, unknown>; groups: string[] }>, primaryProxyGroup: string) {
   const groups = new Map<string, string[]>();
   const ungrouped: string[] = [];
 
@@ -54,7 +55,7 @@ function buildProxyGroups(nodes: Array<{ proxy: Record<string, unknown>; groups:
   const renderedGroupNames = groupNames.map(renderGroupName);
   const mainProxies =
     renderedGroupNames.length > 0 ? [...renderedGroupNames, ...uniqueStrings(ungrouped)] : uniqueStrings(ungrouped);
-  const proxyGroups = [createProxyGroup("Proxy", mainProxies)];
+  const proxyGroups = [createProxyGroup(primaryProxyGroup, mainProxies)];
 
   for (const groupName of groupNames) {
     proxyGroups.push(createProxyGroup(renderGroupName(groupName), uniqueStrings(groups.get(groupName) ?? [])));

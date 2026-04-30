@@ -2,6 +2,7 @@ export type SubscribeTokenRow = {
   id: string;
   owner_id: string | null;
   profile_id: string | null;
+  profile_name: string | null;
   token: string;
   name: string;
   enabled: number;
@@ -15,5 +16,7 @@ export type ActiveSubscribeTokenRow = {
   token: string;
   name: string;
   profile_id: string | null;
+  profile_name: string | null;
+  profile_default_strategy: string | null;
+  profile_enabled: number | null;
 };
-

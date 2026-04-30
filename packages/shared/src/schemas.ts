@@ -22,6 +22,13 @@ export const nodeGroupSchema = z
   .max(40)
   .regex(/^[^,\r\n]+$/, "Group cannot contain comma or newline");
 
+export const strategyNameSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(80)
+  .regex(/^[^,\r\n]+$/, "Strategy cannot contain comma or newline");
+
 export const createNodeSchema = z.object({
   uri: z.string().trim().min(1),
   name: z.string().trim().min(1).max(120).optional(),
@@ -44,7 +51,7 @@ export type UpdateNodeInput = z.infer<typeof updateNodeSchema>;
 export const createProfileSchema = z.object({
   name: z.string().trim().min(1).max(80),
   description: z.string().trim().max(240).nullable().optional(),
-  default_strategy: z.string().trim().min(1).max(80).default("Proxy"),
+  default_strategy: strategyNameSchema.default("Proxy"),
   enabled: z.boolean().default(true)
 });
 
@@ -54,7 +61,7 @@ export const updateProfileSchema = z
   .object({
     name: z.string().trim().min(1).max(80).optional(),
     description: z.string().trim().max(240).nullable().optional(),
-    default_strategy: z.string().trim().min(1).max(80).optional(),
+    default_strategy: strategyNameSchema.optional(),
     enabled: z.boolean().optional()
   })
   .refine((value) => Object.keys(value).length > 0, "At least one field must be provided");
@@ -63,6 +70,7 @@ export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
 export const createSubscribeTokenSchema = z.object({
   name: z.string().trim().min(1).max(80),
+  profile_id: z.string().trim().min(1).nullable().optional(),
   enabled: z.boolean().default(true),
   expires_at: z.string().trim().max(32).nullable().optional()
 });
@@ -72,6 +80,7 @@ export type CreateSubscribeTokenInput = z.infer<typeof createSubscribeTokenSchem
 export const updateSubscribeTokenSchema = z
   .object({
     name: z.string().trim().min(1).max(80).optional(),
+    profile_id: z.string().trim().min(1).nullable().optional(),
     enabled: z.boolean().optional(),
     expires_at: z.string().trim().max(32).nullable().optional()
   })

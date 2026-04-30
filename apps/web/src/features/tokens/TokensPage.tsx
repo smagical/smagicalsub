@@ -1,8 +1,9 @@
 import { useState } from "react";
-import type { SubscribeTokenDto } from "@smagicalsub/shared";
+import type { SubscribeTokenDto, UpdateSubscribeTokenInput } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
+import { listProfiles } from "../profiles/api";
 import { createToken, deleteToken, listTokens, resetToken, updateToken } from "./api";
 import { TokenForm } from "./TokenForm";
 import { TokensTable } from "./TokensTable";
@@ -19,6 +20,12 @@ export function TokensPage() {
     retry: false
   });
   const tokens = query.data?.items ?? [];
+  const profilesQuery = useQuery({
+    queryKey: ["profiles"],
+    queryFn: listProfiles,
+    retry: false
+  });
+  const profiles = profilesQuery.data?.items ?? [];
 
   const invalidateTokenData = async () => {
     await Promise.all([
@@ -37,7 +44,7 @@ export function TokensPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => updateToken(id, { enabled }),
+    mutationFn: ({ id, input }: { id: string; input: UpdateSubscribeTokenInput }) => updateToken(id, input),
     onSuccess: invalidateTokenData
   });
 
@@ -60,6 +67,7 @@ export function TokensPage() {
   const pending =
     createMutation.isPending || updateMutation.isPending || resetMutation.isPending || deleteMutation.isPending;
   const error = createMutation.error ?? updateMutation.error ?? resetMutation.error ?? deleteMutation.error ?? query.error;
+  const pageError = error ?? profilesQuery.error;
 
   async function handleCopy(token: SubscribeTokenDto) {
     if (!navigator.clipboard) {
@@ -75,16 +83,23 @@ export function TokensPage() {
     <section className="panel wide">
       <ModuleHeading eyebrow="Tokens" title="订阅令牌" description="创建订阅访问令牌，控制启停、过期、重置和删除。" />
 
-      <TokenForm form={form} pending={pending} setForm={setForm} onSubmit={(value) => createMutation.mutate(value)} />
+      <TokenForm
+        form={form}
+        pending={pending}
+        profiles={profiles}
+        setForm={setForm}
+        onSubmit={(value) => createMutation.mutate(value)}
+      />
 
       {notice ? <p className="success-text">{notice}</p> : null}
-      {error instanceof Error ? <p className="error-text">{error.message}</p> : null}
+      {pageError instanceof Error ? <p className="error-text">{pageError.message}</p> : null}
 
       {tokens.length === 0 ? (
         <EmptyState label="还没有订阅令牌" />
       ) : (
         <TokensTable
           pending={pending}
+          profiles={profiles}
           tokens={tokens}
           onCopy={(token) => void handleCopy(token)}
           onDelete={(token) => {
@@ -97,7 +112,8 @@ export function TokensPage() {
               resetMutation.mutate(token.id);
             }
           }}
-          onToggleEnabled={(token) => updateMutation.mutate({ id: token.id, enabled: !token.enabled })}
+          onProfileChange={(token, profileId) => updateMutation.mutate({ id: token.id, input: { profile_id: profileId } })}
+          onToggleEnabled={(token) => updateMutation.mutate({ id: token.id, input: { enabled: !token.enabled } })}
         />
       )}
     </section>

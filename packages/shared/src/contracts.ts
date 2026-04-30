@@ -68,6 +68,7 @@ export type SubscribeTokenDto = {
   id: string;
   owner_id: string | null;
   profile_id: string | null;
+  profile_name: string | null;
   token: string;
   name: string;
   enabled: number;

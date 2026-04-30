@@ -1,41 +1,12 @@
 import type { CreateSubscribeTokenInput, UpdateSubscribeTokenInput } from "@smagicalsub/shared";
-import type { ActiveSubscribeTokenRow, SubscribeTokenRow } from "./token.types";
+import { findSubscribeTokenById } from "./token-reader.repository";
 
-export async function listSubscribeTokens(db: D1Database) {
-  const result = await db
-    .prepare(
-      `SELECT id, owner_id, profile_id, token, name, enabled, expires_at, last_used_at, created_at
-       FROM subscribe_tokens
-       ORDER BY created_at DESC`
-    )
-    .all<SubscribeTokenRow>();
-
-  return result.results ?? [];
-}
-
-export async function findActiveSubscribeToken(db: D1Database, token: string) {
-  return db
-    .prepare(
-      `SELECT id, token, name, profile_id
-       FROM subscribe_tokens
-       WHERE token = ?1
-         AND enabled = 1
-         AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)`
-    )
-    .bind(token)
-    .first<ActiveSubscribeTokenRow>();
-}
-
-export async function findSubscribeTokenById(db: D1Database, id: string) {
-  return db
-    .prepare(
-      `SELECT id, owner_id, profile_id, token, name, enabled, expires_at, last_used_at, created_at
-       FROM subscribe_tokens
-       WHERE id = ?1`
-    )
-    .bind(id)
-    .first<SubscribeTokenRow>();
-}
+export {
+  findActiveSubscribeToken,
+  findSubscribeTokenById,
+  listSubscribeTokens,
+  listSubscribeTokenValuesByProfileId
+} from "./token-reader.repository";
 
 export async function createSubscribeToken(db: D1Database, input: CreateSubscribeTokenInput) {
   const id = crypto.randomUUID();
@@ -43,9 +14,16 @@ export async function createSubscribeToken(db: D1Database, input: CreateSubscrib
   await db
     .prepare(
       `INSERT INTO subscribe_tokens (id, owner_id, profile_id, token, name, enabled, expires_at)
-       VALUES (?1, NULL, NULL, ?2, ?3, ?4, ?5)`
+       VALUES (?1, NULL, ?2, ?3, ?4, ?5, ?6)`
     )
-    .bind(id, generateSubscribeToken(), input.name, input.enabled ? 1 : 0, normalizeExpiresAt(input.expires_at))
+    .bind(
+      id,
+      normalizeProfileId(input.profile_id),
+      generateSubscribeToken(),
+      input.name,
+      input.enabled ? 1 : 0,
+      normalizeExpiresAt(input.expires_at)
+    )
     .run();
 
   return findSubscribeTokenById(db, id);
@@ -62,12 +40,14 @@ export async function updateSubscribeToken(db: D1Database, id: string, input: Up
     .prepare(
       `UPDATE subscribe_tokens
        SET name = ?1,
-           enabled = ?2,
-           expires_at = ?3
-       WHERE id = ?4`
+           profile_id = ?2,
+           enabled = ?3,
+           expires_at = ?4
+       WHERE id = ?5`
     )
     .bind(
       input.name ?? current.name,
+      input.profile_id === undefined ? current.profile_id : normalizeProfileId(input.profile_id),
       input.enabled === undefined ? current.enabled : input.enabled ? 1 : 0,
       input.expires_at === undefined ? current.expires_at : normalizeExpiresAt(input.expires_at),
       id
@@ -121,6 +101,14 @@ function generateSubscribeToken() {
   const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
 
   return `sub_${btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")}`;
+}
+
+function normalizeProfileId(value: string | null | undefined) {
+  if (!value?.trim()) {
+    return null;
+  }
+
+  return value.trim();
 }
 
 function normalizeExpiresAt(value: string | null | undefined) {

@@ -3,6 +3,7 @@ import { compact, getNodeConfig, numberValue, renderGroupName, stringValue, stri
 
 export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string {
   // 输出保持最小可运行：mixed inbound、主 selector、分组 selector、节点 outbound 和 direct。
+  const primarySelector = input.defaultStrategy ?? "Proxy";
   const outbounds = input.nodes
     .map(toSingBoxOutbound)
     .filter((outbound): outbound is Record<string, unknown> => outbound !== null);
@@ -22,7 +23,7 @@ export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string 
       }
     ],
     outbounds: [
-      createSingBoxSelector("Proxy", grouped.main.length > 0 ? grouped.main : ["direct"]),
+      createSingBoxSelector(primarySelector, grouped.main.length > 0 ? grouped.main : ["direct"]),
       ...grouped.groups,
       ...outbounds,
       {
@@ -31,7 +32,7 @@ export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string 
       }
     ],
     route: {
-      final: "Proxy"
+      final: primarySelector
     }
   };
 

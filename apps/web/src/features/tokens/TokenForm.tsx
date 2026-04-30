@@ -1,15 +1,17 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
+import type { ProfileDto } from "@smagicalsub/shared";
 import type { TokenFormState } from "./types";
 import { toCreateTokenInput } from "./utils";
 
 type TokenFormProps = {
   form: TokenFormState;
   pending: boolean;
+  profiles: ProfileDto[];
   setForm: Dispatch<SetStateAction<TokenFormState>>;
   onSubmit: (value: ReturnType<typeof toCreateTokenInput>) => void;
 };
 
-export function TokenForm({ form, pending, setForm, onSubmit }: TokenFormProps) {
+export function TokenForm({ form, pending, profiles, setForm, onSubmit }: TokenFormProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onSubmit(toCreateTokenInput(form));
@@ -26,6 +28,20 @@ export function TokenForm({ form, pending, setForm, onSubmit }: TokenFormProps) 
           type="text"
           value={form.name}
         />
+      </label>
+      <label>
+        <span>配置档</span>
+        <select
+          onChange={(event) => setForm((current) => ({ ...current, profile_id: event.target.value }))}
+          value={form.profile_id}
+        >
+          <option value="">不绑定</option>
+          {profiles.map((profile) => (
+            <option disabled={!profile.enabled} key={profile.id} value={profile.id}>
+              {profile.name}
+            </option>
+          ))}
+        </select>
       </label>
       <label>
         <span>过期时间</span>
