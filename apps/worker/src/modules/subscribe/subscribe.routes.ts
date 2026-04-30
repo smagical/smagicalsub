@@ -1,20 +1,8 @@
 import { Hono } from "hono";
 import { renderClashConfig } from "@smagicalsub/clash";
-import type { Env } from "../env";
-
-type TokenRow = {
-  id: string;
-  token: string;
-  name: string;
-  profile_id: string | null;
-};
-
-type NodeRow = {
-  id: string;
-  name: string;
-  protocol: string;
-  config_json: string;
-};
+import type { Env } from "../../env";
+import { listEnabledRenderableNodes } from "../nodes/node.repository";
+import { findActiveSubscribeToken } from "../tokens/token.repository";
 
 export const subscribeRoutes = new Hono<{ Bindings: Env }>();
 
@@ -27,30 +15,16 @@ subscribeRoutes.get("/:token", async (c) => {
     return yaml(cached);
   }
 
-  const tokenRow = await c.env.DB.prepare(
-    `SELECT id, token, name, profile_id
-     FROM subscribe_tokens
-     WHERE token = ?1
-       AND enabled = 1
-       AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)`
-  )
-    .bind(token)
-    .first<TokenRow>();
+  const tokenRow = await findActiveSubscribeToken(c.env.DB, token);
 
   if (!tokenRow) {
     return new Response("Subscription token not found", { status: 404 });
   }
 
-  const nodes = await c.env.DB.prepare(
-    `SELECT id, name, protocol, config_json
-     FROM nodes
-     WHERE enabled = 1
-     ORDER BY name ASC`
-  ).all<NodeRow>();
-
+  const nodes = await listEnabledRenderableNodes(c.env.DB);
   const body = renderClashConfig({
     profileName: tokenRow.name,
-    nodes: nodes.results ?? []
+    nodes
   });
 
   const ttl = Number(c.env.SUBSCRIPTION_CACHE_TTL_SECONDS ?? 300);
@@ -84,3 +58,4 @@ function yaml(body: string) {
     }
   });
 }
+

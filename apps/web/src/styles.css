@@ -97,6 +97,11 @@ button {
   padding: 26px;
 }
 
+.section-stack {
+  display: grid;
+  gap: 18px;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -225,6 +230,17 @@ h2 {
   margin-bottom: 18px;
 }
 
+.module-heading {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.module-heading span {
+  color: #697168;
+  font-size: 14px;
+}
+
 .action-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -300,6 +316,81 @@ h2 {
   background: #c73e4f;
 }
 
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.status-badge.enabled {
+  background: #d9f0df;
+  color: #1d6b3b;
+}
+
+.status-badge.disabled {
+  background: #ecefec;
+  color: #697168;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.data-table th,
+.data-table td {
+  border-bottom: 1px solid #e6ebe3;
+  padding: 12px 10px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.data-table th {
+  color: #697168;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.data-table td {
+  color: #1f2a23;
+  font-size: 14px;
+}
+
+.truncate-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mono-cell {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.empty-state,
+.placeholder-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  border: 1px dashed #cbd7c8;
+  border-radius: 8px;
+  background: #f8faf6;
+  color: #687367;
+  font-weight: 700;
+}
+
+.placeholder-block {
+  gap: 10px;
+}
+
 @media (max-width: 920px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -318,6 +409,12 @@ h2 {
   .content-grid,
   .action-row {
     grid-template-columns: 1fr;
+  }
+
+  .data-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
   }
 }
 

@@ -14,3 +14,4 @@ export async function getJson<T>(url: string): Promise<T> {
 
   return payload.data;
 }
+
