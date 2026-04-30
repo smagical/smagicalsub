@@ -55,6 +55,10 @@ pnpm db:migrate:remote
 
 `plain` 和 `v2rayn` 会保留原始 URI，适合客户端自行识别完整协议能力；Clash 输出会尽量保留可映射字段。sing-box 输出只转换字段结构确定的协议，SSR、Snell、Mieru、Juicity、MASQUE、Sudoku、TrustTunnel 等没有稳定等价映射的类型不会强行生成 outbound。
 
+## 节点管理
+
+节点支持单条 URI 添加、启停、删除、名称编辑和逗号分隔的分组编辑。订阅源刷新会保留同一原始 URI 节点的本地名称、分组和启停状态，避免上游更新覆盖人工整理结果。
+
 令牌可以绑定配置档；绑定后订阅输出使用配置档名称和默认策略组，配置档停用时该令牌订阅不可用。未绑定配置档的令牌使用令牌名称和默认 `Proxy` 策略。
 
 配置档规则按排序升序写入 Clash 订阅；如果没有 `MATCH` 规则，会自动追加 `MATCH,<默认策略>` 兜底。v2rayN、明文和 sing-box 当前不转换配置档规则。

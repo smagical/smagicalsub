@@ -5,6 +5,11 @@ export type NodeFormState = {
   enabled: boolean;
 };
 
+export type NodeEditFormState = {
+  name: string;
+  groups: string;
+};
+
 export const initialNodeFormState: NodeFormState = {
   uri: "",
   name: "",
@@ -12,3 +17,7 @@ export const initialNodeFormState: NodeFormState = {
   enabled: true
 };
 
+export const initialNodeEditFormState: NodeEditFormState = {
+  name: "",
+  groups: ""
+};

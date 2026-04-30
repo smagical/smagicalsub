@@ -89,6 +89,16 @@
   padding: 0 10px;
 }
 
+.data-table input[type="text"] {
+  width: min(240px, 100%);
+  min-height: 34px;
+  border: 1px solid #cfd9cd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #17201b;
+  padding: 0 10px;
+}
+
 .muted-text {
   color: #778176;
 }

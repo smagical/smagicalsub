@@ -1,16 +1,20 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
 import { createNode, deleteNode, listNodeGroups, listNodes, updateNode } from "./api";
 import { NodeFilters } from "./NodeFilters";
 import { NodeForm } from "./NodeForm";
 import { NodesTable } from "./NodesTable";
-import { initialNodeFormState } from "./types";
+import { initialNodeEditFormState, initialNodeFormState } from "./types";
+import { formatGroups, parseGroups } from "./utils";
 
 export function NodesPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(initialNodeFormState);
+  const [editForm, setEditForm] = useState(initialNodeEditFormState);
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [groupFilter, setGroupFilter] = useState("all");
   const [notice, setNotice] = useState<string | null>(null);
   const query = useQuery({
@@ -55,8 +59,16 @@ export function NodesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => updateNode(id, { enabled }),
-    onSuccess: invalidateNodeData
+    mutationFn: ({ id, input }: { id: string; input: UpdateNodeInput }) => updateNode(id, input),
+    onSuccess: async (_node, variables) => {
+      if (variables.input.name !== undefined || variables.input.groups !== undefined) {
+        setEditingNodeId(null);
+        setEditForm(initialNodeEditFormState);
+        setNotice("节点已更新");
+      }
+
+      await invalidateNodeData();
+    }
   });
 
   const deleteMutation = useMutation({
@@ -69,6 +81,25 @@ export function NodesPage() {
 
   const pending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
   const error = createMutation.error ?? updateMutation.error ?? deleteMutation.error ?? query.error;
+
+  const startEdit = (node: NodeDto) => {
+    setNotice(null);
+    setEditingNodeId(node.id);
+    setEditForm({
+      name: node.name,
+      groups: formatGroups(node.groups)
+    });
+  };
+
+  const saveEdit = (node: NodeDto) => {
+    updateMutation.mutate({
+      id: node.id,
+      input: {
+        name: editForm.name.trim() || node.name,
+        groups: parseGroups(editForm.groups)
+      }
+    });
+  };
 
   return (
     <section className="panel wide">
@@ -84,14 +115,23 @@ export function NodesPage() {
         <EmptyState label="还没有节点" />
       ) : (
         <NodesTable
+          editForm={editForm}
+          editingNodeId={editingNodeId}
           nodes={filteredNodes}
           pending={pending}
+          onCancelEdit={() => {
+            setEditingNodeId(null);
+            setEditForm(initialNodeEditFormState);
+          }}
           onDelete={(node) => {
             if (window.confirm(`删除节点「${node.name}」？`)) {
               deleteMutation.mutate(node.id);
             }
           }}
-          onToggleEnabled={(node) => updateMutation.mutate({ id: node.id, enabled: !node.enabled })}
+          onEditFormChange={setEditForm}
+          onSaveEdit={saveEdit}
+          onStartEdit={startEdit}
+          onToggleEnabled={(node) => updateMutation.mutate({ id: node.id, input: { enabled: !node.enabled } })}
         />
       )}
     </section>

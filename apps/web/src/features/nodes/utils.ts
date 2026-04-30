@@ -9,3 +9,6 @@ export function parseGroups(value: string) {
   );
 }
 
+export function formatGroups(groups: string[]) {
+  return groups.join(",");
+}
