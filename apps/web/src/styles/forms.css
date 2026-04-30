@@ -139,6 +139,10 @@
   margin-bottom: 14px;
 }
 
+.batch-row {
+  justify-content: flex-start;
+}
+
 .filter-row label {
   display: grid;
   gap: 6px;

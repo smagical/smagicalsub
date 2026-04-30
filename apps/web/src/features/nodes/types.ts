@@ -10,6 +10,10 @@ export type NodeEditFormState = {
   groups: string;
 };
 
+export type NodeBatchFormState = {
+  groups: string;
+};
+
 export const initialNodeFormState: NodeFormState = {
   uri: "",
   name: "",
@@ -19,5 +23,9 @@ export const initialNodeFormState: NodeFormState = {
 
 export const initialNodeEditFormState: NodeEditFormState = {
   name: "",
+  groups: ""
+};
+
+export const initialNodeBatchFormState: NodeBatchFormState = {
   groups: ""
 };

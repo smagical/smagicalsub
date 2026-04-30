@@ -1,12 +1,22 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { createNodeSchema, failure, success, updateNodeSchema } from "@smagicalsub/shared";
+import { createNodeSchema, failure, nodeBatchActionSchema, success, updateNodeSchema } from "@smagicalsub/shared";
 import { z } from "zod";
 import type { Env } from "../../env";
 import { listResponse } from "../../lib/list-response";
 import { deleteGeneratedSubscriptionCaches } from "../subscribe/subscribe-cache";
 import { listSubscribeTokenValues } from "../tokens/token.repository";
-import { createManualNode, deleteNode, listNodeGroups, listNodes, updateNode } from "./node.repository";
+import {
+  appendNodesGroups,
+  createManualNode,
+  deleteNode,
+  deleteNodes,
+  listNodeGroups,
+  listNodes,
+  setNodesEnabled,
+  setNodesGroups,
+  updateNode
+} from "./node.repository";
 
 export const nodeRoutes = new Hono<{ Bindings: Env }>();
 const idParamSchema = z.object({
@@ -34,6 +44,17 @@ nodeRoutes.post("/", zValidator("json", createNodeSchema), async (c) => {
   return c.json(success(node), 201);
 });
 
+nodeRoutes.post("/batch", zValidator("json", nodeBatchActionSchema), async (c) => {
+  const input = c.req.valid("json");
+  const affected = await applyNodeBatch(c.env.DB, input);
+
+  if (affected > 0) {
+    await deleteAllSubscriptionCaches(c.env);
+  }
+
+  return c.json(success({ affected }));
+});
+
 nodeRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json", updateNodeSchema), async (c) => {
   const node = await updateNode(c.env.DB, c.req.valid("param").id, c.req.valid("json"));
 
@@ -59,4 +80,21 @@ nodeRoutes.delete("/:id", zValidator("param", idParamSchema), async (c) => {
 async function deleteAllSubscriptionCaches(env: Env) {
   const tokenValues = await listSubscribeTokenValues(env.DB);
   await deleteGeneratedSubscriptionCaches(env.KV, tokenValues);
+}
+
+async function applyNodeBatch(db: D1Database, input: z.infer<typeof nodeBatchActionSchema>) {
+  switch (input.action) {
+    case "enable":
+      return setNodesEnabled(db, input.ids, true);
+    case "disable":
+      return setNodesEnabled(db, input.ids, false);
+    case "delete":
+      return deleteNodes(db, input.ids);
+    case "set-groups":
+      return setNodesGroups(db, input.ids, input.groups ?? []);
+    case "append-groups":
+      return appendNodesGroups(db, input.ids, input.groups ?? []);
+  }
+
+  return 0;
 }

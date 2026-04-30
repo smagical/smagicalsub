@@ -5,6 +5,8 @@ import type { NodeEditFormState } from "./types";
 type NodesTableProps = {
   editForm: NodeEditFormState;
   editingNodeId: string | null;
+  selectedNodeIds: string[];
+  allVisibleSelected: boolean;
   nodes: NodeDto[];
   pending: boolean;
   onCancelEdit: () => void;
@@ -13,6 +15,8 @@ type NodesTableProps = {
   onSaveEdit: (node: NodeDto) => void;
   onStartEdit: (node: NodeDto) => void;
   onToggleEnabled: (node: NodeDto) => void;
+  onToggleSelected: (nodeId: string, checked: boolean) => void;
+  onToggleVisible: (checked: boolean) => void;
 };
 
 type NodeActionProps = Pick<NodesTableProps, "onCancelEdit" | "onDelete" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"> & {
@@ -23,6 +27,8 @@ type NodeActionProps = Pick<NodesTableProps, "onCancelEdit" | "onDelete" | "onSa
 export function NodesTable({
   editForm,
   editingNodeId,
+  selectedNodeIds,
+  allVisibleSelected,
   nodes,
   pending,
   onCancelEdit,
@@ -30,12 +36,15 @@ export function NodesTable({
   onEditFormChange,
   onSaveEdit,
   onStartEdit,
-  onToggleEnabled
+  onToggleEnabled,
+  onToggleSelected,
+  onToggleVisible
 }: NodesTableProps) {
   return (
     <table className="data-table">
       <thead>
         <tr>
+          <th>{selectionInput("选择当前列表节点", allVisibleSelected, pending || nodes.length === 0, onToggleVisible)}</th>
           <th>名称</th>
           <th>协议</th>
           <th>服务端</th>
@@ -52,31 +61,17 @@ export function NodesTable({
           return (
             <tr key={node.id}>
               <td>
-                {editing ? (
-                  <input
-                    aria-label="节点名称"
-                    disabled={pending}
-                    onChange={(event) => onEditFormChange({ ...editForm, name: event.target.value })}
-                    type="text"
-                    value={editForm.name}
-                  />
-                ) : (
-                  node.name
-                )}
+                {selectionInput(`选择节点 ${node.name}`, selectedNodeIds.includes(node.id), pending, (checked) => onToggleSelected(node.id, checked))}
+              </td>
+              <td>
+                {editing ? textInput("节点名称", editForm.name, pending, (name) => onEditFormChange({ ...editForm, name })) : node.name}
               </td>
               <td>{node.protocol}</td>
               <td>{node.server ?? "-"}</td>
               <td>{node.port ?? "-"}</td>
               <td>
                 {editing ? (
-                  <input
-                    aria-label="节点分组"
-                    disabled={pending}
-                    onChange={(event) => onEditFormChange({ ...editForm, groups: event.target.value })}
-                    placeholder="香港,日本,备用"
-                    type="text"
-                    value={editForm.groups}
-                  />
+                  textInput("节点分组", editForm.groups, pending, (groups) => onEditFormChange({ ...editForm, groups }), "香港,日本,备用")
                 ) : (
                   <GroupChips groups={node.groups} />
                 )}
@@ -102,6 +97,14 @@ export function NodesTable({
       </tbody>
     </table>
   );
+}
+
+function selectionInput(label: string, checked: boolean, disabled: boolean, onChange: (checked: boolean) => void) {
+  return <input aria-label={label} checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} type="checkbox" />;
+}
+
+function textInput(label: string, value: string, pending: boolean, onChange: (value: string) => void, placeholder?: string) {
+  return <input aria-label={label} disabled={pending} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} type="text" value={value} />;
 }
 
 function NodeActions({

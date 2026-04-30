@@ -1,4 +1,4 @@
-import type { CreateNodeInput, ListDto, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
+import type { CreateNodeInput, ListDto, NodeBatchActionInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
 import { deleteJson, getJson, patchJson, postJson } from "../../lib/api-client";
 
 export function listNodes() {
@@ -11,6 +11,10 @@ export function listNodeGroups() {
 
 export function createNode(input: CreateNodeInput) {
   return postJson<NodeDto>("/api/nodes", input);
+}
+
+export function batchNodes(input: NodeBatchActionInput) {
+  return postJson<{ affected: number }>("/api/nodes/batch", input);
 }
 
 export function updateNode(id: string, input: UpdateNodeInput) {

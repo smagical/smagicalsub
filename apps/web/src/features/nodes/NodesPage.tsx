@@ -1,20 +1,22 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
+import type { NodeBatchActionInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
-import { createNode, deleteNode, listNodeGroups, listNodes, updateNode } from "./api";
-import { NodeFilters } from "./NodeFilters";
+import { batchNodes, createNode, deleteNode, listNodeGroups, listNodes, updateNode } from "./api";
+import { NodeBatchBar, NodeFilters } from "./NodeFilters";
 import { NodeForm } from "./NodeForm";
 import { NodesTable } from "./NodesTable";
-import { initialNodeEditFormState, initialNodeFormState } from "./types";
-import { formatGroups, parseGroups } from "./utils";
+import { initialNodeBatchFormState, initialNodeEditFormState, initialNodeFormState } from "./types";
+import { filterNodes, formatGroups, parseGroups, toggleSelectedId, toggleVisibleSelection } from "./utils";
 
 export function NodesPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(initialNodeFormState);
   const [editForm, setEditForm] = useState(initialNodeEditFormState);
+  const [batchForm, setBatchForm] = useState(initialNodeBatchFormState);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [groupFilter, setGroupFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
@@ -30,23 +32,9 @@ export function NodesPage() {
   });
   const nodes = query.data?.items ?? [];
   const groups = groupsQuery.data?.groups ?? [];
-  const filteredNodes = useMemo(() => {
-    const normalizedSearch = searchQuery.trim().toLowerCase();
-    const grouped =
-      groupFilter === "all"
-        ? nodes
-        : nodes.filter((node) => (groupFilter === "ungrouped" ? node.groups.length === 0 : node.groups.includes(groupFilter)));
-
-    if (!normalizedSearch) {
-      return grouped;
-    }
-
-    return grouped.filter((node) =>
-      [node.name, node.protocol, node.server ?? "", String(node.port ?? ""), ...node.groups].some((value) =>
-        value.toLowerCase().includes(normalizedSearch)
-      )
-    );
-  }, [groupFilter, nodes, searchQuery]);
+  const filteredNodes = useMemo(() => filterNodes(nodes, groupFilter, searchQuery), [groupFilter, nodes, searchQuery]);
+  const visibleNodeIds = useMemo(() => filteredNodes.map((node) => node.id), [filteredNodes]);
+  const allVisibleSelected = visibleNodeIds.length > 0 && visibleNodeIds.every((id) => selectedNodeIds.includes(id));
 
   const invalidateNodeData = async () => {
     await Promise.all([
@@ -86,27 +74,49 @@ export function NodesPage() {
     }
   });
 
-  const pending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
-  const error = createMutation.error ?? updateMutation.error ?? deleteMutation.error ?? query.error;
+  const batchMutation = useMutation({
+    mutationFn: batchNodes,
+    onSuccess: async (result) => {
+      setBatchForm(initialNodeBatchFormState);
+      setSelectedNodeIds([]);
+      setNotice(`批量操作完成，影响 ${result.affected} 个节点`);
+      await invalidateNodeData();
+    }
+  });
+
+  const pending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending || batchMutation.isPending;
+  const error = createMutation.error ?? updateMutation.error ?? deleteMutation.error ?? batchMutation.error ?? query.error;
   const emptyLabel = nodes.length === 0 ? "还没有节点" : "没有匹配的节点";
 
   const startEdit = (node: NodeDto) => {
     setNotice(null);
     setEditingNodeId(node.id);
-    setEditForm({
-      name: node.name,
-      groups: formatGroups(node.groups)
-    });
+    setEditForm({ name: node.name, groups: formatGroups(node.groups) });
   };
 
   const saveEdit = (node: NodeDto) => {
     updateMutation.mutate({
       id: node.id,
-      input: {
-        name: editForm.name.trim() || node.name,
-        groups: parseGroups(editForm.groups)
-      }
+      input: { name: editForm.name.trim() || node.name, groups: parseGroups(editForm.groups) }
     });
+  };
+
+  const runBatchAction = (action: NodeBatchActionInput["action"]) => {
+    if (selectedNodeIds.length === 0) {
+      return;
+    }
+
+    if (action === "delete" && !window.confirm(`删除选中的 ${selectedNodeIds.length} 个节点？`)) {
+      return;
+    }
+
+    const groups = parseGroups(batchForm.groups);
+    if (action === "append-groups" && groups.length === 0) {
+      setNotice("请输入要追加的分组");
+      return;
+    }
+
+    batchMutation.mutate({ ids: selectedNodeIds, action, groups: action.endsWith("-groups") ? groups : undefined });
   };
 
   return (
@@ -121,6 +131,14 @@ export function NodesPage() {
         onGroupFilterChange={setGroupFilter}
         onSearchQueryChange={setSearchQuery}
       />
+      <NodeBatchBar
+        batchGroups={batchForm.groups}
+        pending={pending}
+        selectedCount={selectedNodeIds.length}
+        onAction={runBatchAction}
+        onBatchGroupsChange={(value) => setBatchForm({ groups: value })}
+        onClearSelection={() => setSelectedNodeIds([])}
+      />
 
       {notice ? <p className="success-text">{notice}</p> : null}
       {error instanceof Error ? <p className="error-text">{error.message}</p> : null}
@@ -129,10 +147,12 @@ export function NodesPage() {
         <EmptyState label={emptyLabel} />
       ) : (
         <NodesTable
+          allVisibleSelected={allVisibleSelected}
           editForm={editForm}
           editingNodeId={editingNodeId}
           nodes={filteredNodes}
           pending={pending}
+          selectedNodeIds={selectedNodeIds}
           onCancelEdit={() => {
             setEditingNodeId(null);
             setEditForm(initialNodeEditFormState);
@@ -146,6 +166,8 @@ export function NodesPage() {
           onSaveEdit={saveEdit}
           onStartEdit={startEdit}
           onToggleEnabled={(node) => updateMutation.mutate({ id: node.id, input: { enabled: !node.enabled } })}
+          onToggleSelected={(nodeId, checked) => setSelectedNodeIds((current) => toggleSelectedId(current, nodeId, checked))}
+          onToggleVisible={(checked) => setSelectedNodeIds((current) => toggleVisibleSelection(current, visibleNodeIds, checked))}
         />
       )}
     </section>

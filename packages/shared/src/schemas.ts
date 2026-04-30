@@ -48,6 +48,19 @@ export const updateNodeSchema = z
 
 export type UpdateNodeInput = z.infer<typeof updateNodeSchema>;
 
+export const nodeBatchActionSchema = z
+  .object({
+    ids: z.array(z.string().trim().min(1)).min(1).max(200),
+    action: z.enum(["enable", "disable", "delete", "set-groups", "append-groups"]),
+    groups: z.array(nodeGroupSchema).optional()
+  })
+  .refine(
+    (value) => (value.action === "set-groups" ? value.groups !== undefined : value.action !== "append-groups" || Boolean(value.groups?.length)),
+    "Groups must be provided for group batch actions, and append-groups requires at least one group"
+  );
+
+export type NodeBatchActionInput = z.infer<typeof nodeBatchActionSchema>;
+
 export const createProfileSchema = z.object({
   name: z.string().trim().min(1).max(80),
   description: z.string().trim().max(240).nullable().optional(),
