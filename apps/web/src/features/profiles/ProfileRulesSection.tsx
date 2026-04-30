@@ -54,6 +54,17 @@ export function ProfileRulesSection({ parentPending, profile, setNotice }: Profi
     }
   });
 
+  const reorderRuleMutation = useMutation({
+    mutationFn: async ({ from, to }: { from: ProfileRuleDto; to: ProfileRuleDto }) => {
+      await updateProfileRule(profile?.id ?? "", from.id, { position: to.position });
+      await updateProfileRule(profile?.id ?? "", to.id, { position: from.position });
+    },
+    onSuccess: async () => {
+      setNotice("规则顺序已更新");
+      await invalidateRuleData();
+    }
+  });
+
   const deleteRuleMutation = useMutation({
     mutationFn: (ruleId: string) => deleteProfileRule(profile?.id ?? "", ruleId),
     onSuccess: async () => {
@@ -67,8 +78,8 @@ export function ProfileRulesSection({ parentPending, profile, setNotice }: Profi
   }
 
   const pending =
-    parentPending || createRuleMutation.isPending || updateRuleMutation.isPending || deleteRuleMutation.isPending;
-  const error = createRuleMutation.error ?? updateRuleMutation.error ?? deleteRuleMutation.error ?? rulesQuery.error;
+    parentPending || createRuleMutation.isPending || updateRuleMutation.isPending || reorderRuleMutation.isPending || deleteRuleMutation.isPending;
+  const error = createRuleMutation.error ?? updateRuleMutation.error ?? reorderRuleMutation.error ?? deleteRuleMutation.error ?? rulesQuery.error;
 
   function startEdit(rule: ProfileRuleDto) {
     setEditingRuleId(rule.id);
@@ -107,10 +118,20 @@ export function ProfileRulesSection({ parentPending, profile, setNotice }: Profi
           setEditForm(initialProfileRuleEditFormState);
         }}
         onEditFormChange={setEditForm}
+        onMoveRule={(rule, direction) => moveRule(rule, direction)}
         onSaveEdit={saveEdit}
         onStartEdit={startEdit}
         onToggleRule={(rule) => updateRuleMutation.mutate({ ruleId: rule.id, input: { enabled: !rule.enabled } })}
       />
     </>
   );
+
+  function moveRule(rule: ProfileRuleDto, direction: "down" | "up") {
+    const index = rules.findIndex((item) => item.id === rule.id);
+    const target = rules[direction === "up" ? index - 1 : index + 1];
+
+    if (target) {
+      reorderRuleMutation.mutate({ from: rule, to: target });
+    }
+  }
 }

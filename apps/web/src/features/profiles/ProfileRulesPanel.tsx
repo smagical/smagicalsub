@@ -17,6 +17,7 @@ type ProfileRulesPanelProps = {
   onCreateRule: (value: { rule: string; position?: number; enabled: boolean }) => void;
   onDeleteRule: (rule: ProfileRuleDto) => void;
   onEditFormChange: (form: ProfileRuleEditFormState) => void;
+  onMoveRule: (rule: ProfileRuleDto, direction: "down" | "up") => void;
   onSaveEdit: (rule: ProfileRuleDto) => void;
   onStartEdit: (rule: ProfileRuleDto) => void;
   onToggleRule: (rule: ProfileRuleDto) => void;
@@ -34,6 +35,7 @@ export function ProfileRulesPanel({
   onCreateRule,
   onDeleteRule,
   onEditFormChange,
+  onMoveRule,
   onSaveEdit,
   onStartEdit,
   onToggleRule
@@ -57,6 +59,7 @@ export function ProfileRulesPanel({
           onCancelEdit={onCancelEdit}
           onDelete={onDeleteRule}
           onEditFormChange={onEditFormChange}
+          onMove={onMoveRule}
           onSaveEdit={onSaveEdit}
           onStartEdit={onStartEdit}
           onToggleEnabled={onToggleRule}

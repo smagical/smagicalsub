@@ -10,6 +10,7 @@ type ProfileRulesTableProps = {
   onCancelEdit: () => void;
   onDelete: (rule: ProfileRuleDto) => void;
   onEditFormChange: (form: ProfileRuleEditFormState) => void;
+  onMove: (rule: ProfileRuleDto, direction: "down" | "up") => void;
   onSaveEdit: (rule: ProfileRuleDto) => void;
   onStartEdit: (rule: ProfileRuleDto) => void;
   onToggleEnabled: (rule: ProfileRuleDto) => void;
@@ -23,6 +24,7 @@ export function ProfileRulesTable({
   onCancelEdit,
   onDelete,
   onEditFormChange,
+  onMove,
   onSaveEdit,
   onStartEdit,
   onToggleEnabled
@@ -38,7 +40,7 @@ export function ProfileRulesTable({
         </tr>
       </thead>
       <tbody>
-        {rules.map((rule) => {
+        {rules.map((rule, index) => {
           const editing = editingRuleId === rule.id;
 
           return (
@@ -57,9 +59,12 @@ export function ProfileRulesTable({
                   rule={rule}
                   onCancelEdit={onCancelEdit}
                   onDelete={onDelete}
+                  onMove={onMove}
                   onSaveEdit={onSaveEdit}
                   onStartEdit={onStartEdit}
                   onToggleEnabled={onToggleEnabled}
+                  canMoveDown={index < rules.length - 1}
+                  canMoveUp={index > 0}
                 />
               </td>
             </tr>
@@ -75,15 +80,20 @@ function editInput(label: string, value: string, pending: boolean, onChange: (va
 }
 
 function RuleActions({
+  canMoveDown,
+  canMoveUp,
   editing,
   pending,
   rule,
   onCancelEdit,
   onDelete,
+  onMove,
   onSaveEdit,
   onStartEdit,
   onToggleEnabled
-}: Pick<ProfileRulesTableProps, "onCancelEdit" | "onDelete" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"> & {
+}: Pick<ProfileRulesTableProps, "onCancelEdit" | "onDelete" | "onMove" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"> & {
+  canMoveDown: boolean;
+  canMoveUp: boolean;
   editing: boolean;
   rule: ProfileRuleDto;
 }) {
@@ -98,6 +108,8 @@ function RuleActions({
 
   return (
     <div className="table-actions">
+      <button className="inline-button" disabled={pending || !canMoveUp} onClick={() => onMove(rule, "up")} type="button">上移</button>
+      <button className="inline-button" disabled={pending || !canMoveDown} onClick={() => onMove(rule, "down")} type="button">下移</button>
       <button className="secondary-button" disabled={pending} onClick={() => onToggleEnabled(rule)} type="button">{rule.enabled ? "停用" : "启用"}</button>
       <button className="secondary-button" disabled={pending} onClick={() => onStartEdit(rule)} type="button">编辑</button>
       <button className="danger-button" disabled={pending} onClick={() => onDelete(rule)} type="button">删除</button>
