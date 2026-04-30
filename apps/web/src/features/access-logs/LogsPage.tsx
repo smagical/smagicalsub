@@ -36,6 +36,17 @@ export function LogsPage() {
     window.open(logUrl(path), "_blank", "noopener,noreferrer");
   }
 
+  function exportCsv() {
+    const csv = toLogsCsv(filteredLogs);
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `access-logs-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <section className="panel wide">
       <ModuleHeading eyebrow="Logs" title="访问日志" description="查看最近 100 条订阅访问记录，用于排查令牌和客户端请求。" />
@@ -57,6 +68,7 @@ export function LogsPage() {
             <option value="deleted-token">已删除令牌</option>
           </select>
         </label>
+        <button className="secondary-button" disabled={filteredLogs.length === 0} onClick={exportCsv} type="button">导出 CSV</button>
       </div>
 
       {notice ? <p className="success-text">{notice}</p> : null}
@@ -69,6 +81,22 @@ export function LogsPage() {
 
 function logUrl(path: string) {
   return typeof window === "undefined" ? path : new URL(path, window.location.origin).toString();
+}
+
+function toLogsCsv(logs: AccessLogDto[]) {
+  const rows = logs.map((log) => [
+    log.created_at,
+    log.token_name ?? "已删除令牌",
+    log.path,
+    log.ip ?? "",
+    log.user_agent ?? ""
+  ]);
+
+  return [["时间", "令牌", "路径", "IP", "User Agent"], ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+}
+
+function csvCell(value: string) {
+  return `"${value.replaceAll("\"", "\"\"")}"`;
 }
 
 function matchesLogTokenState(log: AccessLogDto, tokenFilter: string) {
