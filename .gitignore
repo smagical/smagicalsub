@@ -141,3 +141,12 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Cloudflare / Workers
+.wrangler/
+.mf/
+
+# Workspace tooling
+.turbo/
+.idea/
+.codex-backup/

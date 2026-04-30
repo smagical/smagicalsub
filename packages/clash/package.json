@@ -1,0 +1,17 @@
+{
+  "name": "@smagicalsub/clash",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

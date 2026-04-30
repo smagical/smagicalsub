@@ -1,0 +1,27 @@
+{
+  "name": "smagicalsub",
+  "private": true,
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smagical/smagicalsub.git"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "pnpm --filter @smagicalsub/web dev",
+    "build": "pnpm --filter @smagicalsub/web build",
+    "deploy": "pnpm --filter @smagicalsub/web deploy",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "pnpm --filter @smagicalsub/web db:migrate:local",
+    "db:migrate:remote": "pnpm --filter @smagicalsub/web db:migrate:remote"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.7",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  }
+}

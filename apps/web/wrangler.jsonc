@@ -1,0 +1,33 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "smagicalsub",
+  "main": "../worker/src/index.ts",
+  "compatibility_date": "2026-04-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "APP_ENV": "local",
+    "SUBSCRIPTION_CACHE_TTL_SECONDS": "300"
+  },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/sub/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "smagicalsub",
+      "database_id": "replace-with-d1-database-id"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "replace-with-kv-namespace-id"
+    }
+  ]
+}
