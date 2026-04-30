@@ -48,7 +48,7 @@ export type NodeDto = {
   protocol: string;
   server: string | null;
   port: number | null;
-  tags: string;
+  groups: string[];
   enabled: number;
   updated_at: string;
 };
