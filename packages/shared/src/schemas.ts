@@ -8,6 +8,13 @@ export const createSubscriptionSourceSchema = z.object({
 
 export type CreateSubscriptionSourceInput = z.infer<typeof createSubscriptionSourceSchema>;
 
+export const updateSubscriptionSourceSchema = createSubscriptionSourceSchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  "At least one field must be provided"
+);
+
+export type UpdateSubscriptionSourceInput = z.infer<typeof updateSubscriptionSourceSchema>;
+
 export const subscribeTokenSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -16,4 +23,3 @@ export const subscribeTokenSchema = z.object({
 });
 
 export type SubscribeToken = z.infer<typeof subscribeTokenSchema>;
-

@@ -1,0 +1,60 @@
+import { parseSubscription } from "@smagicalsub/clash";
+import type { SourceRefreshDto } from "@smagicalsub/shared";
+import type { Env } from "../../env";
+import {
+  createRefreshJob,
+  findSourceById,
+  markRefreshJobFinished,
+  markSourceRefreshStatus,
+  replaceSourceNodes
+} from "./source.repository";
+
+const sourceRawKeyPrefix = "source_raw";
+
+export async function refreshSource(env: Env, sourceId: string): Promise<SourceRefreshDto | null> {
+  const source = await findSourceById(env.DB, sourceId);
+
+  if (!source) {
+    return null;
+  }
+
+  const jobId = await createRefreshJob(env.DB, sourceId);
+
+  try {
+    const response = await fetch(source.url, {
+      headers: {
+        Accept: "text/plain, application/octet-stream, */*"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upstream returned ${response.status}`);
+    }
+
+    const content = await response.text();
+    await env.KV.put(`${sourceRawKeyPrefix}:${sourceId}`, content, {
+      expirationTtl: 60 * 60 * 24
+    });
+
+    const nodes = parseSubscription(content);
+    const nodeCount = await replaceSourceNodes(env.DB, sourceId, nodes);
+    await markSourceRefreshStatus(env.DB, sourceId, "success");
+    await markRefreshJobFinished(env.DB, jobId, "success", `Parsed ${nodeCount} nodes`);
+
+    return {
+      sourceId,
+      nodeCount,
+      status: "success"
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown refresh error";
+    await markSourceRefreshStatus(env.DB, sourceId, "failed", message);
+    await markRefreshJobFinished(env.DB, jobId, "failed", message);
+
+    return {
+      sourceId,
+      nodeCount: 0,
+      status: "failed"
+    };
+  }
+}

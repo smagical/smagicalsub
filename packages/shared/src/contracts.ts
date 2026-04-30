@@ -35,6 +35,12 @@ export type SourceDto = {
   updated_at: string;
 };
 
+export type SourceRefreshDto = {
+  sourceId: string;
+  nodeCount: number;
+  status: "success" | "failed";
+};
+
 export type NodeDto = {
   id: string;
   source_id: string | null;
@@ -69,4 +75,3 @@ export type SubscribeTokenDto = {
   last_used_at: string | null;
   created_at: string;
 };
-
