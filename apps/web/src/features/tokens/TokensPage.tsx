@@ -8,7 +8,7 @@ import { createToken, deleteToken, listTokens, resetToken, updateToken } from ".
 import { TokenForm } from "./TokenForm";
 import { TokensTable } from "./TokensTable";
 import { initialTokenEditFormState, initialTokenFormState, tokenSubscriptionFormats, type TokenSubscriptionFormat } from "./types";
-import { subscriptionUrl, toDatetimeLocalValue } from "./utils";
+import { filterTokens, subscriptionUrl, toDatetimeLocalValue } from "./utils";
 
 export function TokensPage() {
   const queryClient = useQueryClient();
@@ -16,11 +16,13 @@ export function TokensPage() {
   const [editForm, setEditForm] = useState(initialTokenEditFormState);
   const [editingTokenId, setEditingTokenId] = useState<string | null>(null);
   const [copyFormat, setCopyFormat] = useState<TokenSubscriptionFormat>("clash");
+  const [searchQuery, setSearchQuery] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const query = useQuery({ queryKey: ["tokens"], queryFn: listTokens, retry: false });
   const tokens = query.data?.items ?? [];
   const profilesQuery = useQuery({ queryKey: ["profiles"], queryFn: listProfiles, retry: false });
   const profiles = profilesQuery.data?.items ?? [];
+  const filteredTokens = filterTokens(tokens, searchQuery);
 
   const invalidateTokenData = async () => {
     await Promise.all([queryClient.invalidateQueries({ queryKey: ["tokens"] }), queryClient.invalidateQueries({ queryKey: ["dashboard"] })]);
@@ -54,6 +56,7 @@ export function TokensPage() {
   const pending = createMutation.isPending || updateMutation.isPending || resetMutation.isPending || deleteMutation.isPending;
   const error = createMutation.error ?? updateMutation.error ?? resetMutation.error ?? deleteMutation.error ?? query.error;
   const pageError = error ?? profilesQuery.error;
+  const emptyLabel = tokens.length === 0 ? "还没有订阅令牌" : "没有匹配的订阅令牌";
 
   async function handleCopy(token: SubscribeTokenDto) {
     if (!navigator.clipboard) {
@@ -112,6 +115,10 @@ export function TokensPage() {
       <TokenForm form={form} pending={pending} profiles={profiles} setForm={setForm} onSubmit={(value) => createMutation.mutate(value)} />
       <div className="filter-row">
         <label>
+          <span>搜索令牌</span>
+          <input onChange={(event) => setSearchQuery(event.target.value)} placeholder="名称 / 令牌 / 配置档" type="search" value={searchQuery} />
+        </label>
+        <label>
           <span>复制格式</span>
           <select onChange={(event) => setCopyFormat(event.target.value as TokenSubscriptionFormat)} value={copyFormat}>
             {tokenSubscriptionFormats.map((format) => (
@@ -126,8 +133,8 @@ export function TokensPage() {
       {notice ? <p className="success-text">{notice}</p> : null}
       {pageError instanceof Error ? <p className="error-text">{pageError.message}</p> : null}
 
-      {tokens.length === 0 ? (
-        <EmptyState label="还没有订阅令牌" />
+      {filteredTokens.length === 0 ? (
+        <EmptyState label={emptyLabel} />
       ) : (
         <TokensTable
           copyFormat={copyFormat}
@@ -135,7 +142,7 @@ export function TokensPage() {
           editingTokenId={editingTokenId}
           pending={pending}
           profiles={profiles}
-          tokens={tokens}
+          tokens={filteredTokens}
           onCancelEdit={cancelEdit}
           onCopy={(token) => void handleCopy(token)}
           onDelete={deleteWithConfirm}

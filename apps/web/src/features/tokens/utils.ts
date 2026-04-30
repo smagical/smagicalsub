@@ -1,4 +1,4 @@
-import type { CreateSubscribeTokenInput } from "@smagicalsub/shared";
+import type { CreateSubscribeTokenInput, SubscribeTokenDto } from "@smagicalsub/shared";
 import type { TokenFormState, TokenSubscriptionFormat } from "./types";
 
 export function toCreateTokenInput(form: TokenFormState): CreateSubscribeTokenInput {
@@ -33,4 +33,18 @@ export function subscriptionUrl(token: string, format: TokenSubscriptionFormat) 
 
 export function toDatetimeLocalValue(value: string | null) {
   return value ? value.replace(" ", "T").slice(0, 16) : "";
+}
+
+export function filterTokens(tokens: SubscribeTokenDto[], searchQuery: string) {
+  const query = searchQuery.trim().toLowerCase();
+
+  if (!query) {
+    return tokens;
+  }
+
+  return tokens.filter((token) =>
+    [token.name, token.token, token.profile_name ?? "", token.expires_at ?? "", token.last_used_at ?? ""].some((value) =>
+      value.toLowerCase().includes(query)
+    )
+  );
 }

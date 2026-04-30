@@ -16,6 +16,7 @@ export function NodesPage() {
   const [editForm, setEditForm] = useState(initialNodeEditFormState);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [groupFilter, setGroupFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const query = useQuery({
     queryKey: ["nodes"],
@@ -30,16 +31,22 @@ export function NodesPage() {
   const nodes = query.data?.items ?? [];
   const groups = groupsQuery.data?.groups ?? [];
   const filteredNodes = useMemo(() => {
-    if (groupFilter === "all") {
-      return nodes;
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const grouped =
+      groupFilter === "all"
+        ? nodes
+        : nodes.filter((node) => (groupFilter === "ungrouped" ? node.groups.length === 0 : node.groups.includes(groupFilter)));
+
+    if (!normalizedSearch) {
+      return grouped;
     }
 
-    if (groupFilter === "ungrouped") {
-      return nodes.filter((node) => node.groups.length === 0);
-    }
-
-    return nodes.filter((node) => node.groups.includes(groupFilter));
-  }, [groupFilter, nodes]);
+    return grouped.filter((node) =>
+      [node.name, node.protocol, node.server ?? "", String(node.port ?? ""), ...node.groups].some((value) =>
+        value.toLowerCase().includes(normalizedSearch)
+      )
+    );
+  }, [groupFilter, nodes, searchQuery]);
 
   const invalidateNodeData = async () => {
     await Promise.all([
@@ -81,6 +88,7 @@ export function NodesPage() {
 
   const pending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
   const error = createMutation.error ?? updateMutation.error ?? deleteMutation.error ?? query.error;
+  const emptyLabel = nodes.length === 0 ? "还没有节点" : "没有匹配的节点";
 
   const startEdit = (node: NodeDto) => {
     setNotice(null);
@@ -106,13 +114,19 @@ export function NodesPage() {
       <ModuleHeading eyebrow="Nodes" title="节点" description="添加单个节点，按分组查看订阅源解析和手动维护的节点。" />
 
       <NodeForm form={form} pending={pending} setForm={setForm} onSubmit={(value) => createMutation.mutate(value)} />
-      <NodeFilters groups={groups} groupFilter={groupFilter} onGroupFilterChange={setGroupFilter} />
+      <NodeFilters
+        groups={groups}
+        groupFilter={groupFilter}
+        searchQuery={searchQuery}
+        onGroupFilterChange={setGroupFilter}
+        onSearchQueryChange={setSearchQuery}
+      />
 
       {notice ? <p className="success-text">{notice}</p> : null}
       {error instanceof Error ? <p className="error-text">{error.message}</p> : null}
 
       {filteredNodes.length === 0 ? (
-        <EmptyState label="还没有节点" />
+        <EmptyState label={emptyLabel} />
       ) : (
         <NodesTable
           editForm={editForm}
