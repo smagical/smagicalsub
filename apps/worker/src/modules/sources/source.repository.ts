@@ -140,7 +140,7 @@ export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes
           node.server ?? null,
           node.port ?? null,
           "[]",
-          JSON.stringify(node.config)
+          JSON.stringify({ ...node.config, __rawUri: node.rawUri })
         )
     );
   }

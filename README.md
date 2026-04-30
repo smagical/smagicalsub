@@ -28,6 +28,27 @@ pnpm db:migrate:local
 pnpm db:migrate:remote
 ```
 
+## 订阅格式
+
+默认输出 Clash YAML：
+
+```text
+/sub/:token
+/sub/:token?format=clash
+```
+
+同时支持：
+
+```text
+/sub/:token?format=v2rayn
+/sub/:token?format=plain
+/sub/:token?format=sing-box
+```
+
+- `v2rayn`：多行节点 URI 的 base64 订阅。
+- `plain`：明文多行节点 URI。
+- `sing-box`：sing-box JSON 配置。
+
 ## 部署
 
 ```bash

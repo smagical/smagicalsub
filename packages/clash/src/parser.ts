@@ -3,6 +3,7 @@ export type ParsedNode = {
   protocol: string;
   server?: string;
   port?: number;
+  rawUri: string;
   config: Record<string, unknown>;
 };
 
@@ -74,6 +75,7 @@ function parseVmess(uri: string): ParsedNode | null {
     protocol: "vmess",
     server: payload.add,
     port: Number(payload.port),
+    rawUri: uri,
     config: compact(config)
   };
 }
@@ -97,6 +99,7 @@ function parseUrlNode(uri: string): ParsedNode | null {
     protocol,
     server: url.hostname,
     port: Number(url.port),
+    rawUri: uri,
     config: compact(config)
   };
 }
@@ -119,6 +122,7 @@ function parseShadowsocks(uri: string): ParsedNode | null {
     protocol: "ss",
     server,
     port: Number(port),
+    rawUri: uri,
     config: {
       type: "ss",
       server,

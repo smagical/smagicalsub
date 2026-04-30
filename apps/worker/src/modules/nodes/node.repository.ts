@@ -62,7 +62,7 @@ export async function createManualNode(db: D1Database, input: CreateNodeInput) {
       parsed.server ?? null,
       parsed.port ?? null,
       JSON.stringify(input.groups),
-      JSON.stringify(parsed.config),
+      JSON.stringify({ ...parsed.config, __rawUri: parsed.rawUri }),
       input.enabled ? 1 : 0
     )
     .run();

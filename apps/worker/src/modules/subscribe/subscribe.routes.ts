@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { renderClashConfig } from "@smagicalsub/clash";
+import { normalizeSubscriptionFormat, renderSubscription, type SubscriptionFormat } from "@smagicalsub/clash";
 import type { Env } from "../../env";
 import { listEnabledRenderableNodes } from "../nodes/node.repository";
 import { findActiveSubscribeToken } from "../tokens/token.repository";
@@ -8,11 +8,12 @@ export const subscribeRoutes = new Hono<{ Bindings: Env }>();
 
 subscribeRoutes.get("/:token", async (c) => {
   const token = c.req.param("token");
-  const cacheKey = `generated_sub:${token}`;
+  const format = normalizeSubscriptionFormat(c.req.query("format") ?? c.req.query("target") ?? c.req.query("type"));
+  const cacheKey = `generated_sub:${format}:${token}`;
   const cached = await c.env.KV.get(cacheKey);
 
   if (cached) {
-    return yaml(cached);
+    return subscriptionResponse(cached, format);
   }
 
   const tokenRow = await findActiveSubscribeToken(c.env.DB, token);
@@ -22,7 +23,8 @@ subscribeRoutes.get("/:token", async (c) => {
   }
 
   const nodes = await listEnabledRenderableNodes(c.env.DB);
-  const body = renderClashConfig({
+  const body = renderSubscription({
+    format,
     profileName: tokenRow.name,
     nodes
   });
@@ -47,15 +49,26 @@ subscribeRoutes.get("/:token", async (c) => {
       .run()
   );
 
-  return yaml(body);
+  return subscriptionResponse(body, format);
 });
 
-function yaml(body: string) {
+function subscriptionResponse(body: string, format: SubscriptionFormat) {
   return new Response(body, {
     headers: {
       "Cache-Control": "private, max-age=300",
-      "Content-Type": "text/yaml; charset=utf-8"
+      "Content-Type": contentType(format)
     }
   });
 }
 
+function contentType(format: SubscriptionFormat) {
+  switch (format) {
+    case "clash":
+      return "text/yaml; charset=utf-8";
+    case "sing-box":
+      return "application/json; charset=utf-8";
+    case "v2rayn":
+    case "plain":
+      return "text/plain; charset=utf-8";
+  }
+}
