@@ -1,9 +1,9 @@
 import { useState } from "react";
-import type { ProfileDto } from "@smagicalsub/shared";
+import type { ProfileDto, ProfileRuleDto } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createProfileRule, deleteProfileRule, listProfileRules, updateProfileRule } from "./api";
 import { ProfileRulesPanel } from "./ProfileRulesPanel";
-import { initialProfileRuleFormState } from "./types";
+import { initialProfileRuleEditFormState, initialProfileRuleFormState } from "./types";
 
 type ProfileRulesSectionProps = {
   parentPending: boolean;
@@ -14,6 +14,8 @@ type ProfileRulesSectionProps = {
 export function ProfileRulesSection({ parentPending, profile, setNotice }: ProfileRulesSectionProps) {
   const queryClient = useQueryClient();
   const [ruleForm, setRuleForm] = useState(initialProfileRuleFormState);
+  const [editForm, setEditForm] = useState(initialProfileRuleEditFormState);
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const rulesQuery = useQuery({
     queryKey: ["profile-rules", profile?.id],
     queryFn: () => listProfileRules(profile?.id ?? ""),
@@ -39,9 +41,17 @@ export function ProfileRulesSection({ parentPending, profile, setNotice }: Profi
   });
 
   const updateRuleMutation = useMutation({
-    mutationFn: ({ ruleId, enabled }: { ruleId: string; enabled: boolean }) =>
-      updateProfileRule(profile?.id ?? "", ruleId, { enabled }),
-    onSuccess: invalidateRuleData
+    mutationFn: ({ ruleId, input }: { ruleId: string; input: Parameters<typeof updateProfileRule>[2] }) =>
+      updateProfileRule(profile?.id ?? "", ruleId, input),
+    onSuccess: async (_rule, variables) => {
+      if (variables.input.rule !== undefined || variables.input.position !== undefined) {
+        setEditingRuleId(null);
+        setEditForm(initialProfileRuleEditFormState);
+        setNotice("规则已更新");
+      }
+
+      await invalidateRuleData();
+    }
   });
 
   const deleteRuleMutation = useMutation({
@@ -60,11 +70,28 @@ export function ProfileRulesSection({ parentPending, profile, setNotice }: Profi
     parentPending || createRuleMutation.isPending || updateRuleMutation.isPending || deleteRuleMutation.isPending;
   const error = createRuleMutation.error ?? updateRuleMutation.error ?? deleteRuleMutation.error ?? rulesQuery.error;
 
+  function startEdit(rule: ProfileRuleDto) {
+    setEditingRuleId(rule.id);
+    setEditForm({ rule: rule.rule, position: String(rule.position) });
+  }
+
+  function saveEdit(rule: ProfileRuleDto) {
+    updateRuleMutation.mutate({
+      ruleId: rule.id,
+      input: {
+        rule: editForm.rule.trim() || rule.rule,
+        position: Number(editForm.position.trim() || rule.position)
+      }
+    });
+  }
+
   return (
     <>
       {error instanceof Error ? <p className="error-text">{error.message}</p> : null}
       <ProfileRulesPanel
         form={ruleForm}
+        editForm={editForm}
+        editingRuleId={editingRuleId}
         pending={pending}
         profile={profile}
         rules={rules}
@@ -75,7 +102,14 @@ export function ProfileRulesSection({ parentPending, profile, setNotice }: Profi
             deleteRuleMutation.mutate(rule.id);
           }
         }}
-        onToggleRule={(rule) => updateRuleMutation.mutate({ ruleId: rule.id, enabled: !rule.enabled })}
+        onCancelEdit={() => {
+          setEditingRuleId(null);
+          setEditForm(initialProfileRuleEditFormState);
+        }}
+        onEditFormChange={setEditForm}
+        onSaveEdit={saveEdit}
+        onStartEdit={startEdit}
+        onToggleRule={(rule) => updateRuleMutation.mutate({ ruleId: rule.id, input: { enabled: !rule.enabled } })}
       />
     </>
   );

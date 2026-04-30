@@ -3,27 +3,39 @@ import type { ProfileDto, ProfileRuleDto } from "@smagicalsub/shared";
 import { EmptyState } from "../../shared/EmptyState";
 import { ProfileRuleForm } from "./ProfileRuleForm";
 import { ProfileRulesTable } from "./ProfileRulesTable";
-import type { ProfileRuleFormState } from "./types";
+import type { ProfileRuleEditFormState, ProfileRuleFormState } from "./types";
 
 type ProfileRulesPanelProps = {
+  editForm: ProfileRuleEditFormState;
+  editingRuleId: string | null;
   form: ProfileRuleFormState;
   pending: boolean;
   profile: ProfileDto;
   rules: ProfileRuleDto[];
   setForm: Dispatch<SetStateAction<ProfileRuleFormState>>;
+  onCancelEdit: () => void;
   onCreateRule: (value: { rule: string; position?: number; enabled: boolean }) => void;
   onDeleteRule: (rule: ProfileRuleDto) => void;
+  onEditFormChange: (form: ProfileRuleEditFormState) => void;
+  onSaveEdit: (rule: ProfileRuleDto) => void;
+  onStartEdit: (rule: ProfileRuleDto) => void;
   onToggleRule: (rule: ProfileRuleDto) => void;
 };
 
 export function ProfileRulesPanel({
+  editForm,
+  editingRuleId,
   form,
   pending,
   profile,
   rules,
   setForm,
+  onCancelEdit,
   onCreateRule,
   onDeleteRule,
+  onEditFormChange,
+  onSaveEdit,
+  onStartEdit,
   onToggleRule
 }: ProfileRulesPanelProps) {
   return (
@@ -37,7 +49,18 @@ export function ProfileRulesPanel({
       {rules.length === 0 ? (
         <EmptyState label="还没有配置档规则" />
       ) : (
-        <ProfileRulesTable pending={pending} rules={rules} onDelete={onDeleteRule} onToggleEnabled={onToggleRule} />
+        <ProfileRulesTable
+          editForm={editForm}
+          editingRuleId={editingRuleId}
+          pending={pending}
+          rules={rules}
+          onCancelEdit={onCancelEdit}
+          onDelete={onDeleteRule}
+          onEditFormChange={onEditFormChange}
+          onSaveEdit={onSaveEdit}
+          onStartEdit={onStartEdit}
+          onToggleEnabled={onToggleRule}
+        />
       )}
     </section>
   );

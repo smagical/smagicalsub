@@ -1,14 +1,32 @@
 import type { ProfileRuleDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
+import type { ProfileRuleEditFormState } from "./types";
 
 type ProfileRulesTableProps = {
+  editForm: ProfileRuleEditFormState;
+  editingRuleId: string | null;
   pending: boolean;
   rules: ProfileRuleDto[];
+  onCancelEdit: () => void;
   onDelete: (rule: ProfileRuleDto) => void;
+  onEditFormChange: (form: ProfileRuleEditFormState) => void;
+  onSaveEdit: (rule: ProfileRuleDto) => void;
+  onStartEdit: (rule: ProfileRuleDto) => void;
   onToggleEnabled: (rule: ProfileRuleDto) => void;
 };
 
-export function ProfileRulesTable({ pending, rules, onDelete, onToggleEnabled }: ProfileRulesTableProps) {
+export function ProfileRulesTable({
+  editForm,
+  editingRuleId,
+  pending,
+  rules,
+  onCancelEdit,
+  onDelete,
+  onEditFormChange,
+  onSaveEdit,
+  onStartEdit,
+  onToggleEnabled
+}: ProfileRulesTableProps) {
   return (
     <table className="data-table compact-table">
       <thead>
@@ -20,26 +38,69 @@ export function ProfileRulesTable({ pending, rules, onDelete, onToggleEnabled }:
         </tr>
       </thead>
       <tbody>
-        {rules.map((rule) => (
-          <tr key={rule.id}>
-            <td>{rule.position}</td>
-            <td className="mono-cell truncate-cell">{rule.rule}</td>
-            <td>
-              <StatusBadge enabled={rule.enabled} />
-            </td>
-            <td>
-              <div className="table-actions">
-                <button className="secondary-button" disabled={pending} onClick={() => onToggleEnabled(rule)} type="button">
-                  {rule.enabled ? "停用" : "启用"}
-                </button>
-                <button className="danger-button" disabled={pending} onClick={() => onDelete(rule)} type="button">
-                  删除
-                </button>
-              </div>
-            </td>
-          </tr>
-        ))}
+        {rules.map((rule) => {
+          const editing = editingRuleId === rule.id;
+
+          return (
+            <tr key={rule.id}>
+              <td>{editing ? editInput("规则排序", editForm.position, pending, (position) => onEditFormChange({ ...editForm, position }), "number") : rule.position}</td>
+              <td className="mono-cell truncate-cell">
+                {editing ? editInput("规则内容", editForm.rule, pending, (value) => onEditFormChange({ ...editForm, rule: value }), "text") : rule.rule}
+              </td>
+              <td>
+                <StatusBadge enabled={rule.enabled} />
+              </td>
+              <td>
+                <RuleActions
+                  editing={editing}
+                  pending={pending}
+                  rule={rule}
+                  onCancelEdit={onCancelEdit}
+                  onDelete={onDelete}
+                  onSaveEdit={onSaveEdit}
+                  onStartEdit={onStartEdit}
+                  onToggleEnabled={onToggleEnabled}
+                />
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
+  );
+}
+
+function editInput(label: string, value: string, pending: boolean, onChange: (value: string) => void, type: "number" | "text") {
+  return <input aria-label={label} disabled={pending} min={type === "number" ? 0 : undefined} onChange={(event) => onChange(event.target.value)} type={type} value={value} />;
+}
+
+function RuleActions({
+  editing,
+  pending,
+  rule,
+  onCancelEdit,
+  onDelete,
+  onSaveEdit,
+  onStartEdit,
+  onToggleEnabled
+}: Pick<ProfileRulesTableProps, "onCancelEdit" | "onDelete" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"> & {
+  editing: boolean;
+  rule: ProfileRuleDto;
+}) {
+  if (editing) {
+    return (
+      <div className="table-actions">
+        <button className="primary-button" disabled={pending} onClick={() => onSaveEdit(rule)} type="button">保存</button>
+        <button className="secondary-button" disabled={pending} onClick={onCancelEdit} type="button">取消</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="table-actions">
+      <button className="secondary-button" disabled={pending} onClick={() => onToggleEnabled(rule)} type="button">{rule.enabled ? "停用" : "启用"}</button>
+      <button className="secondary-button" disabled={pending} onClick={() => onStartEdit(rule)} type="button">编辑</button>
+      <button className="danger-button" disabled={pending} onClick={() => onDelete(rule)} type="button">删除</button>
+    </div>
   );
 }
