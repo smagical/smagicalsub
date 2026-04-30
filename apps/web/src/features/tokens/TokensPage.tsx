@@ -7,31 +7,23 @@ import { listProfiles } from "../profiles/api";
 import { createToken, deleteToken, listTokens, resetToken, updateToken } from "./api";
 import { TokenForm } from "./TokenForm";
 import { TokensTable } from "./TokensTable";
-import { initialTokenFormState } from "./types";
-import { subscriptionUrl } from "./utils";
+import { initialTokenEditFormState, initialTokenFormState, tokenSubscriptionFormats, type TokenSubscriptionFormat } from "./types";
+import { subscriptionUrl, toDatetimeLocalValue } from "./utils";
 
 export function TokensPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(initialTokenFormState);
+  const [editForm, setEditForm] = useState(initialTokenEditFormState);
+  const [editingTokenId, setEditingTokenId] = useState<string | null>(null);
+  const [copyFormat, setCopyFormat] = useState<TokenSubscriptionFormat>("clash");
   const [notice, setNotice] = useState<string | null>(null);
-  const query = useQuery({
-    queryKey: ["tokens"],
-    queryFn: listTokens,
-    retry: false
-  });
+  const query = useQuery({ queryKey: ["tokens"], queryFn: listTokens, retry: false });
   const tokens = query.data?.items ?? [];
-  const profilesQuery = useQuery({
-    queryKey: ["profiles"],
-    queryFn: listProfiles,
-    retry: false
-  });
+  const profilesQuery = useQuery({ queryKey: ["profiles"], queryFn: listProfiles, retry: false });
   const profiles = profilesQuery.data?.items ?? [];
 
   const invalidateTokenData = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["tokens"] }),
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
-    ]);
+    await Promise.all([queryClient.invalidateQueries({ queryKey: ["tokens"] }), queryClient.invalidateQueries({ queryKey: ["dashboard"] })]);
   };
 
   const createMutation = useMutation({
@@ -45,27 +37,21 @@ export function TokensPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateSubscribeTokenInput }) => updateToken(id, input),
-    onSuccess: invalidateTokenData
-  });
+    onSuccess: async (_token, variables) => {
+      if (variables.input.name !== undefined || variables.input.expires_at !== undefined) {
+        setEditingTokenId(null);
+        setEditForm(initialTokenEditFormState);
+        setNotice("订阅令牌已更新");
+      }
 
-  const resetMutation = useMutation({
-    mutationFn: resetToken,
-    onSuccess: async () => {
-      setNotice("令牌已重置，旧订阅地址已失效");
       await invalidateTokenData();
     }
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteToken,
-    onSuccess: async () => {
-      setNotice("订阅令牌已删除");
-      await invalidateTokenData();
-    }
-  });
+  const resetMutation = useMutation({ mutationFn: resetToken, onSuccess: () => finishTokenAction("令牌已重置，旧订阅地址已失效") });
+  const deleteMutation = useMutation({ mutationFn: deleteToken, onSuccess: () => finishTokenAction("订阅令牌已删除") });
 
-  const pending =
-    createMutation.isPending || updateMutation.isPending || resetMutation.isPending || deleteMutation.isPending;
+  const pending = createMutation.isPending || updateMutation.isPending || resetMutation.isPending || deleteMutation.isPending;
   const error = createMutation.error ?? updateMutation.error ?? resetMutation.error ?? deleteMutation.error ?? query.error;
   const pageError = error ?? profilesQuery.error;
 
@@ -75,21 +61,67 @@ export function TokensPage() {
       return;
     }
 
-    await navigator.clipboard.writeText(subscriptionUrl(token.token));
+    await navigator.clipboard.writeText(subscriptionUrl(token.token, copyFormat));
     setNotice("订阅地址已复制");
+  }
+
+  function startEdit(token: SubscribeTokenDto) {
+    setNotice(null);
+    setEditingTokenId(token.id);
+    setEditForm({
+      name: token.name,
+      expires_at: toDatetimeLocalValue(token.expires_at)
+    });
+  }
+
+  function saveEdit(token: SubscribeTokenDto) {
+    updateMutation.mutate({
+      id: token.id,
+      input: {
+        name: editForm.name.trim() || token.name,
+        expires_at: editForm.expires_at.trim() || null
+      }
+    });
+  }
+
+  async function finishTokenAction(message: string) {
+    setNotice(message);
+    await invalidateTokenData();
+  }
+
+  function cancelEdit() {
+    setEditingTokenId(null);
+    setEditForm(initialTokenEditFormState);
+  }
+
+  function deleteWithConfirm(token: SubscribeTokenDto) {
+    if (window.confirm(`删除令牌「${token.name}」？`)) {
+      deleteMutation.mutate(token.id);
+    }
+  }
+
+  function resetWithConfirm(token: SubscribeTokenDto) {
+    if (window.confirm(`重置令牌「${token.name}」？旧订阅地址会立即失效。`)) {
+      resetMutation.mutate(token.id);
+    }
   }
 
   return (
     <section className="panel wide">
       <ModuleHeading eyebrow="Tokens" title="订阅令牌" description="创建订阅访问令牌，控制启停、过期、重置和删除。" />
-
-      <TokenForm
-        form={form}
-        pending={pending}
-        profiles={profiles}
-        setForm={setForm}
-        onSubmit={(value) => createMutation.mutate(value)}
-      />
+      <TokenForm form={form} pending={pending} profiles={profiles} setForm={setForm} onSubmit={(value) => createMutation.mutate(value)} />
+      <div className="filter-row">
+        <label>
+          <span>复制格式</span>
+          <select onChange={(event) => setCopyFormat(event.target.value as TokenSubscriptionFormat)} value={copyFormat}>
+            {tokenSubscriptionFormats.map((format) => (
+              <option key={format.value} value={format.value}>
+                {format.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       {notice ? <p className="success-text">{notice}</p> : null}
       {pageError instanceof Error ? <p className="error-text">{pageError.message}</p> : null}
@@ -98,20 +130,19 @@ export function TokensPage() {
         <EmptyState label="还没有订阅令牌" />
       ) : (
         <TokensTable
+          copyFormat={copyFormat}
+          editForm={editForm}
+          editingTokenId={editingTokenId}
           pending={pending}
           profiles={profiles}
           tokens={tokens}
+          onCancelEdit={cancelEdit}
           onCopy={(token) => void handleCopy(token)}
-          onDelete={(token) => {
-            if (window.confirm(`删除令牌「${token.name}」？`)) {
-              deleteMutation.mutate(token.id);
-            }
-          }}
-          onReset={(token) => {
-            if (window.confirm(`重置令牌「${token.name}」？旧订阅地址会立即失效。`)) {
-              resetMutation.mutate(token.id);
-            }
-          }}
+          onDelete={deleteWithConfirm}
+          onReset={resetWithConfirm}
+          onEditFormChange={setEditForm}
+          onSaveEdit={saveEdit}
+          onStartEdit={startEdit}
           onProfileChange={(token, profileId) => updateMutation.mutate({ id: token.id, input: { profile_id: profileId } })}
           onToggleEnabled={(token) => updateMutation.mutate({ id: token.id, input: { enabled: !token.enabled } })}
         />

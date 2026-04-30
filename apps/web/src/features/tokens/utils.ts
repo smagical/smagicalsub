@@ -1,5 +1,5 @@
 import type { CreateSubscribeTokenInput } from "@smagicalsub/shared";
-import type { TokenFormState } from "./types";
+import type { TokenFormState, TokenSubscriptionFormat } from "./types";
 
 export function toCreateTokenInput(form: TokenFormState): CreateSubscribeTokenInput {
   return {
@@ -22,7 +22,15 @@ export function subscriptionPath(token: string) {
   return `/sub/${token}`;
 }
 
-export function subscriptionUrl(token: string) {
-  const path = subscriptionPath(token);
+export function subscriptionFormatPath(token: string, format: TokenSubscriptionFormat) {
+  return `${subscriptionPath(token)}?format=${encodeURIComponent(format)}`;
+}
+
+export function subscriptionUrl(token: string, format: TokenSubscriptionFormat) {
+  const path = subscriptionFormatPath(token, format);
   return typeof window === "undefined" ? path : new URL(path, window.location.origin).toString();
+}
+
+export function toDatetimeLocalValue(value: string | null) {
+  return value ? value.replace(" ", "T").slice(0, 16) : "";
 }
