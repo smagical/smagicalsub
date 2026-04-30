@@ -12,14 +12,7 @@ const fallbackDashboard: DashboardDto = {
     profiles: 0,
     tokens: 0
   },
-  recentEvents: [
-    {
-      id: "init",
-      title: "项目骨架已就绪，等待配置 D1/KV",
-      status: "warning",
-      time: "local"
-    }
-  ]
+  recentEvents: []
 };
 
 const quickActions = [
@@ -118,4 +111,3 @@ function StorageItem({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
