@@ -3,6 +3,7 @@ import { ModuleHeading } from "../../shared/ModuleHeading";
 import { TokenFilters } from "./TokenFilters";
 import { TokenForm } from "./TokenForm";
 import { TokensTable } from "./TokensTable";
+import { exportTokensCsv } from "./utils";
 import { useTokensPage } from "./useTokensPage";
 
 export function TokensPage() {
@@ -14,8 +15,10 @@ export function TokensPage() {
       <TokenForm form={page.form} pending={page.pending} profiles={page.profiles} setForm={page.setForm} onSubmit={page.createToken} />
       <TokenFilters
         copyFormat={page.copyFormat}
+        exportDisabled={page.filteredTokens.length === 0}
         searchQuery={page.searchQuery}
         onCopyFormatChange={page.setCopyFormat}
+        onExport={() => exportTokensCsv(page.filteredTokens)}
         onSearchQueryChange={page.setSearchQuery}
       />
 

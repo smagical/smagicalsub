@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { AccessLogDto } from "@smagicalsub/shared";
 import { useQuery } from "@tanstack/react-query";
+import { downloadCsv } from "../../lib/download-csv";
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
 import { listAccessLogs } from "./api";
@@ -37,14 +38,7 @@ export function LogsPage() {
   }
 
   function exportCsv() {
-    const csv = toLogsCsv(filteredLogs);
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = `access-logs-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadCsv("access-logs", toLogsCsvRows(filteredLogs));
   }
 
   return (
@@ -83,7 +77,7 @@ function logUrl(path: string) {
   return typeof window === "undefined" ? path : new URL(path, window.location.origin).toString();
 }
 
-function toLogsCsv(logs: AccessLogDto[]) {
+function toLogsCsvRows(logs: AccessLogDto[]) {
   const rows = logs.map((log) => [
     log.created_at,
     log.token_name ?? "已删除令牌",
@@ -92,11 +86,7 @@ function toLogsCsv(logs: AccessLogDto[]) {
     log.user_agent ?? ""
   ]);
 
-  return [["时间", "令牌", "路径", "IP", "User Agent"], ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
-}
-
-function csvCell(value: string) {
-  return `"${value.replaceAll("\"", "\"\"")}"`;
+  return [["时间", "令牌", "路径", "IP", "User Agent"], ...rows];
 }
 
 function matchesLogTokenState(log: AccessLogDto, tokenFilter: string) {

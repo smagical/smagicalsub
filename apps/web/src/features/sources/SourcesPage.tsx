@@ -3,6 +3,7 @@ import { ModuleHeading } from "../../shared/ModuleHeading";
 import { SourceFilters } from "./SourceFilters";
 import { SourceForm } from "./SourceForm";
 import { SourcesTable } from "./SourcesTable";
+import { exportSourcesCsv } from "./utils";
 import { useSourcesPage } from "./useSourcesPage";
 
 export function SourcesPage() {
@@ -14,10 +15,12 @@ export function SourcesPage() {
 
       <SourceForm form={page.form} pending={page.pending} setForm={page.setForm} onSubmit={page.createSource} />
       <SourceFilters
+        exportDisabled={page.filteredSources.length === 0}
         pending={page.pending}
         searchQuery={page.searchQuery}
         sourceCount={page.sourceCount}
         statusFilter={page.statusFilter}
+        onExport={() => exportSourcesCsv(page.filteredSources)}
         onRefreshAll={page.refreshAll}
         onSearchQueryChange={page.setSearchQuery}
         onStatusFilterChange={page.setStatusFilter}

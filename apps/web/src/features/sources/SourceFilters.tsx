@@ -1,18 +1,22 @@
 type SourceFiltersProps = {
+  exportDisabled: boolean;
   pending: boolean;
   searchQuery: string;
   sourceCount: number;
   statusFilter: string;
+  onExport: () => void;
   onRefreshAll: () => void;
   onSearchQueryChange: (query: string) => void;
   onStatusFilterChange: (status: string) => void;
 };
 
 export function SourceFilters({
+  exportDisabled,
   pending,
   searchQuery,
   sourceCount,
   statusFilter,
+  onExport,
   onRefreshAll,
   onSearchQueryChange,
   onStatusFilterChange
@@ -36,6 +40,9 @@ export function SourceFilters({
       </label>
       <button className="secondary-button" disabled={pending || sourceCount === 0} onClick={onRefreshAll} type="button">
         刷新全部启用
+      </button>
+      <button className="secondary-button" disabled={exportDisabled} onClick={onExport} type="button">
+        导出 CSV
       </button>
     </div>
   );

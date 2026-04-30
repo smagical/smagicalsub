@@ -1,11 +1,13 @@
 type ProfileFiltersProps = {
+  exportDisabled: boolean;
   searchQuery: string;
   statusFilter: string;
+  onExport: () => void;
   onSearchQueryChange: (query: string) => void;
   onStatusFilterChange: (status: string) => void;
 };
 
-export function ProfileFilters({ searchQuery, statusFilter, onSearchQueryChange, onStatusFilterChange }: ProfileFiltersProps) {
+export function ProfileFilters({ exportDisabled, searchQuery, statusFilter, onExport, onSearchQueryChange, onStatusFilterChange }: ProfileFiltersProps) {
   return (
     <div className="filter-row">
       <label>
@@ -25,6 +27,9 @@ export function ProfileFilters({ searchQuery, statusFilter, onSearchQueryChange,
           <option value="disabled">已停用</option>
         </select>
       </label>
+      <button className="secondary-button" disabled={exportDisabled} onClick={onExport} type="button">
+        导出 CSV
+      </button>
     </div>
   );
 }

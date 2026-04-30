@@ -3,6 +3,7 @@ import type { SourceDto, UpdateSubscriptionSourceInput } from "@smagicalsub/shar
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSource, deleteSource, listSources, refreshAllSources, refreshSource, updateSource } from "./api";
 import { initialSourceEditFormState, initialSourceFormState } from "./types";
+import { filterSources } from "./utils";
 
 export function useSourcesPage() {
   const queryClient = useQueryClient();
@@ -121,24 +122,4 @@ export function useSourcesPage() {
     startEdit,
     toggleEnabled: (source: SourceDto) => updateMutation.mutate({ id: source.id, input: { enabled: !source.enabled } })
   };
-}
-
-function filterSources(sources: SourceDto[], searchQuery: string, statusFilter: string) {
-  const query = searchQuery.trim().toLowerCase();
-
-  return sources.filter((source) => {
-    const statusMatches =
-      statusFilter === "all" ||
-      (statusFilter === "enabled" && source.enabled === 1) ||
-      (statusFilter === "disabled" && source.enabled !== 1) ||
-      (statusFilter === "never" && !source.last_status) ||
-      source.last_status === statusFilter;
-    const searchMatches =
-      !query ||
-      [source.name, source.url, source.last_status ?? "", source.last_error ?? "", source.last_fetched_at ?? ""].some((value) =>
-        value.toLowerCase().includes(query)
-      );
-
-    return statusMatches && searchMatches;
-  });
 }

@@ -1,4 +1,5 @@
 import type { CreateSubscribeTokenInput, SubscribeTokenDto } from "@smagicalsub/shared";
+import { downloadCsv } from "../../lib/download-csv";
 import type { TokenFormState, TokenSubscriptionFormat } from "./types";
 
 export function toCreateTokenInput(form: TokenFormState): CreateSubscribeTokenInput {
@@ -47,4 +48,18 @@ export function filterTokens(tokens: SubscribeTokenDto[], searchQuery: string) {
       value.toLowerCase().includes(query)
     )
   );
+}
+
+export function exportTokensCsv(tokens: SubscribeTokenDto[]) {
+  const rows = tokens.map((token) => [
+    token.name,
+    maskToken(token.token),
+    token.profile_name ?? "未绑定",
+    token.enabled ? "启用" : "停用",
+    token.expires_at ?? "永不过期",
+    token.last_used_at ?? "未使用",
+    token.created_at
+  ]);
+
+  downloadCsv("tokens", [["名称", "令牌", "配置档", "状态", "过期时间", "最近使用", "创建时间"], ...rows]);
 }

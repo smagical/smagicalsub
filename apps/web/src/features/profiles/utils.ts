@@ -1,4 +1,5 @@
 import type { CreateProfileInput, ProfileDto } from "@smagicalsub/shared";
+import { downloadCsv } from "../../lib/download-csv";
 import type { ProfileFormState, ProfileRuleFormState } from "./types";
 
 export function toCreateProfileInput(form: ProfileFormState): CreateProfileInput {
@@ -22,6 +23,19 @@ export function toCreateProfileRuleInput(form: ProfileRuleFormState) {
 
 export function filterProfiles(profiles: ProfileDto[], searchQuery: string, statusFilter: string) {
   return profiles.filter((profile) => matchesProfileStatus(profile, statusFilter) && matchesProfileSearch(profile, searchQuery));
+}
+
+export function exportProfilesCsv(profiles: ProfileDto[]) {
+  const rows = profiles.map((profile) => [
+    profile.name,
+    profile.default_strategy,
+    profile.description ?? "",
+    profile.enabled ? "启用" : "停用",
+    profile.created_at,
+    profile.updated_at
+  ]);
+
+  downloadCsv("profiles", [["名称", "默认策略", "描述", "状态", "创建时间", "更新时间"], ...rows]);
 }
 
 function matchesProfileStatus(profile: ProfileDto, statusFilter: string) {

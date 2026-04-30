@@ -2,12 +2,14 @@ import { tokenSubscriptionFormats, type TokenSubscriptionFormat } from "./types"
 
 type TokenFiltersProps = {
   copyFormat: TokenSubscriptionFormat;
+  exportDisabled: boolean;
   searchQuery: string;
   onCopyFormatChange: (format: TokenSubscriptionFormat) => void;
+  onExport: () => void;
   onSearchQueryChange: (query: string) => void;
 };
 
-export function TokenFilters({ copyFormat, searchQuery, onCopyFormatChange, onSearchQueryChange }: TokenFiltersProps) {
+export function TokenFilters({ copyFormat, exportDisabled, searchQuery, onCopyFormatChange, onExport, onSearchQueryChange }: TokenFiltersProps) {
   return (
     <div className="filter-row">
       <label>
@@ -24,6 +26,9 @@ export function TokenFilters({ copyFormat, searchQuery, onCopyFormatChange, onSe
           ))}
         </select>
       </label>
+      <button className="secondary-button" disabled={exportDisabled} onClick={onExport} type="button">
+        导出 CSV
+      </button>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { ProfileFilters } from "./ProfileFilters";
 import { ProfileForm } from "./ProfileForm";
 import { ProfileRulesSection } from "./ProfileRulesSection";
 import { ProfilesTable } from "./ProfilesTable";
+import { exportProfilesCsv } from "./utils";
 import { useProfilesPage } from "./useProfilesPage";
 
 export function ProfilesPage() {
@@ -15,8 +16,10 @@ export function ProfilesPage() {
 
       <ProfileForm form={page.form} pending={page.pending} setForm={page.setForm} onSubmit={page.createProfile} />
       <ProfileFilters
+        exportDisabled={page.filteredProfiles.length === 0}
         searchQuery={page.searchQuery}
         statusFilter={page.statusFilter}
+        onExport={() => exportProfilesCsv(page.filteredProfiles)}
         onSearchQueryChange={page.setSearchQuery}
         onStatusFilterChange={page.setStatusFilter}
       />
