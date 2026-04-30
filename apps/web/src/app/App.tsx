@@ -21,15 +21,15 @@ export function App() {
 
   return (
     <Layout activeSection={activeSection} health={healthQuery.data} onSectionChange={setActiveSection}>
-      {renderSection(activeSection, healthQuery.data)}
+      {renderSection(activeSection, healthQuery.data, setActiveSection)}
     </Layout>
   );
 }
 
-function renderSection(section: SectionId, health?: HealthDto) {
+function renderSection(section: SectionId, health: HealthDto | undefined, onNavigate: (section: SectionId) => void) {
   switch (section) {
     case "dashboard":
-      return <DashboardPage health={health} />;
+      return <DashboardPage health={health} onNavigate={onNavigate} />;
     case "sources":
       return <SourcesPage />;
     case "nodes":
