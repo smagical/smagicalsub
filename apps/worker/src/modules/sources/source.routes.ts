@@ -7,7 +7,7 @@ import { listResponse } from "../../lib/list-response";
 import { deleteGeneratedSubscriptionCaches } from "../subscribe/subscribe-cache";
 import { listSubscribeTokenValues } from "../tokens/token.repository";
 import { createSource, deleteSource, listSources, updateSource } from "./source.repository";
-import { refreshSource } from "./source.service";
+import { refreshEnabledSources, refreshSource } from "./source.service";
 
 export const sourceRoutes = new Hono<{ Bindings: Env }>();
 const idParamSchema = z.object({
@@ -22,6 +22,16 @@ sourceRoutes.get("/", async (c) => {
 sourceRoutes.post("/", zValidator("json", createSubscriptionSourceSchema), async (c) => {
   const source = await createSource(c.env.DB, c.req.valid("json"));
   return c.json(success(source), 201);
+});
+
+sourceRoutes.post("/refresh", async (c) => {
+  const result = await refreshEnabledSources(c.env);
+
+  if (result.success > 0) {
+    await deleteAllSubscriptionCaches(c.env);
+  }
+
+  return c.json(success(result));
 });
 
 sourceRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json", updateSubscriptionSourceSchema), async (c) => {

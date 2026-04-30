@@ -41,6 +41,14 @@ export type SourceRefreshDto = {
   status: "success" | "failed";
 };
 
+export type SourceRefreshAllDto = {
+  total: number;
+  success: number;
+  failed: number;
+  nodeCount: number;
+  results: SourceRefreshDto[];
+};
+
 export type NodeDto = {
   id: string;
   source_id: string | null;

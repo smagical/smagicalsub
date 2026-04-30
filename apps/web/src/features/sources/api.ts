@@ -2,6 +2,7 @@ import type {
   CreateSubscriptionSourceInput,
   ListDto,
   SourceDto,
+  SourceRefreshAllDto,
   SourceRefreshDto,
   UpdateSubscriptionSourceInput
 } from "@smagicalsub/shared";
@@ -25,4 +26,8 @@ export function deleteSource(id: string) {
 
 export function refreshSource(id: string) {
   return postJson<SourceRefreshDto>(`/api/sources/${id}/refresh`);
+}
+
+export function refreshAllSources() {
+  return postJson<SourceRefreshAllDto>("/api/sources/refresh");
 }

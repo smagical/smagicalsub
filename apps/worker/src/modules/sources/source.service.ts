@@ -1,5 +1,5 @@
 import { parseSubscription } from "@smagicalsub/clash";
-import type { SourceRefreshDto } from "@smagicalsub/shared";
+import type { SourceRefreshAllDto, SourceRefreshDto } from "@smagicalsub/shared";
 import type { Env } from "../../env";
 import { replaceSourceNodes } from "./source-node.repository";
 import {
@@ -7,7 +7,7 @@ import {
   markRefreshJobFinished,
   markSourceRefreshStatus
 } from "./source-refresh.repository";
-import { findSourceById } from "./source.repository";
+import { findSourceById, listEnabledSourceIds } from "./source.repository";
 
 const sourceRawKeyPrefix = "source_raw";
 
@@ -60,4 +60,26 @@ export async function refreshSource(env: Env, sourceId: string): Promise<SourceR
       status: "failed"
     };
   }
+}
+
+export async function refreshEnabledSources(env: Env): Promise<SourceRefreshAllDto> {
+  const sourceIds = await listEnabledSourceIds(env.DB);
+  const results: SourceRefreshDto[] = [];
+
+  // Worker 刷新外部订阅源时串行执行，降低上游限速和 Worker 子请求峰值风险。
+  for (const sourceId of sourceIds) {
+    const result = await refreshSource(env, sourceId);
+
+    if (result) {
+      results.push(result);
+    }
+  }
+
+  return {
+    total: sourceIds.length,
+    success: results.filter((result) => result.status === "success").length,
+    failed: results.filter((result) => result.status === "failed").length,
+    nodeCount: results.reduce((total, result) => total + result.nodeCount, 0),
+    results
+  };
 }

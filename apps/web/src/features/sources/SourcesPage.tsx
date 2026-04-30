@@ -3,7 +3,7 @@ import type { SourceDto, UpdateSubscriptionSourceInput } from "@smagicalsub/shar
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
-import { createSource, deleteSource, listSources, refreshSource, updateSource } from "./api";
+import { createSource, deleteSource, listSources, refreshAllSources, refreshSource, updateSource } from "./api";
 import { SourceForm } from "./SourceForm";
 import { SourcesTable } from "./SourcesTable";
 import { initialSourceEditFormState, initialSourceFormState } from "./types";
@@ -67,6 +67,14 @@ export function SourcesPage() {
     }
   });
 
+  const refreshAllMutation = useMutation({
+    mutationFn: refreshAllSources,
+    onSuccess: async (result) => {
+      setNotice(`批量刷新完成：成功 ${result.success} 个，失败 ${result.failed} 个，解析 ${result.nodeCount} 个节点`);
+      await invalidateSourceData();
+    }
+  });
+
   const updateMutation = useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateSubscriptionSourceInput }) => updateSource(id, input),
     onSuccess: async (_source, variables) => {
@@ -88,10 +96,9 @@ export function SourcesPage() {
     }
   });
 
-  const pending =
-    createMutation.isPending || refreshMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
+  const pending = createMutation.isPending || refreshMutation.isPending || refreshAllMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
   const error =
-    createMutation.error ?? refreshMutation.error ?? updateMutation.error ?? deleteMutation.error ?? query.error;
+    createMutation.error ?? refreshMutation.error ?? refreshAllMutation.error ?? updateMutation.error ?? deleteMutation.error ?? query.error;
   const emptyLabel = sources.length === 0 ? "还没有订阅源" : "没有匹配的订阅源";
 
   const startEdit = (source: SourceDto) => {
@@ -131,6 +138,7 @@ export function SourcesPage() {
             <option value="never">未刷新</option>
           </select>
         </label>
+        <button className="secondary-button" disabled={pending || sources.length === 0} onClick={() => refreshAllMutation.mutate()} type="button">刷新全部启用</button>
       </div>
 
       {notice ? <p className="success-text">{notice}</p> : null}

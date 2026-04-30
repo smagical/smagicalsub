@@ -13,6 +13,19 @@ export async function listSources(db: D1Database) {
   return result.results ?? [];
 }
 
+export async function listEnabledSourceIds(db: D1Database) {
+  const result = await db
+    .prepare(
+      `SELECT id
+       FROM subscription_sources
+       WHERE enabled = 1
+       ORDER BY created_at DESC`
+    )
+    .all<{ id: string }>();
+
+  return (result.results ?? []).map((row) => row.id);
+}
+
 export async function findSourceById(db: D1Database, id: string) {
   return db
     .prepare(
