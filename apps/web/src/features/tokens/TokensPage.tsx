@@ -68,6 +68,10 @@ export function TokensPage() {
     setNotice("订阅地址已复制");
   }
 
+  function openSubscription(token: SubscribeTokenDto) {
+    window.open(subscriptionUrl(token.token, copyFormat), "_blank", "noopener,noreferrer");
+  }
+
   function startEdit(token: SubscribeTokenDto) {
     setNotice(null);
     setEditingTokenId(token.id);
@@ -146,6 +150,7 @@ export function TokensPage() {
           onCancelEdit={cancelEdit}
           onCopy={(token) => void handleCopy(token)}
           onDelete={deleteWithConfirm}
+          onOpen={openSubscription}
           onReset={resetWithConfirm}
           onEditFormChange={setEditForm}
           onSaveEdit={saveEdit}

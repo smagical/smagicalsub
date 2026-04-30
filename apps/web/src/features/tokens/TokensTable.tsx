@@ -14,6 +14,7 @@ type TokensTableProps = {
   onCopy: (token: SubscribeTokenDto) => void;
   onDelete: (token: SubscribeTokenDto) => void;
   onEditFormChange: (form: TokenEditFormState) => void;
+  onOpen: (token: SubscribeTokenDto) => void;
   onProfileChange: (token: SubscribeTokenDto, profileId: string | null) => void;
   onReset: (token: SubscribeTokenDto) => void;
   onSaveEdit: (token: SubscribeTokenDto) => void;
@@ -21,7 +22,7 @@ type TokensTableProps = {
   onToggleEnabled: (token: SubscribeTokenDto) => void;
 };
 
-type TokenActionProps = Pick<TokensTableProps, "onCancelEdit" | "onCopy" | "onDelete" | "onReset" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"> & {
+type TokenActionProps = Pick<TokensTableProps, "onCancelEdit" | "onCopy" | "onDelete" | "onOpen" | "onReset" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"> & {
   editing: boolean;
   token: SubscribeTokenDto;
 };
@@ -36,6 +37,7 @@ export function TokensTable({
   onCopy,
   onDelete,
   onEditFormChange,
+  onOpen,
   onProfileChange,
   onReset,
   onSaveEdit,
@@ -83,7 +85,7 @@ export function TokensTable({
               <td>
                 <StatusBadge enabled={token.enabled} />
               </td>
-              <td>{tokenActions({ token, editing, pending, onCancelEdit, onCopy, onDelete, onReset, onSaveEdit, onStartEdit, onToggleEnabled })}</td>
+              <td>{tokenActions({ token, editing, pending, onCancelEdit, onCopy, onDelete, onOpen, onReset, onSaveEdit, onStartEdit, onToggleEnabled })}</td>
             </tr>
           );
         })}
@@ -121,7 +123,7 @@ function profileSelect(
   );
 }
 
-function tokenActions({ token, editing, pending, onCancelEdit, onCopy, onDelete, onReset, onSaveEdit, onStartEdit, onToggleEnabled }: TokenActionProps) {
+function tokenActions({ token, editing, pending, onCancelEdit, onCopy, onDelete, onOpen, onReset, onSaveEdit, onStartEdit, onToggleEnabled }: TokenActionProps) {
   if (editing) {
     return (
       <div className="table-actions">
@@ -134,6 +136,7 @@ function tokenActions({ token, editing, pending, onCancelEdit, onCopy, onDelete,
   return (
     <div className="table-actions">
       {actionButton("复制", "secondary-button", pending, () => onCopy(token))}
+      {actionButton("打开", "inline-button", pending, () => onOpen(token))}
       {actionButton("编辑", "secondary-button", pending, () => onStartEdit(token))}
       {actionButton(token.enabled ? "停用" : "启用", "secondary-button", pending, () => onToggleEnabled(token))}
       {actionButton("重置", "secondary-button", pending, () => onReset(token))}
