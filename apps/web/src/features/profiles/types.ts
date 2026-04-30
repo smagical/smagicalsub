@@ -12,6 +12,18 @@ export const initialProfileFormState: ProfileFormState = {
   enabled: true
 };
 
+export type ProfileEditFormState = {
+  name: string;
+  description: string;
+  default_strategy: string;
+};
+
+export const initialProfileEditFormState: ProfileEditFormState = {
+  name: "",
+  description: "",
+  default_strategy: ""
+};
+
 export type ProfileRuleFormState = {
   rule: string;
   position: string;

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { ProfileDto } from "@smagicalsub/shared";
+import type { ProfileDto, UpdateProfileInput } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
@@ -7,11 +7,13 @@ import { createProfile, deleteProfile, listProfiles, updateProfile } from "./api
 import { ProfileForm } from "./ProfileForm";
 import { ProfileRulesSection } from "./ProfileRulesSection";
 import { ProfilesTable } from "./ProfilesTable";
-import { initialProfileFormState } from "./types";
+import { initialProfileEditFormState, initialProfileFormState } from "./types";
 
 export function ProfilesPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(initialProfileFormState);
+  const [editForm, setEditForm] = useState(initialProfileEditFormState);
+  const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<ProfileDto | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,7 +32,8 @@ export function ProfilesPage() {
   const invalidateProfileData = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["profiles"] }),
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+      queryClient.invalidateQueries({ queryKey: ["tokens"] })
     ]);
   };
 
@@ -44,8 +47,20 @@ export function ProfilesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => updateProfile(id, { enabled }),
-    onSuccess: invalidateProfileData
+    mutationFn: ({ id, input }: { id: string; input: UpdateProfileInput }) => updateProfile(id, input),
+    onSuccess: async (profile, variables) => {
+      if (selectedProfile?.id === profile.id) {
+        setSelectedProfile(profile);
+      }
+
+      if (variables.input.name !== undefined || variables.input.default_strategy !== undefined || variables.input.description !== undefined) {
+        setEditingProfileId(null);
+        setEditForm(initialProfileEditFormState);
+        setNotice("配置档已更新");
+      }
+
+      await invalidateProfileData();
+    }
   });
 
   const deleteMutation = useMutation({
@@ -60,6 +75,23 @@ export function ProfilesPage() {
   const pending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
   const error = createMutation.error ?? updateMutation.error ?? deleteMutation.error ?? query.error;
   const emptyLabel = profiles.length === 0 ? "还没有配置档" : "没有匹配的配置档";
+
+  function startEdit(profile: ProfileDto) {
+    setNotice(null);
+    setEditingProfileId(profile.id);
+    setEditForm({ name: profile.name, description: profile.description ?? "", default_strategy: profile.default_strategy });
+  }
+
+  function saveEdit(profile: ProfileDto) {
+    updateMutation.mutate({
+      id: profile.id,
+      input: {
+        name: editForm.name.trim() || profile.name,
+        default_strategy: editForm.default_strategy.trim() || profile.default_strategy,
+        description: editForm.description.trim() || null
+      }
+    });
+  }
 
   return (
     <section className="panel wide">
@@ -93,15 +125,24 @@ export function ProfilesPage() {
         <EmptyState label={emptyLabel} />
       ) : (
         <ProfilesTable
+          editForm={editForm}
+          editingProfileId={editingProfileId}
           pending={pending}
           profiles={filteredProfiles}
+          onCancelEdit={() => {
+            setEditingProfileId(null);
+            setEditForm(initialProfileEditFormState);
+          }}
           onDelete={(profile) => {
             if (window.confirm(`删除配置档「${profile.name}」？`)) {
               deleteMutation.mutate(profile.id);
             }
           }}
+          onEditFormChange={setEditForm}
           onManageRules={setSelectedProfile}
-          onToggleEnabled={(profile) => updateMutation.mutate({ id: profile.id, enabled: !profile.enabled })}
+          onSaveEdit={saveEdit}
+          onStartEdit={startEdit}
+          onToggleEnabled={(profile) => updateMutation.mutate({ id: profile.id, input: { enabled: !profile.enabled } })}
         />
       )}
 
