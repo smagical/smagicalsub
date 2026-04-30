@@ -1,5 +1,6 @@
 import type { RenderSubscriptionBaseInput, RenderableNode } from "./types";
-import { compact, getNodeConfig, numberValue, renderGroupName, stringValue, stripInternalFields, uniqueStrings } from "./utils";
+import { toSingBoxOutbound } from "./sing-box-outbound";
+import { renderGroupName, uniqueStrings } from "./utils";
 
 export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string {
   // 输出保持最小可运行：mixed inbound、主 selector、分组 selector、节点 outbound 和 direct。
@@ -37,65 +38,6 @@ export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string 
   };
 
   return `${JSON.stringify(config, null, 2)}\n`;
-}
-
-function toSingBoxOutbound(node: RenderableNode): Record<string, unknown> | null {
-  try {
-    // 内部通用节点先转换为 sing-box 字段；缺少 server/port 的节点直接跳过。
-    const parsed = stripInternalFields(getNodeConfig(node));
-    const tag = node.name;
-    const server = stringValue(parsed.server);
-    const serverPort = numberValue(parsed.port);
-
-    if (!server || !serverPort) {
-      return null;
-    }
-
-    switch (parsed.type) {
-      case "ss":
-        return compact({
-          type: "shadowsocks",
-          tag,
-          server,
-          server_port: serverPort,
-          method: stringValue(parsed.cipher),
-          password: stringValue(parsed.password)
-        });
-      case "trojan":
-        return compact({
-          type: "trojan",
-          tag,
-          server,
-          server_port: serverPort,
-          password: stringValue(parsed.password),
-          tls: parsed.tls ? { enabled: true } : undefined
-        });
-      case "vmess":
-        return compact({
-          type: "vmess",
-          tag,
-          server,
-          server_port: serverPort,
-          uuid: stringValue(parsed.uuid),
-          security: stringValue(parsed.cipher) ?? "auto",
-          alter_id: numberValue(parsed.alterId),
-          tls: parsed.tls ? { enabled: true } : undefined
-        });
-      case "vless":
-        return compact({
-          type: "vless",
-          tag,
-          server,
-          server_port: serverPort,
-          uuid: stringValue(parsed.uuid),
-          tls: parsed.tls ? { enabled: true } : undefined
-        });
-      default:
-        return null;
-    }
-  } catch {
-    return null;
-  }
 }
 
 // sing-box selector 复用 Clash 的分组模型：主选择器先放分组，再放未分组节点。

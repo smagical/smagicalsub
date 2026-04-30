@@ -1,6 +1,8 @@
 import { parseShadowsocks } from "./parsers/shadowsocks";
+import { parseShadowsocksR } from "./parsers/ssr";
 import type { ParsedNode } from "./parsers/types";
 import { parseUrlNode } from "./parsers/url-node";
+import { isUrlNodeUri } from "./parsers/url-schemes";
 import { tryDecodeBase64 } from "./parsers/utils";
 import { parseVmess } from "./parsers/vmess";
 
@@ -25,12 +27,16 @@ export function parseNodeUri(uri: string): ParsedNode | null {
       return parseVmess(uri);
     }
 
-    if (uri.startsWith("trojan://") || uri.startsWith("vless://")) {
+    if (isUrlNodeUri(uri)) {
       return parseUrlNode(uri);
     }
 
     if (uri.startsWith("ss://")) {
       return parseShadowsocks(uri);
+    }
+
+    if (uri.startsWith("ssr://")) {
+      return parseShadowsocksR(uri);
     }
   } catch {
     return null;
