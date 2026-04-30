@@ -18,6 +18,7 @@ export function SourcesTable({ pending, sources, onDelete, onRefresh, onToggleEn
           <th>状态</th>
           <th>刷新状态</th>
           <th>最近刷新</th>
+          <th>错误</th>
           <th>链接</th>
           <th>操作</th>
         </tr>
@@ -31,6 +32,7 @@ export function SourcesTable({ pending, sources, onDelete, onRefresh, onToggleEn
             </td>
             <td>{source.last_status ?? "-"}</td>
             <td>{source.last_fetched_at ?? "未刷新"}</td>
+            <td className="truncate-cell">{source.last_error ?? "-"}</td>
             <td className="truncate-cell">{source.url}</td>
             <td>
               <div className="table-actions">
@@ -51,4 +53,3 @@ export function SourcesTable({ pending, sources, onDelete, onRefresh, onToggleEn
     </table>
   );
 }
-
