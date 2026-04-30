@@ -1,0 +1,154 @@
+.runtime-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  border: 1px solid #d6ded2;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #315443;
+  padding: 0 14px;
+  font-weight: 700;
+}
+
+.metric-card,
+.panel {
+  border: 1px solid #dfe5dc;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgb(31 42 35 / 6%);
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 112px;
+  padding: 18px;
+}
+
+.metric-card span {
+  display: block;
+  color: #697168;
+  font-size: 14px;
+}
+
+.metric-card strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.metric-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 8px;
+}
+
+.metric-card.green .metric-icon {
+  background: #d9f0df;
+  color: #1d6b3b;
+}
+
+.metric-card.blue .metric-icon {
+  background: #dbeafe;
+  color: #245a9a;
+}
+
+.metric-card.amber .metric-icon {
+  background: #f8e7bd;
+  color: #8a5b0c;
+}
+
+.metric-card.rose .metric-icon {
+  background: #f8d7df;
+  color: #9a2948;
+}
+
+.panel {
+  padding: 18px;
+}
+
+.panel.wide {
+  grid-column: 1 / -1;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.module-heading {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.module-heading span {
+  color: #697168;
+  font-size: 14px;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  border: 1px solid #cfd9cd;
+  border-radius: 8px;
+  background: #f8faf6;
+  color: #20382d;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.action-button:hover {
+  border-color: #91ad98;
+  background: #edf6ef;
+}
+
+.storage-list,
+.event-list {
+  display: grid;
+  gap: 10px;
+}
+
+.storage-item,
+.event-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  border-radius: 8px;
+  background: #f7f8f5;
+  padding: 10px 12px;
+}
+
+.storage-item span,
+.event-item time {
+  color: #6d756b;
+  font-size: 13px;
+}
+
+.event-item {
+  justify-content: flex-start;
+}
+
+.event-item time {
+  margin-left: auto;
+}
+

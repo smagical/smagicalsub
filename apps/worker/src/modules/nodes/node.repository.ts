@@ -1,5 +1,6 @@
-import { parseNodeUri, type RenderableNode } from "@smagicalsub/clash";
-import type { CreateNodeInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
+import { parseNodeUri } from "@smagicalsub/clash";
+import type { CreateNodeInput, UpdateNodeInput } from "@smagicalsub/shared";
+import { toNodeDto, toRenderableNode } from "./node.mapper";
 import type { NodeRow, RenderableNodeRow } from "./node.types";
 
 export async function listNodes(db: D1Database) {
@@ -113,42 +114,4 @@ export async function listEnabledRenderableNodes(db: D1Database) {
     .all<RenderableNodeRow>();
 
   return (result.results ?? []).map(toRenderableNode);
-}
-
-function toNodeDto(row: NodeRow): NodeDto {
-  return {
-    id: row.id,
-    source_id: row.source_id,
-    name: row.name,
-    protocol: row.protocol,
-    server: row.server,
-    port: row.port,
-    groups: parseGroups(row.tags),
-    enabled: row.enabled,
-    updated_at: row.updated_at
-  };
-}
-
-function parseGroups(tags: string) {
-  try {
-    const parsed = JSON.parse(tags) as unknown;
-
-    if (Array.isArray(parsed)) {
-      return parsed.filter((tag): tag is string => typeof tag === "string" && tag.trim().length > 0);
-    }
-  } catch {
-    return [];
-  }
-
-  return [];
-}
-
-function toRenderableNode(row: RenderableNodeRow): RenderableNode {
-  return {
-    id: row.id,
-    name: row.name,
-    protocol: row.protocol,
-    config_json: row.config_json,
-    groups: parseGroups(row.tags)
-  };
 }

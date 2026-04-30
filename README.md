@@ -49,6 +49,14 @@ pnpm db:migrate:remote
 - `plain`：明文多行节点 URI。
 - `sing-box`：sing-box JSON 配置。
 
+## 开发约定
+
+- 文件按模块拆分，TS/TSX/CSS 文件接近 160 行时优先拆分。
+- 复杂流程必须写简短注释，说明为什么这样做，不写重复代码含义的注释。
+- 前端功能按 `features/*` 拆分，通用 UI 放到 `shared/*`。
+- Worker 后端按 `modules/*` 拆分，路由、repository、service 分开维护。
+- 订阅格式相关逻辑放在 `packages/clash/src/renderers/*`，不要继续堆到单一文件。
+
 ## 部署
 
 ```bash
