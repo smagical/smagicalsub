@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { HealthDto } from "@smagicalsub/shared";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
-import { LogsPage } from "../features/logs/LogsPage";
+import { LogsPage } from "../features/access-logs/LogsPage";
 import { NodesPage } from "../features/nodes/NodesPage";
 import { ProfilesPage } from "../features/profiles/ProfilesPage";
 import { SourcesPage } from "../features/sources/SourcesPage";

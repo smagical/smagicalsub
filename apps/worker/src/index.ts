@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { logger } from "hono/logger";
 import type { Env } from "./env";
 import { onError, notFound } from "./middleware/error";
+import { accessLogRoutes } from "./modules/access-logs/access-log.routes";
 import { dashboardRoutes } from "./modules/dashboard/dashboard.routes";
 import { healthRoutes } from "./routes/health";
 import { nodeRoutes } from "./modules/nodes/node.routes";
@@ -19,6 +20,7 @@ app.route("/api/sources", sourceRoutes);
 app.route("/api/nodes", nodeRoutes);
 app.route("/api/profiles", profileRoutes);
 app.route("/api/tokens", tokenRoutes);
+app.route("/api/logs", accessLogRoutes);
 app.route("/sub", subscribeRoutes);
 
 app.onError(onError);

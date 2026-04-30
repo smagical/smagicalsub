@@ -41,6 +41,26 @@ export const updateNodeSchema = z
 
 export type UpdateNodeInput = z.infer<typeof updateNodeSchema>;
 
+export const createProfileSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  description: z.string().trim().max(240).nullable().optional(),
+  default_strategy: z.string().trim().min(1).max(80).default("Proxy"),
+  enabled: z.boolean().default(true)
+});
+
+export type CreateProfileInput = z.infer<typeof createProfileSchema>;
+
+export const updateProfileSchema = z
+  .object({
+    name: z.string().trim().min(1).max(80).optional(),
+    description: z.string().trim().max(240).nullable().optional(),
+    default_strategy: z.string().trim().min(1).max(80).optional(),
+    enabled: z.boolean().optional()
+  })
+  .refine((value) => Object.keys(value).length > 0, "At least one field must be provided");
+
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
 export const createSubscribeTokenSchema = z.object({
   name: z.string().trim().min(1).max(80),
   enabled: z.boolean().default(true),
