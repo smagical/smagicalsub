@@ -1,12 +1,13 @@
-export type ParsedNode = {
-  name: string;
-  protocol: string;
-  server?: string;
-  port?: number;
-  rawUri: string;
-  config: Record<string, unknown>;
-};
+import { parseShadowsocks } from "./parsers/shadowsocks";
+import type { ParsedNode } from "./parsers/types";
+import { parseUrlNode } from "./parsers/url-node";
+import { tryDecodeBase64 } from "./parsers/utils";
+import { parseVmess } from "./parsers/vmess";
 
+export type { ParsedNode } from "./parsers/types";
+
+// 订阅内容可能是 base64 包裹的多行 URI，也可能已经是明文。
+// 单条节点解析失败时直接丢弃，避免一条脏数据阻断整次源刷新。
 export function parseSubscription(content: string): ParsedNode[] {
   const normalized = tryDecodeBase64(content);
   return normalized
@@ -19,6 +20,7 @@ export function parseSubscription(content: string): ParsedNode[] {
 
 export function parseNodeUri(uri: string): ParsedNode | null {
   try {
+    // 所有入口统一转换为 ParsedNode，后续 D1 存储和渲染层只依赖这个中间结构。
     if (uri.startsWith("vmess://")) {
       return parseVmess(uri);
     }
@@ -35,119 +37,4 @@ export function parseNodeUri(uri: string): ParsedNode | null {
   }
 
   return null;
-}
-
-function parseVmess(uri: string): ParsedNode | null {
-  const json = tryDecodeBase64(uri.slice("vmess://".length));
-  const payload = JSON.parse(json) as {
-    ps?: string;
-    add?: string;
-    port?: string | number;
-    id?: string;
-    aid?: string | number;
-    net?: string;
-    type?: string;
-    host?: string;
-    path?: string;
-    tls?: string;
-  };
-
-  const name = payload.ps ?? payload.add ?? "vmess";
-  const config = {
-    type: "vmess",
-    server: payload.add,
-    port: Number(payload.port),
-    uuid: payload.id,
-    alterId: Number(payload.aid ?? 0),
-    cipher: "auto",
-    network: payload.net,
-    tls: payload.tls === "tls",
-    "ws-opts": payload.path || payload.host
-      ? {
-          path: payload.path,
-          headers: payload.host ? { Host: payload.host } : undefined
-        }
-      : undefined
-  };
-
-  return {
-    name,
-    protocol: "vmess",
-    server: payload.add,
-    port: Number(payload.port),
-    rawUri: uri,
-    config: compact(config)
-  };
-}
-
-function parseUrlNode(uri: string): ParsedNode | null {
-  const url = new URL(uri);
-  const protocol = url.protocol.replace(":", "");
-  const name = decodeURIComponent(url.hash.slice(1) || url.hostname || protocol);
-  const config: Record<string, unknown> = {
-    type: protocol,
-    server: url.hostname,
-    port: Number(url.port),
-    password: protocol === "trojan" ? decodeURIComponent(url.username) : undefined,
-    uuid: protocol === "vless" ? decodeURIComponent(url.username) : undefined,
-    network: url.searchParams.get("type") ?? undefined,
-    tls: url.searchParams.get("security") === "tls"
-  };
-
-  return {
-    name,
-    protocol,
-    server: url.hostname,
-    port: Number(url.port),
-    rawUri: uri,
-    config: compact(config)
-  };
-}
-
-function parseShadowsocks(uri: string): ParsedNode | null {
-  const withoutScheme = uri.slice("ss://".length);
-  const [main, hash = ""] = withoutScheme.split("#");
-  const name = decodeURIComponent(hash || "shadowsocks");
-  const decoded = main.includes("@") ? main : tryDecodeBase64(main);
-  const match = decoded.match(/^([^:]+):([^@]+)@([^:]+):(\d+)$/);
-
-  if (!match) {
-    return null;
-  }
-
-  const [, cipher, password, server, port] = match;
-
-  return {
-    name,
-    protocol: "ss",
-    server,
-    port: Number(port),
-    rawUri: uri,
-    config: {
-      type: "ss",
-      server,
-      port: Number(port),
-      cipher,
-      password
-    }
-  };
-}
-
-function tryDecodeBase64(value: string) {
-  const normalized = value.trim().replace(/-/g, "+").replace(/_/g, "/");
-  const padding = normalized.length % 4 === 0 ? "" : "=".repeat(4 - (normalized.length % 4));
-
-  try {
-    const binary = globalThis.atob(normalized + padding);
-    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-    return new TextDecoder().decode(bytes);
-  } catch {
-    return value;
-  }
-}
-
-function compact<T extends Record<string, unknown>>(value: T): T {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, entry]) => entry !== undefined && entry !== "")
-  ) as T;
 }

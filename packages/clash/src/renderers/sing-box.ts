@@ -2,6 +2,7 @@ import type { RenderSubscriptionBaseInput, RenderableNode } from "./types";
 import { compact, getNodeConfig, numberValue, renderGroupName, stringValue, stripInternalFields, uniqueStrings } from "./utils";
 
 export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string {
+  // 输出保持最小可运行：mixed inbound、主 selector、分组 selector、节点 outbound 和 direct。
   const outbounds = input.nodes
     .map(toSingBoxOutbound)
     .filter((outbound): outbound is Record<string, unknown> => outbound !== null);
@@ -39,6 +40,7 @@ export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string 
 
 function toSingBoxOutbound(node: RenderableNode): Record<string, unknown> | null {
   try {
+    // 内部通用节点先转换为 sing-box 字段；缺少 server/port 的节点直接跳过。
     const parsed = stripInternalFields(getNodeConfig(node));
     const tag = node.name;
     const server = stringValue(parsed.server);
@@ -95,7 +97,7 @@ function toSingBoxOutbound(node: RenderableNode): Record<string, unknown> | null
   }
 }
 
-// sing-box selector outbounds mirror the same grouping model used by Clash.
+// sing-box selector 复用 Clash 的分组模型：主选择器先放分组，再放未分组节点。
 function buildSingBoxSelectors(nodes: RenderableNode[], outboundTags: string[]) {
   const groups = new Map<string, string[]>();
   const ungrouped: string[] = [];
@@ -130,10 +132,10 @@ function buildSingBoxSelectors(nodes: RenderableNode[], outboundTags: string[]) 
 }
 
 function createSingBoxSelector(tag: string, outbounds: string[]) {
+  // 空分组回退到 direct，保证生成的 sing-box JSON 始终可启动。
   return {
     type: "selector",
     tag,
     outbounds: outbounds.length > 0 ? outbounds : ["direct"]
   };
 }
-

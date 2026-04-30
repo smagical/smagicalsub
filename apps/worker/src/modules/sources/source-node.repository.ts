@@ -6,6 +6,7 @@ export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes
   ];
 
   for (const node of dedupeNodes(nodes)) {
+    // __rawUri 只给 v2rayN/plain 输出使用，Clash/sing-box 渲染时会过滤内部字段。
     statements.push(
       db
         .prepare(
@@ -29,7 +30,7 @@ export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes
   return statements.length - 1;
 }
 
-// Source refresh replaces a full source snapshot, so duplicate nodes are collapsed per source.
+// 源刷新按完整快照替换，同一个源内的重复节点在入库前折叠掉。
 function dedupeNodes(nodes: ParsedNode[]) {
   const seen = new Set<string>();
   const unique: ParsedNode[] = [];
@@ -45,4 +46,3 @@ function dedupeNodes(nodes: ParsedNode[]) {
 
   return unique;
 }
-

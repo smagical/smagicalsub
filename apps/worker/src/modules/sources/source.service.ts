@@ -18,6 +18,7 @@ export async function refreshSource(env: Env, sourceId: string): Promise<SourceR
     return null;
   }
 
+  // 刷新是可审计操作：先创建 job，再更新 source 状态，失败也能保留原因。
   const jobId = await createRefreshJob(env.DB, sourceId);
 
   try {
@@ -32,11 +33,13 @@ export async function refreshSource(env: Env, sourceId: string): Promise<SourceR
     }
 
     const content = await response.text();
+    // 原文放 KV 做短期缓存，D1 只保存解析后的节点，避免数据库承载大文本。
     await env.KV.put(`${sourceRawKeyPrefix}:${sourceId}`, content, {
       expirationTtl: 60 * 60 * 24
     });
 
     const nodes = parseSubscription(content);
+    // 源节点按快照替换，确保上游删除节点后本地不会残留旧节点。
     const nodeCount = await replaceSourceNodes(env.DB, sourceId, nodes);
     await markSourceRefreshStatus(env.DB, sourceId, "success");
     await markRefreshJobFinished(env.DB, jobId, "success", `Parsed ${nodeCount} nodes`);

@@ -3,6 +3,7 @@ import type { RenderSubscriptionBaseInput, RenderableNode } from "./types";
 import { getNodeConfig, renderGroupName, stripInternalFields, uniqueStrings } from "./utils";
 
 export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
+  // Clash 可直接消费内部通用配置，但渲染前必须去掉 __rawUri 等内部字段。
   const renderableNodes = input.nodes
     .map((node) => {
       const proxy = toProxy(node);
@@ -26,7 +27,7 @@ export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
   return `# ${input.profileName}\n${YAML.stringify(config)}`;
 }
 
-// The main Proxy group references generated group selectors first, then ungrouped nodes.
+// 主 Proxy 组先引用生成的分组选择器，再追加未分组节点，便于客户端快速切换策略。
 function buildProxyGroups(nodes: Array<{ proxy: Record<string, unknown>; groups: string[] }>) {
   const groups = new Map<string, string[]>();
   const ungrouped: string[] = [];
@@ -80,4 +81,3 @@ function toProxy(node: RenderableNode): Record<string, unknown> | null {
     return null;
   }
 }
-

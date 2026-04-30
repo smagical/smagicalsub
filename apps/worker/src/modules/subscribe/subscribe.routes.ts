@@ -8,7 +8,9 @@ export const subscribeRoutes = new Hono<{ Bindings: Env }>();
 
 subscribeRoutes.get("/:token", async (c) => {
   const token = c.req.param("token");
+  // 兼容不同客户端/转换器的查询习惯：format、target、type 都可指定输出格式。
   const format = normalizeSubscriptionFormat(c.req.query("format") ?? c.req.query("target") ?? c.req.query("type"));
+  // 格式必须进入缓存 key，否则同一 token 的 YAML、JSON、明文会互相覆盖。
   const cacheKey = `generated_sub:${format}:${token}`;
   const cached = await c.env.KV.get(cacheKey);
 
@@ -34,6 +36,7 @@ subscribeRoutes.get("/:token", async (c) => {
     expirationTtl: Number.isFinite(ttl) ? ttl : 300
   });
 
+  // 访问日志不阻塞订阅响应，失败也不影响客户端获取订阅内容。
   c.executionCtx.waitUntil(
     c.env.DB.prepare(
       `INSERT INTO access_logs (id, token_id, path, ip, user_agent)

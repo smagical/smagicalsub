@@ -8,6 +8,7 @@ export { renderClashConfig } from "./renderers/clash";
 export { renderPlainSubscription, renderV2rayNSubscription } from "./renderers/plain";
 export { renderSingBoxConfig } from "./renderers/sing-box";
 
+// 统一格式别名入口，避免路由层散落 v2ray/base64/singbox 等兼容判断。
 export function normalizeSubscriptionFormat(value: string | null | undefined): SubscriptionFormat {
   switch (value?.toLowerCase()) {
     case "v2ray":
@@ -29,6 +30,7 @@ export function normalizeSubscriptionFormat(value: string | null | undefined): S
   }
 }
 
+// 路由层只关心目标格式，具体输出差异收敛到各 renderer 小模块内。
 export function renderSubscription(input: RenderSubscriptionInput): string {
   switch (input.format) {
     case "v2rayn":

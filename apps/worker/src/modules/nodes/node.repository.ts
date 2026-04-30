@@ -19,6 +19,7 @@ export async function listNodeGroups(db: D1Database) {
   const nodes = await listNodes(db);
   const groups = new Set<string>();
 
+  // 当前阶段分组复用 nodes.tags JSON 字段，列表页从节点聚合出可选分组。
   for (const node of nodes) {
     for (const group of node.groups) {
       groups.add(group);
@@ -51,6 +52,7 @@ export async function createManualNode(db: D1Database, input: CreateNodeInput) {
   const id = crypto.randomUUID();
   const name = input.name ?? parsed.name;
 
+  // 手动节点和订阅源节点共用 nodes 表，source_id=NULL 表示用户手动维护。
   await db
     .prepare(
       `INSERT INTO nodes (id, source_id, name, protocol, server, port, tags, config_json, enabled)
@@ -63,6 +65,7 @@ export async function createManualNode(db: D1Database, input: CreateNodeInput) {
       parsed.server ?? null,
       parsed.port ?? null,
       JSON.stringify(input.groups),
+      // 保留原始 URI，保证 v2rayN base64 和明文订阅可以无损输出。
       JSON.stringify({ ...parsed.config, __rawUri: parsed.rawUri }),
       input.enabled ? 1 : 0
     )
@@ -104,6 +107,7 @@ export async function deleteNode(db: D1Database, id: string) {
 }
 
 export async function listEnabledRenderableNodes(db: D1Database) {
+  // 订阅渲染只读取最小字段，降低 Worker 生成订阅时的 D1 查询和反序列化成本。
   const result = await db
     .prepare(
       `SELECT id, name, protocol, config_json, tags
