@@ -1,4 +1,4 @@
-import type { ParsedNode } from "@smagicalsub/clash";
+import type { ParsedNode } from "@smagicalsub/subscription";
 
 type ExistingSourceNode = {
   id: string;

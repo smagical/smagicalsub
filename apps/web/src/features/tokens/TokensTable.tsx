@@ -1,5 +1,6 @@
 import type { ProfileDto, SubscribeTokenDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { TokenActions } from "./TokenActions";
 import type { TokenEditFormState, TokenSubscriptionFormat } from "./types";
 import { maskToken, subscriptionFormatPath } from "./utils";
 
@@ -22,10 +23,6 @@ type TokensTableProps = {
   onToggleEnabled: (token: SubscribeTokenDto) => void;
 };
 
-type TokenActionProps = Pick<TokensTableProps, "onCancelEdit" | "onCopy" | "onDelete" | "onOpen" | "onReset" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"> & {
-  editing: boolean;
-  token: SubscribeTokenDto;
-};
 export function TokensTable({
   copyFormat,
   editForm,
@@ -85,7 +82,21 @@ export function TokensTable({
               <td>
                 <StatusBadge enabled={token.enabled} />
               </td>
-              <td>{tokenActions({ token, editing, pending, onCancelEdit, onCopy, onDelete, onOpen, onReset, onSaveEdit, onStartEdit, onToggleEnabled })}</td>
+              <td>
+                <TokenActions
+                  editing={editing}
+                  pending={pending}
+                  token={token}
+                  onCancelEdit={onCancelEdit}
+                  onCopy={onCopy}
+                  onDelete={onDelete}
+                  onOpen={onOpen}
+                  onReset={onReset}
+                  onSaveEdit={onSaveEdit}
+                  onStartEdit={onStartEdit}
+                  onToggleEnabled={onToggleEnabled}
+                />
+              </td>
             </tr>
           );
         })}
@@ -120,36 +131,6 @@ function profileSelect(
       ))}
       {missingProfileOption(token, profiles)}
     </select>
-  );
-}
-
-function tokenActions({ token, editing, pending, onCancelEdit, onCopy, onDelete, onOpen, onReset, onSaveEdit, onStartEdit, onToggleEnabled }: TokenActionProps) {
-  if (editing) {
-    return (
-      <div className="table-actions">
-        {actionButton("保存", "primary-button", pending, () => onSaveEdit(token))}
-        {actionButton("取消", "secondary-button", pending, onCancelEdit)}
-      </div>
-    );
-  }
-
-  return (
-    <div className="table-actions">
-      {actionButton("复制", "secondary-button", pending, () => onCopy(token))}
-      {actionButton("打开", "inline-button", pending, () => onOpen(token))}
-      {actionButton("编辑", "secondary-button", pending, () => onStartEdit(token))}
-      {actionButton(token.enabled ? "停用" : "启用", "secondary-button", pending, () => onToggleEnabled(token))}
-      {actionButton("重置", "secondary-button", pending, () => onReset(token))}
-      {actionButton("删除", "danger-button", pending, () => onDelete(token))}
-    </div>
-  );
-}
-
-function actionButton(label: string, className: string, pending: boolean, onClick: () => void) {
-  return (
-    <button className={className} disabled={pending} onClick={onClick} type="button">
-      {label}
-    </button>
   );
 }
 

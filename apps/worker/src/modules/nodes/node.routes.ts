@@ -8,13 +8,15 @@ import { deleteGeneratedSubscriptionCaches } from "../subscribe/subscribe-cache"
 import { listSubscribeTokenValues } from "../tokens/token.repository";
 import {
   appendNodesGroups,
+  deleteNodes,
+  setNodesEnabled,
+  setNodesGroups
+} from "./node-batch.repository";
+import {
   createManualNode,
   deleteNode,
-  deleteNodes,
   listNodeGroups,
   listNodes,
-  setNodesEnabled,
-  setNodesGroups,
   updateNode
 } from "./node.repository";
 

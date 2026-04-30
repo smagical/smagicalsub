@@ -1,4 +1,4 @@
-import type { SubscriptionFormat } from "@smagicalsub/clash";
+import type { SubscriptionFormat } from "@smagicalsub/subscription";
 
 const cachedFormats: SubscriptionFormat[] = ["clash", "v2rayn", "plain", "sing-box"];
 

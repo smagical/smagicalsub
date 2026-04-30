@@ -17,7 +17,7 @@
     "paths": {
       "@smagicalsub/shared": ["./packages/shared/src/index.ts"],
       "@smagicalsub/db": ["./packages/db/src/index.ts"],
-      "@smagicalsub/clash": ["./packages/clash/src/index.ts"]
+      "@smagicalsub/subscription": ["./packages/subscription/src/index.ts"]
     }
   }
 }

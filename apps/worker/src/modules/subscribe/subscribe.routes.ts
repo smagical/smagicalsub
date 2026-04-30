@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { normalizeSubscriptionFormat, renderSubscription, type SubscriptionFormat } from "@smagicalsub/clash";
+import { normalizeSubscriptionFormat, renderSubscription, type SubscriptionFormat } from "@smagicalsub/subscription";
 import type { Env } from "../../env";
 import { listEnabledRenderableNodes } from "../nodes/node.repository";
 import { listEnabledProfileRuleText } from "../profiles/profile-rule.repository";

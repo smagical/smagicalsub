@@ -7,9 +7,9 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.2",
-    "@smagicalsub/clash": "workspace:*",
     "@smagicalsub/db": "workspace:*",
     "@smagicalsub/shared": "workspace:*",
+    "@smagicalsub/subscription": "workspace:*",
     "hono": "^4.6.18",
     "zod": "^3.24.1"
   },

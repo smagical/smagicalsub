@@ -1,4 +1,4 @@
-import { parseNodeUri } from "@smagicalsub/clash";
+import { parseNodeUri } from "@smagicalsub/subscription";
 import type { CreateNodeInput, UpdateNodeInput } from "@smagicalsub/shared";
 import { toNodeDto, toRenderableNode } from "./node.mapper";
 import type { NodeRow, RenderableNodeRow } from "./node.types";
@@ -106,47 +106,6 @@ export async function deleteNode(db: D1Database, id: string) {
   return result.meta.changes > 0;
 }
 
-export async function deleteNodes(db: D1Database, ids: string[]) {
-  const result = await db.prepare(`DELETE FROM nodes WHERE id IN (${placeholders(ids)})`).bind(...ids).run();
-  return result.meta.changes;
-}
-
-export async function setNodesEnabled(db: D1Database, ids: string[], enabled: boolean) {
-  const result = await db
-    .prepare(`UPDATE nodes SET enabled = ?1, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders(ids, 2)})`)
-    .bind(enabled ? 1 : 0, ...ids)
-    .run();
-  return result.meta.changes;
-}
-
-export async function setNodesGroups(db: D1Database, ids: string[], groups: string[]) {
-  const result = await db
-    .prepare(`UPDATE nodes SET tags = ?1, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders(ids, 2)})`)
-    .bind(JSON.stringify(groups), ...ids)
-    .run();
-  return result.meta.changes;
-}
-
-export async function appendNodesGroups(db: D1Database, ids: string[], groups: string[]) {
-  const result = await db.prepare(`SELECT id, tags FROM nodes WHERE id IN (${placeholders(ids)})`).bind(...ids).all<Pick<NodeRow, "id" | "tags">>();
-  const rows = result.results ?? [];
-
-  if (rows.length === 0) {
-    return 0;
-  }
-
-  // 追加分组需要读取每个节点现有 tags，逐条合并后批量写回，避免覆盖用户已有整理。
-  await db.batch(
-    rows.map((row) =>
-      db
-        .prepare(`UPDATE nodes SET tags = ?1, updated_at = CURRENT_TIMESTAMP WHERE id = ?2`)
-        .bind(JSON.stringify(Array.from(new Set([...parseTags(row.tags), ...groups]))), row.id)
-    )
-  );
-
-  return rows.length;
-}
-
 export async function listEnabledRenderableNodes(db: D1Database) {
   // 订阅渲染只读取最小字段，降低 Worker 生成订阅时的 D1 查询和反序列化成本。
   const result = await db
@@ -161,17 +120,4 @@ export async function listEnabledRenderableNodes(db: D1Database) {
     .all<RenderableNodeRow>();
 
   return (result.results ?? []).map(toRenderableNode);
-}
-
-function placeholders(values: unknown[], offset = 1) {
-  return values.map((_, index) => `?${index + offset}`).join(", ");
-}
-
-function parseTags(value: string) {
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
-  } catch {
-    return [];
-  }
 }

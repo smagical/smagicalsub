@@ -1,4 +1,4 @@
-import { parseSubscription } from "@smagicalsub/clash";
+import { parseSubscription } from "@smagicalsub/subscription";
 import type { SourceRefreshAllDto, SourceRefreshDto } from "@smagicalsub/shared";
 import type { Env } from "../../env";
 import { replaceSourceNodes } from "./source-node.repository";

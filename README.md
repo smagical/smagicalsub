@@ -12,6 +12,22 @@
 - D1 + KV
 - Drizzle schema
 
+## 项目结构
+
+```text
+apps/
+  web/                 React/Vite 前端、Cloudflare Vite 插件和 wrangler 部署入口
+  worker/              Hono Worker API，承载 /api/* 和 /sub/* 后端路由
+packages/
+  db/                  D1/Drizzle schema
+  shared/              前后端共享 DTO、Zod schema 和通用类型
+  subscription/        节点 URI 解析、订阅解析、多格式订阅渲染
+```
+
+`packages/subscription` 原先命名为 `packages/clash`，但实际职责已经覆盖 Clash YAML、v2rayN Base64、明文 URI 和 sing-box JSON，因此改为更贴近职责的订阅处理包。
+
+前后端通过 `apps/web/wrangler.jsonc` 同时部署到 Cloudflare Workers：静态资源由 Workers Static Assets 托管，`/api/*` 和 `/sub/*` 会先进入 `apps/worker/src/index.ts` 的 Hono 路由。
+
 ## 本地开发
 
 ```bash
@@ -81,7 +97,7 @@ pnpm db:migrate:remote
 - 复杂流程必须写简短注释，说明为什么这样做，不写重复代码含义的注释。
 - 前端功能按 `features/*` 拆分，通用 UI 放到 `shared/*`。
 - Worker 后端按 `modules/*` 拆分，路由、repository、service 分开维护。
-- 订阅格式相关逻辑放在 `packages/clash/src/renderers/*`，不要继续堆到单一文件。
+- 订阅格式相关逻辑放在 `packages/subscription/src/renderers/*`，不要继续堆到单一文件。
 
 ## 部署
 

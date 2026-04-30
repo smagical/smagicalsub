@@ -1,4 +1,4 @@
-import type { RenderableNode } from "@smagicalsub/clash";
+import type { RenderableNode } from "@smagicalsub/subscription";
 import type { NodeDto } from "@smagicalsub/shared";
 import type { NodeRow, RenderableNodeRow } from "./node.types";
 
@@ -40,4 +40,3 @@ export function parseGroups(tags: string) {
 
   return [];
 }
-

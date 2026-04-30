@@ -1,4 +1,4 @@
-import type { CreateProfileInput } from "@smagicalsub/shared";
+import type { CreateProfileInput, ProfileDto } from "@smagicalsub/shared";
 import type { ProfileFormState, ProfileRuleFormState } from "./types";
 
 export function toCreateProfileInput(form: ProfileFormState): CreateProfileInput {
@@ -18,4 +18,32 @@ export function toCreateProfileRuleInput(form: ProfileRuleFormState) {
     position: position ? Number(position) : undefined,
     enabled: form.enabled
   };
+}
+
+export function filterProfiles(profiles: ProfileDto[], searchQuery: string, statusFilter: string) {
+  return profiles.filter((profile) => matchesProfileStatus(profile, statusFilter) && matchesProfileSearch(profile, searchQuery));
+}
+
+function matchesProfileStatus(profile: ProfileDto, statusFilter: string) {
+  if (statusFilter === "enabled") {
+    return profile.enabled === 1;
+  }
+
+  if (statusFilter === "disabled") {
+    return profile.enabled !== 1;
+  }
+
+  return true;
+}
+
+function matchesProfileSearch(profile: ProfileDto, searchQuery: string) {
+  const query = searchQuery.trim().toLowerCase();
+
+  if (!query) {
+    return true;
+  }
+
+  return [profile.name, profile.default_strategy, profile.description ?? "", profile.updated_at].some((value) =>
+    value.toLowerCase().includes(query)
+  );
 }
