@@ -1,16 +1,18 @@
 import { useMemo, useState } from "react";
-import type { SourceDto } from "@smagicalsub/shared";
+import type { SourceDto, UpdateSubscriptionSourceInput } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
 import { createSource, deleteSource, listSources, refreshSource, updateSource } from "./api";
 import { SourceForm } from "./SourceForm";
 import { SourcesTable } from "./SourcesTable";
-import { initialSourceFormState } from "./types";
+import { initialSourceEditFormState, initialSourceFormState } from "./types";
 
 export function SourcesPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(initialSourceFormState);
+  const [editForm, setEditForm] = useState(initialSourceEditFormState);
+  const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [notice, setNotice] = useState<string | null>(null);
@@ -20,10 +22,25 @@ export function SourcesPage() {
     retry: false
   });
   const sources = query.data?.items ?? [];
-  const filteredSources = useMemo(
-    () => sources.filter((source) => matchesSourceStatus(source, statusFilter) && matchesSourceSearch(source, searchQuery)),
-    [searchQuery, sources, statusFilter]
-  );
+  const filteredSources = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return sources.filter((source) => {
+      const statusMatches =
+        statusFilter === "all" ||
+        (statusFilter === "enabled" && source.enabled === 1) ||
+        (statusFilter === "disabled" && source.enabled !== 1) ||
+        (statusFilter === "never" && !source.last_status) ||
+        source.last_status === statusFilter;
+      const searchMatches =
+        !query ||
+        [source.name, source.url, source.last_status ?? "", source.last_error ?? "", source.last_fetched_at ?? ""].some((value) =>
+          value.toLowerCase().includes(query)
+        );
+
+      return statusMatches && searchMatches;
+    });
+  }, [searchQuery, sources, statusFilter]);
 
   const invalidateSourceData = async () => {
     await Promise.all([
@@ -51,8 +68,16 @@ export function SourcesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => updateSource(id, { enabled }),
-    onSuccess: invalidateSourceData
+    mutationFn: ({ id, input }: { id: string; input: UpdateSubscriptionSourceInput }) => updateSource(id, input),
+    onSuccess: async (_source, variables) => {
+      if (variables.input.name !== undefined || variables.input.url !== undefined) {
+        setEditingSourceId(null);
+        setEditForm(initialSourceEditFormState);
+        setNotice("订阅源已更新");
+      }
+
+      await invalidateSourceData();
+    }
   });
 
   const deleteMutation = useMutation({
@@ -68,6 +93,22 @@ export function SourcesPage() {
   const error =
     createMutation.error ?? refreshMutation.error ?? updateMutation.error ?? deleteMutation.error ?? query.error;
   const emptyLabel = sources.length === 0 ? "还没有订阅源" : "没有匹配的订阅源";
+
+  const startEdit = (source: SourceDto) => {
+    setNotice(null);
+    setEditingSourceId(source.id);
+    setEditForm({ name: source.name, url: source.url });
+  };
+
+  const saveEdit = (source: SourceDto) => {
+    updateMutation.mutate({
+      id: source.id,
+      input: {
+        name: editForm.name.trim() || source.name,
+        url: editForm.url.trim() || source.url
+      }
+    });
+  };
 
   return (
     <section className="panel wide">
@@ -100,44 +141,25 @@ export function SourcesPage() {
       ) : (
         <SourcesTable
           pending={pending}
+          editForm={editForm}
+          editingSourceId={editingSourceId}
           sources={filteredSources}
+          onCancelEdit={() => {
+            setEditingSourceId(null);
+            setEditForm(initialSourceEditFormState);
+          }}
           onDelete={(source) => {
             if (window.confirm(`删除订阅源「${source.name}」？`)) {
               deleteMutation.mutate(source.id);
             }
           }}
+          onEditFormChange={setEditForm}
           onRefresh={(id) => refreshMutation.mutate(id)}
-          onToggleEnabled={(source) => updateMutation.mutate({ id: source.id, enabled: !source.enabled })}
+          onSaveEdit={saveEdit}
+          onStartEdit={startEdit}
+          onToggleEnabled={(source) => updateMutation.mutate({ id: source.id, input: { enabled: !source.enabled } })}
         />
       )}
     </section>
-  );
-}
-
-function matchesSourceStatus(source: SourceDto, statusFilter: string) {
-  switch (statusFilter) {
-    case "enabled":
-      return source.enabled === 1;
-    case "disabled":
-      return source.enabled !== 1;
-    case "success":
-    case "failed":
-      return source.last_status === statusFilter;
-    case "never":
-      return !source.last_status;
-    default:
-      return true;
-  }
-}
-
-function matchesSourceSearch(source: SourceDto, searchQuery: string) {
-  const query = searchQuery.trim().toLowerCase();
-
-  if (!query) {
-    return true;
-  }
-
-  return [source.name, source.url, source.last_status ?? "", source.last_error ?? "", source.last_fetched_at ?? ""].some((value) =>
-    value.toLowerCase().includes(query)
   );
 }

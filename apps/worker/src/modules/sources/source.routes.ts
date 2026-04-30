@@ -31,6 +31,7 @@ sourceRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json"
     return c.json(failure({ code: "SOURCE_NOT_FOUND", message: "订阅源不存在" }), 404);
   }
 
+  await deleteAllSubscriptionCaches(c.env);
   return c.json(success(source));
 });
 

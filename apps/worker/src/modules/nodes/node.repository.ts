@@ -110,10 +110,12 @@ export async function listEnabledRenderableNodes(db: D1Database) {
   // 订阅渲染只读取最小字段，降低 Worker 生成订阅时的 D1 查询和反序列化成本。
   const result = await db
     .prepare(
-      `SELECT id, name, protocol, config_json, tags
+      `SELECT nodes.id, nodes.name, nodes.protocol, nodes.config_json, nodes.tags
        FROM nodes
-       WHERE enabled = 1
-       ORDER BY name ASC`
+       LEFT JOIN subscription_sources ON subscription_sources.id = nodes.source_id
+       WHERE nodes.enabled = 1
+         AND (nodes.source_id IS NULL OR subscription_sources.enabled = 1)
+       ORDER BY nodes.name ASC`
     )
     .all<RenderableNodeRow>();
 
