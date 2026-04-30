@@ -41,6 +41,24 @@ export const updateNodeSchema = z
 
 export type UpdateNodeInput = z.infer<typeof updateNodeSchema>;
 
+export const createSubscribeTokenSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  enabled: z.boolean().default(true),
+  expires_at: z.string().trim().max(32).nullable().optional()
+});
+
+export type CreateSubscribeTokenInput = z.infer<typeof createSubscribeTokenSchema>;
+
+export const updateSubscribeTokenSchema = z
+  .object({
+    name: z.string().trim().min(1).max(80).optional(),
+    enabled: z.boolean().optional(),
+    expires_at: z.string().trim().max(32).nullable().optional()
+  })
+  .refine((value) => Object.keys(value).length > 0, "At least one field must be provided");
+
+export type UpdateSubscribeTokenInput = z.infer<typeof updateSubscribeTokenSchema>;
+
 export const subscribeTokenSchema = z.object({
   id: z.string(),
   name: z.string(),
