@@ -1,14 +1,24 @@
 import type { NodeBatchActionInput } from "@smagicalsub/shared";
 
 type NodeFiltersProps = {
+  exportDisabled?: boolean;
   groups: string[];
   groupFilter: string;
   searchQuery: string;
+  onExport?: () => void;
   onGroupFilterChange: (group: string) => void;
   onSearchQueryChange: (query: string) => void;
 };
 
-export function NodeFilters({ groups, groupFilter, searchQuery, onGroupFilterChange, onSearchQueryChange }: NodeFiltersProps) {
+export function NodeFilters({
+  exportDisabled = false,
+  groups,
+  groupFilter,
+  searchQuery,
+  onExport,
+  onGroupFilterChange,
+  onSearchQueryChange
+}: NodeFiltersProps) {
   return (
     <div className="filter-row">
       <label>
@@ -32,6 +42,11 @@ export function NodeFilters({ groups, groupFilter, searchQuery, onGroupFilterCha
           ))}
         </select>
       </label>
+      {onExport ? (
+        <button className="secondary-button" disabled={exportDisabled} onClick={onExport} type="button">
+          导出 CSV
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { NodeDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { NodeActions } from "./NodeActions";
 import type { NodeEditFormState } from "./types";
 
 type NodesTableProps = {
@@ -17,11 +18,6 @@ type NodesTableProps = {
   onToggleEnabled: (node: NodeDto) => void;
   onToggleSelected: (nodeId: string, checked: boolean) => void;
   onToggleVisible: (checked: boolean) => void;
-};
-
-type NodeActionProps = Pick<NodesTableProps, "onCancelEdit" | "onDelete" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"> & {
-  editing: boolean;
-  node: NodeDto;
 };
 
 export function NodesTable({
@@ -105,44 +101,6 @@ function selectionInput(label: string, checked: boolean, disabled: boolean, onCh
 
 function textInput(label: string, value: string, pending: boolean, onChange: (value: string) => void, placeholder?: string) {
   return <input aria-label={label} disabled={pending} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} type="text" value={value} />;
-}
-
-function NodeActions({
-  editing,
-  node,
-  pending,
-  onCancelEdit,
-  onDelete,
-  onSaveEdit,
-  onStartEdit,
-  onToggleEnabled
-}: NodeActionProps) {
-  if (editing) {
-    return (
-      <div className="table-actions">
-        <button className="primary-button" disabled={pending} onClick={() => onSaveEdit(node)} type="button">
-          保存
-        </button>
-        <button className="secondary-button" disabled={pending} onClick={onCancelEdit} type="button">
-          取消
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="table-actions">
-      <button className="secondary-button" disabled={pending} onClick={() => onToggleEnabled(node)} type="button">
-        {node.enabled ? "停用" : "启用"}
-      </button>
-      <button className="secondary-button" disabled={pending} onClick={() => onStartEdit(node)} type="button">
-        编辑
-      </button>
-      <button className="danger-button" disabled={pending} onClick={() => onDelete(node)} type="button">
-        删除
-      </button>
-    </div>
-  );
 }
 
 function GroupChips({ groups }: { groups: string[] }) {
