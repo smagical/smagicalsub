@@ -14,6 +14,7 @@ export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
   const proxyNames = proxies.map((proxy) => String(proxy.name));
   const primaryProxyGroup = input.defaultStrategy ?? "Proxy";
   const proxyGroups = buildProxyGroups(renderableNodes, primaryProxyGroup);
+  const rules = buildRules(input.rules ?? [], primaryProxyGroup);
 
   const config = {
     "mixed-port": 7890,
@@ -22,7 +23,7 @@ export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
     "log-level": "info",
     proxies,
     "proxy-groups": proxyGroups.length > 0 ? proxyGroups : [createProxyGroup(primaryProxyGroup, proxyNames)],
-    rules: [`MATCH,${primaryProxyGroup}`]
+    rules
   };
 
   return `# ${input.profileName}\n${YAML.stringify(config)}`;
@@ -62,6 +63,13 @@ function buildProxyGroups(nodes: Array<{ proxy: Record<string, unknown>; groups:
   }
 
   return proxyGroups;
+}
+
+function buildRules(rules: string[], primaryProxyGroup: string) {
+  const profileRules = uniqueStrings(rules);
+  const hasMatchFallback = profileRules.some((rule) => rule.toUpperCase().startsWith("MATCH,"));
+
+  return hasMatchFallback ? profileRules : [...profileRules, `MATCH,${primaryProxyGroup}`];
 }
 
 function createProxyGroup(name: string, proxies: string[]) {

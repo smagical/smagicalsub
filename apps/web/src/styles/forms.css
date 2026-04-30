@@ -20,6 +20,7 @@
 .form-grid input[type="text"],
 .form-grid input[type="url"],
 .form-grid input[type="datetime-local"],
+.form-grid input[type="number"],
 .form-grid select,
 .filter-row select {
   width: 100%;
@@ -48,6 +49,10 @@
 
 .token-form {
   grid-template-columns: minmax(160px, 0.8fr) minmax(180px, 0.8fr) minmax(220px, 1fr) auto auto;
+}
+
+.rule-form {
+  grid-template-columns: minmax(320px, 1.6fr) minmax(120px, 0.4fr) auto auto;
 }
 
 .checkbox-field {

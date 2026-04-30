@@ -64,6 +64,11 @@
   font-size: 14px;
 }
 
+.compact-table th,
+.compact-table td {
+  padding: 10px 8px;
+}
+
 .truncate-cell {
   max-width: 420px;
   overflow: hidden;

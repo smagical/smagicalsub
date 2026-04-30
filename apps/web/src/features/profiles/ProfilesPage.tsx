@@ -1,9 +1,11 @@
 import { useState } from "react";
+import type { ProfileDto } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
 import { createProfile, deleteProfile, listProfiles, updateProfile } from "./api";
 import { ProfileForm } from "./ProfileForm";
+import { ProfileRulesSection } from "./ProfileRulesSection";
 import { ProfilesTable } from "./ProfilesTable";
 import { initialProfileFormState } from "./types";
 
@@ -11,6 +13,7 @@ export function ProfilesPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(initialProfileFormState);
   const [notice, setNotice] = useState<string | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<ProfileDto | null>(null);
   const query = useQuery({
     queryKey: ["profiles"],
     queryFn: listProfiles,
@@ -42,6 +45,7 @@ export function ProfilesPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteProfile,
     onSuccess: async () => {
+      setSelectedProfile(null);
       setNotice("配置档已删除");
       await invalidateProfileData();
     }
@@ -70,9 +74,16 @@ export function ProfilesPage() {
               deleteMutation.mutate(profile.id);
             }
           }}
+          onManageRules={setSelectedProfile}
           onToggleEnabled={(profile) => updateMutation.mutate({ id: profile.id, enabled: !profile.enabled })}
         />
       )}
+
+      <ProfileRulesSection
+        parentPending={pending}
+        profile={selectedProfile}
+        setNotice={(message) => setNotice(message)}
+      />
     </section>
   );
 }

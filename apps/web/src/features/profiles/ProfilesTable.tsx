@@ -5,10 +5,11 @@ type ProfilesTableProps = {
   pending: boolean;
   profiles: ProfileDto[];
   onDelete: (profile: ProfileDto) => void;
+  onManageRules: (profile: ProfileDto) => void;
   onToggleEnabled: (profile: ProfileDto) => void;
 };
 
-export function ProfilesTable({ pending, profiles, onDelete, onToggleEnabled }: ProfilesTableProps) {
+export function ProfilesTable({ pending, profiles, onDelete, onManageRules, onToggleEnabled }: ProfilesTableProps) {
   return (
     <table className="data-table">
       <thead>
@@ -35,6 +36,9 @@ export function ProfilesTable({ pending, profiles, onDelete, onToggleEnabled }: 
               <div className="table-actions">
                 <button className="secondary-button" disabled={pending} onClick={() => onToggleEnabled(profile)} type="button">
                   {profile.enabled ? "停用" : "启用"}
+                </button>
+                <button className="secondary-button" disabled={pending} onClick={() => onManageRules(profile)} type="button">
+                  规则
                 </button>
                 <button className="danger-button" disabled={pending} onClick={() => onDelete(profile)} type="button">
                   删除

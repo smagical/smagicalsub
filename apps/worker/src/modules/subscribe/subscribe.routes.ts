@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { normalizeSubscriptionFormat, renderSubscription, type SubscriptionFormat } from "@smagicalsub/clash";
 import type { Env } from "../../env";
 import { listEnabledRenderableNodes } from "../nodes/node.repository";
+import { listEnabledProfileRuleText } from "../profiles/profile-rule.repository";
 import { findActiveSubscribeToken, markSubscribeTokenUsed } from "../tokens/token.repository";
 import { generatedSubscriptionCacheKey } from "./subscribe-cache";
 
@@ -37,10 +38,12 @@ subscribeRoutes.get("/:token", async (c) => {
   const nodes = await listEnabledRenderableNodes(c.env.DB);
   const profileName = tokenRow.profile_name ?? tokenRow.name;
   const defaultStrategy = tokenRow.profile_default_strategy ?? "Proxy";
+  const rules = tokenRow.profile_id ? await listEnabledProfileRuleText(c.env.DB, tokenRow.profile_id) : [];
   const body = renderSubscription({
     format,
     profileName,
     defaultStrategy,
+    rules,
     nodes
   });
 

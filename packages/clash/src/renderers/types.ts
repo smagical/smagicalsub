@@ -11,6 +11,7 @@ export type SubscriptionFormat = "clash" | "v2rayn" | "plain" | "sing-box";
 export type RenderSubscriptionBaseInput = {
   profileName: string;
   defaultStrategy?: string;
+  rules?: string[];
   nodes: RenderableNode[];
 };
 

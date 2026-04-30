@@ -11,3 +11,15 @@ export const initialProfileFormState: ProfileFormState = {
   default_strategy: "Proxy",
   enabled: true
 };
+
+export type ProfileRuleFormState = {
+  rule: string;
+  position: string;
+  enabled: boolean;
+};
+
+export const initialProfileRuleFormState: ProfileRuleFormState = {
+  rule: "",
+  position: "",
+  enabled: true
+};

@@ -68,6 +68,24 @@ export const updateProfileSchema = z
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
+export const createProfileRuleSchema = z.object({
+  rule: z.string().trim().min(1).max(300),
+  position: z.number().int().min(0).max(9999).optional(),
+  enabled: z.boolean().default(true)
+});
+
+export type CreateProfileRuleInput = z.infer<typeof createProfileRuleSchema>;
+
+export const updateProfileRuleSchema = z
+  .object({
+    rule: z.string().trim().min(1).max(300).optional(),
+    position: z.number().int().min(0).max(9999).optional(),
+    enabled: z.boolean().optional()
+  })
+  .refine((value) => Object.keys(value).length > 0, "At least one field must be provided");
+
+export type UpdateProfileRuleInput = z.infer<typeof updateProfileRuleSchema>;
+
 export const createSubscribeTokenSchema = z.object({
   name: z.string().trim().min(1).max(80),
   profile_id: z.string().trim().min(1).nullable().optional(),

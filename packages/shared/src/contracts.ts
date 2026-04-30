@@ -64,6 +64,14 @@ export type ProfileDto = {
   updated_at: string;
 };
 
+export type ProfileRuleDto = {
+  id: string;
+  profile_id: string;
+  position: number;
+  rule: string;
+  enabled: number;
+};
+
 export type SubscribeTokenDto = {
   id: string;
   owner_id: string | null;
