@@ -1,3 +1,4 @@
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import type { NodeDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
@@ -100,12 +101,11 @@ export function NodesTable({
 
 function selectionInput(label: string, checked: boolean, disabled: boolean, onChange: (checked: boolean) => void) {
   return (
-    <input
+    <Checkbox
       aria-label={label}
       checked={checked}
       disabled={disabled}
-      onChange={(event) => onChange(event.target.checked)}
-      type="checkbox"
+      onCheckedChange={(value) => onChange(value === true)}
     />
   );
 }

@@ -1,5 +1,6 @@
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
+import { PageFeedback } from "../../shared/PageFeedback";
 import { ProfileFilters } from "./ProfileFilters";
 import { ProfileForm } from "./ProfileForm";
 import { ProfileRulesSection } from "./ProfileRulesSection";
@@ -24,8 +25,7 @@ export function ProfilesPage() {
         onStatusFilterChange={page.setStatusFilter}
       />
 
-      {page.notice ? <p className="success-text">{page.notice}</p> : null}
-      {page.error instanceof Error ? <p className="error-text">{page.error.message}</p> : null}
+      <PageFeedback error={page.error} notice={page.notice} />
 
       {page.filteredProfiles.length === 0 ? (
         <EmptyState label={page.emptyLabel} />

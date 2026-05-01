@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
+import { CheckboxField } from "../../shared/CheckboxField";
 import { FilterField } from "../../shared/FilterField";
 import type { ProfileRuleFormState } from "./types";
 import { toCreateProfileRuleInput } from "./utils";
@@ -38,14 +39,11 @@ export function ProfileRuleForm({ form, pending, setForm, onSubmit }: ProfileRul
           value={form.position}
         />
       </FilterField>
-      <label className="checkbox-field">
-        <input
-          checked={form.enabled}
-          onChange={(event) => setForm((current) => ({ ...current, enabled: event.target.checked }))}
-          type="checkbox"
-        />
-        <span>启用</span>
-      </label>
+      <CheckboxField
+        checked={form.enabled}
+        label="启用"
+        onCheckedChange={(enabled) => setForm((current) => ({ ...current, enabled }))}
+      />
       <Button disabled={pending} type="submit">
         添加规则
       </Button>

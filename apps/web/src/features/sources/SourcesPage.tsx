@@ -1,5 +1,6 @@
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
+import { PageFeedback } from "../../shared/PageFeedback";
 import { SourceFilters } from "./SourceFilters";
 import { SourceForm } from "./SourceForm";
 import { SourcesTable } from "./SourcesTable";
@@ -26,8 +27,7 @@ export function SourcesPage() {
         onStatusFilterChange={page.setStatusFilter}
       />
 
-      {page.notice ? <p className="success-text">{page.notice}</p> : null}
-      {page.error instanceof Error ? <p className="error-text">{page.error.message}</p> : null}
+      <PageFeedback error={page.error} notice={page.notice} />
 
       {page.filteredSources.length === 0 ? (
         <EmptyState label={page.emptyLabel} />

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cable, Database, FileSliders, KeyRound, RefreshCw, Server, ShieldCheck } from "lucide-react";
 import { EmptyState } from "../../shared/EmptyState";
 import { MetricCard } from "../../shared/MetricCard";
+import { PageFeedback } from "../../shared/PageFeedback";
 import type { SectionId } from "../../app/navigation";
 import { refreshAllSources } from "../sources/api";
 import { getDashboard } from "./api";
@@ -43,6 +44,9 @@ export function DashboardPage({ health, onNavigate }: DashboardPageProps) {
 
   const dashboard = dashboardQuery.data ?? fallbackDashboard;
   const refreshResult = refreshMutation.data;
+  const refreshNotice = refreshResult
+    ? `刷新完成：成功 ${refreshResult.success} 个，失败 ${refreshResult.failed} 个，解析 ${refreshResult.nodeCount} 个节点`
+    : null;
 
   return (
     <div className="section-stack">
@@ -76,13 +80,7 @@ export function DashboardPage({ health, onNavigate }: DashboardPageProps) {
               </Button>
             ))}
           </div>
-          {refreshResult ? (
-            <p className="success-text">
-              刷新完成：成功 {refreshResult.success} 个，失败 {refreshResult.failed} 个，解析{" "}
-              {refreshResult.nodeCount} 个节点
-            </p>
-          ) : null}
-          {refreshMutation.error instanceof Error ? <p className="error-text">{refreshMutation.error.message}</p> : null}
+          <PageFeedback error={refreshMutation.error} notice={refreshNotice} />
         </div>
 
         <StoragePanel health={health} />

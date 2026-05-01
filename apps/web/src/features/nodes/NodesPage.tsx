@@ -1,5 +1,6 @@
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
+import { PageFeedback } from "../../shared/PageFeedback";
 import { NodeBatchBar, NodeFilters } from "./NodeFilters";
 import { NodeForm } from "./NodeForm";
 import { NodesTable } from "./NodesTable";
@@ -32,8 +33,7 @@ export function NodesPage() {
         onClearSelection={page.clearSelection}
       />
 
-      {page.notice ? <p className="success-text">{page.notice}</p> : null}
-      {page.error instanceof Error ? <p className="error-text">{page.error.message}</p> : null}
+      <PageFeedback error={page.error} notice={page.notice} />
 
       {page.filteredNodes.length === 0 ? (
         <EmptyState label={page.emptyLabel} />

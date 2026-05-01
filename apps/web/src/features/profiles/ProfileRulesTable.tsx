@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ProfileRuleDto } from "@smagicalsub/shared";
+import { ConfirmButton } from "../../shared/ConfirmButton";
 import { StatusBadge } from "../../shared/StatusBadge";
 import type { ProfileRuleEditFormState } from "./types";
 
@@ -141,9 +142,16 @@ function RuleActions({
       <Button disabled={pending} onClick={() => onStartEdit(rule)} size="sm" type="button" variant="outline">
         编辑
       </Button>
-      <Button disabled={pending} onClick={() => onDelete(rule)} size="sm" type="button" variant="destructive">
+      <ConfirmButton
+        disabled={pending}
+        description="删除后该规则会从配置档输出中移除。"
+        onConfirm={() => onDelete(rule)}
+        size="sm"
+        title={`删除规则「${rule.rule}」？`}
+        type="button"
+      >
         删除
-      </Button>
+      </ConfirmButton>
     </div>
   );
 }

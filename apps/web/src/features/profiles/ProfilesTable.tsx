@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ProfileDto } from "@smagicalsub/shared";
+import { ConfirmButton } from "../../shared/ConfirmButton";
 import { StatusBadge } from "../../shared/StatusBadge";
 import type { ProfileEditFormState } from "./types";
 
@@ -144,9 +145,16 @@ function ProfileActions({
       <Button disabled={pending} onClick={() => onStartEdit(profile)} size="sm" type="button" variant="outline">
         编辑
       </Button>
-      <Button disabled={pending} onClick={() => onDelete(profile)} size="sm" type="button" variant="destructive">
+      <ConfirmButton
+        disabled={pending}
+        description="删除后绑定该配置档的订阅令牌将无法继续使用它生成规则。"
+        onConfirm={() => onDelete(profile)}
+        size="sm"
+        title={`删除配置档「${profile.name}」？`}
+        type="button"
+      >
         删除
-      </Button>
+      </ConfirmButton>
     </div>
   );
 }

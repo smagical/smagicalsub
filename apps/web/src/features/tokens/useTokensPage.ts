@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { SubscribeTokenDto, UpdateSubscribeTokenInput } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listProfiles } from "../profiles/api";
-import { createToken, deleteToken, listTokens, resetToken, updateToken } from "./api";
+import { createToken, deleteToken, listTokens, resetToken as resetTokenRequest, updateToken } from "./api";
 import { initialTokenEditFormState, initialTokenFormState, type TokenSubscriptionFormat } from "./types";
 import { filterTokens, subscriptionUrl, toDatetimeLocalValue } from "./utils";
 
@@ -50,7 +50,7 @@ export function useTokensPage() {
     }
   });
 
-  const resetMutation = useMutation({ mutationFn: resetToken, onSuccess: () => finishTokenAction("令牌已重置，旧订阅地址已失效") });
+  const resetMutation = useMutation({ mutationFn: resetTokenRequest, onSuccess: () => finishTokenAction("令牌已重置，旧订阅地址已失效") });
   const deleteMutation = useMutation({ mutationFn: deleteToken, onSuccess: () => finishTokenAction("订阅令牌已删除") });
   const pending = createMutation.isPending || updateMutation.isPending || resetMutation.isPending || deleteMutation.isPending;
   const error = createMutation.error ?? updateMutation.error ?? resetMutation.error ?? deleteMutation.error ?? query.error ?? profilesQuery.error;
@@ -88,18 +88,6 @@ export function useTokensPage() {
     await invalidateTokenData();
   }
 
-  function deleteWithConfirm(token: SubscribeTokenDto) {
-    if (window.confirm(`删除令牌「${token.name}」？`)) {
-      deleteMutation.mutate(token.id);
-    }
-  }
-
-  function resetWithConfirm(token: SubscribeTokenDto) {
-    if (window.confirm(`重置令牌「${token.name}」？旧订阅地址会立即失效。`)) {
-      resetMutation.mutate(token.id);
-    }
-  }
-
   return {
     copyFormat,
     editForm,
@@ -113,11 +101,11 @@ export function useTokensPage() {
     profiles,
     searchQuery,
     createToken: createMutation.mutate,
-    deleteWithConfirm,
+    deleteToken: (token: SubscribeTokenDto) => deleteMutation.mutate(token.id),
     handleCopy,
     openSubscription,
     resetEdit,
-    resetWithConfirm,
+    resetToken: (token: SubscribeTokenDto) => resetMutation.mutate(token.id),
     saveEdit,
     setCopyFormat,
     setEditForm,

@@ -1,5 +1,6 @@
 import { EmptyState } from "../../shared/EmptyState";
 import { ModuleHeading } from "../../shared/ModuleHeading";
+import { PageFeedback } from "../../shared/PageFeedback";
 import { TokenFilters } from "./TokenFilters";
 import { TokenForm } from "./TokenForm";
 import { TokensTable } from "./TokensTable";
@@ -22,8 +23,7 @@ export function TokensPage() {
         onSearchQueryChange={page.setSearchQuery}
       />
 
-      {page.notice ? <p className="success-text">{page.notice}</p> : null}
-      {page.error instanceof Error ? <p className="error-text">{page.error.message}</p> : null}
+      <PageFeedback error={page.error} notice={page.notice} />
 
       {page.filteredTokens.length === 0 ? (
         <EmptyState label={page.emptyLabel} />
@@ -37,11 +37,11 @@ export function TokensPage() {
           tokens={page.filteredTokens}
           onCancelEdit={page.resetEdit}
           onCopy={(token) => void page.handleCopy(token)}
-          onDelete={page.deleteWithConfirm}
+          onDelete={page.deleteToken}
           onEditFormChange={page.setEditForm}
           onOpen={page.openSubscription}
           onProfileChange={page.updateProfileBinding}
-          onReset={page.resetWithConfirm}
+          onReset={page.resetToken}
           onSaveEdit={page.saveEdit}
           onStartEdit={page.startEdit}
           onToggleEnabled={page.toggleEnabled}

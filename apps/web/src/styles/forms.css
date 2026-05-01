@@ -35,33 +35,15 @@
 
 .checkbox-field {
   display: inline-flex;
-  grid-template-columns: auto auto;
   align-items: center;
+  gap: 8px;
   min-height: 40px;
 }
 
-.checkbox-field input {
-  width: 16px;
-  height: 16px;
-}
-
-.success-text,
-.error-text {
-  margin: 0 0 14px;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.success-text {
-  background: #edf8ef;
-  color: #1d6b3b;
-}
-
-.error-text {
-  background: #fff4f4;
-  color: #9c2f2f;
+.checkbox-field label {
+  color: #596258;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .filter-row {

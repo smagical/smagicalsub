@@ -8,6 +8,7 @@ import { downloadCsv } from "../../lib/download-csv";
 import { EmptyState } from "../../shared/EmptyState";
 import { FilterField } from "../../shared/FilterField";
 import { ModuleHeading } from "../../shared/ModuleHeading";
+import { PageFeedback } from "../../shared/PageFeedback";
 import { listAccessLogs } from "./api";
 import { LogsTable } from "./LogsTable";
 
@@ -69,8 +70,7 @@ export function LogsPage() {
         </Button>
       </div>
 
-      {notice ? <p className="success-text">{notice}</p> : null}
-      {query.error instanceof Error ? <p className="error-text">{query.error.message}</p> : null}
+      <PageFeedback error={query.error} notice={notice} />
 
       {filteredLogs.length === 0 ? (
         <EmptyState label={emptyLabel} />

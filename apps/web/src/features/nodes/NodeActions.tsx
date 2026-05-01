@@ -1,5 +1,6 @@
 import type { NodeDto } from "@smagicalsub/shared";
 import { Button } from "@/components/ui/button";
+import { ConfirmButton } from "../../shared/ConfirmButton";
 
 type NodeActionsProps = {
   editing: boolean;
@@ -43,9 +44,16 @@ export function NodeActions({
       <Button disabled={pending} onClick={() => onStartEdit(node)} size="sm" type="button" variant="outline">
         编辑
       </Button>
-      <Button disabled={pending} onClick={() => onDelete(node)} size="sm" type="button" variant="destructive">
+      <ConfirmButton
+        disabled={pending}
+        description="删除后该节点不会再出现在任何订阅输出中。"
+        onConfirm={() => onDelete(node)}
+        size="sm"
+        title={`删除节点「${node.name}」？`}
+        type="button"
+      >
         删除
-      </Button>
+      </ConfirmButton>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import { useState } from "react";
 import type { HealthDto } from "@smagicalsub/shared";
 import { useQuery } from "@tanstack/react-query";
@@ -20,9 +21,12 @@ export function App() {
   });
 
   return (
-    <Layout activeSection={activeSection} health={healthQuery.data} onSectionChange={setActiveSection}>
-      {renderSection(activeSection, healthQuery.data, setActiveSection)}
-    </Layout>
+    <>
+      <Layout activeSection={activeSection} health={healthQuery.data} onSectionChange={setActiveSection}>
+        {renderSection(activeSection, healthQuery.data, setActiveSection)}
+      </Layout>
+      <Toaster position="top-right" richColors />
+    </>
   );
 }
 

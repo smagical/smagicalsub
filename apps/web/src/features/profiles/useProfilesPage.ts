@@ -99,11 +99,7 @@ export function useProfilesPage() {
     selectedProfile,
     statusFilter,
     createProfile: createMutation.mutate,
-    deleteProfile: (profile: ProfileDto) => {
-      if (window.confirm(`删除配置档「${profile.name}」？`)) {
-        deleteMutation.mutate(profile.id);
-      }
-    },
+    deleteProfile: (profile: ProfileDto) => deleteMutation.mutate(profile.id),
     resetEdit,
     saveEdit,
     setEditForm,

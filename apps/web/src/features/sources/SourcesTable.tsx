@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { SourceDto } from "@smagicalsub/shared";
+import { ConfirmButton } from "../../shared/ConfirmButton";
 import { StatusBadge } from "../../shared/StatusBadge";
 import type { SourceEditFormState } from "./types";
 
@@ -144,9 +145,16 @@ function SourceActions({
       <Button disabled={pending} onClick={() => onToggleEnabled(source)} size="sm" type="button" variant="outline">
         {source.enabled ? "停用" : "启用"}
       </Button>
-      <Button disabled={pending} onClick={() => onDelete(source)} size="sm" type="button" variant="destructive">
+      <ConfirmButton
+        disabled={pending}
+        description="删除后该订阅源及其同步节点会从管理列表移除。"
+        onConfirm={() => onDelete(source)}
+        size="sm"
+        title={`删除订阅源「${source.name}」？`}
+        type="button"
+      >
         删除
-      </Button>
+      </ConfirmButton>
     </div>
   );
 }

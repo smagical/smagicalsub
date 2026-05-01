@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ProfileDto, ProfileRuleDto } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { PageFeedback } from "../../shared/PageFeedback";
 import { createProfileRule, deleteProfileRule, listProfileRules, updateProfileRule } from "./api";
 import { ProfileRulesPanel } from "./ProfileRulesPanel";
 import { initialProfileRuleEditFormState, initialProfileRuleFormState } from "./types";
@@ -98,7 +99,7 @@ export function ProfileRulesSection({ parentPending, profile, setNotice }: Profi
 
   return (
     <>
-      {error instanceof Error ? <p className="error-text">{error.message}</p> : null}
+      <PageFeedback error={error} />
       <ProfileRulesPanel
         form={ruleForm}
         editForm={editForm}
@@ -108,11 +109,7 @@ export function ProfileRulesSection({ parentPending, profile, setNotice }: Profi
         rules={rules}
         setForm={setRuleForm}
         onCreateRule={(value) => createRuleMutation.mutate(value)}
-        onDeleteRule={(rule) => {
-          if (window.confirm(`删除规则「${rule.rule}」？`)) {
-            deleteRuleMutation.mutate(rule.id);
-          }
-        }}
+        onDeleteRule={(rule) => deleteRuleMutation.mutate(rule.id)}
         onCancelEdit={() => {
           setEditingRuleId(null);
           setEditForm(initialProfileRuleEditFormState);

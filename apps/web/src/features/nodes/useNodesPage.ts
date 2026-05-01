@@ -95,10 +95,6 @@ export function useNodesPage() {
       return;
     }
 
-    if (action === "delete" && !window.confirm(`删除选中的 ${selectedNodeIds.length} 个节点？`)) {
-      return;
-    }
-
     const groups = parseGroups(batchForm.groups);
     if (action === "append-groups" && groups.length === 0) {
       setNotice("请输入要追加的分组");
@@ -132,11 +128,7 @@ export function useNodesPage() {
     searchQuery,
     selectedNodeIds,
     createNode: createMutation.mutate,
-    deleteNode: (node: NodeDto) => {
-      if (window.confirm(`删除节点「${node.name}」？`)) {
-        deleteMutation.mutate(node.id);
-      }
-    },
+    deleteNode: (node: NodeDto) => deleteMutation.mutate(node.id),
     resetEdit,
     runBatchAction,
     saveEdit,

@@ -106,11 +106,7 @@ export function useSourcesPage() {
     sourceCount: sources.length,
     statusFilter,
     createSource: createMutation.mutate,
-    deleteSource: (source: SourceDto) => {
-      if (window.confirm(`删除订阅源「${source.name}」？`)) {
-        deleteMutation.mutate(source.id);
-      }
-    },
+    deleteSource: (source: SourceDto) => deleteMutation.mutate(source.id),
     refreshAll: () => refreshAllMutation.mutate(),
     refreshSource: (id: string) => refreshMutation.mutate(id),
     resetEdit,

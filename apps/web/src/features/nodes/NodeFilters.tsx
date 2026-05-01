@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { NodeBatchActionInput } from "@smagicalsub/shared";
+import { ConfirmButton } from "../../shared/ConfirmButton";
 import { FilterField } from "../../shared/FilterField";
 
 type NodeFiltersProps = {
@@ -96,9 +97,15 @@ export function NodeBatchBar({
       <Button disabled={disabled} onClick={() => onAction("append-groups")} type="button" variant="outline">
         追加分组
       </Button>
-      <Button disabled={disabled} onClick={() => onAction("delete")} type="button" variant="destructive">
+      <ConfirmButton
+        disabled={disabled}
+        description="删除后这些节点不会再出现在任何订阅输出中。"
+        onConfirm={() => onAction("delete")}
+        title={`删除选中的 ${selectedCount} 个节点？`}
+        type="button"
+      >
         删除
-      </Button>
+      </ConfirmButton>
       <Button disabled={disabled} onClick={onClearSelection} type="button" variant="ghost">
         清空选择
       </Button>

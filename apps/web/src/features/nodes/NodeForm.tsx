@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
+import { CheckboxField } from "../../shared/CheckboxField";
 import type { NodeFormState } from "./types";
 import { parseGroups } from "./utils";
 
@@ -52,14 +53,11 @@ export function NodeForm({ form, pending, setForm, onSubmit }: NodeFormProps) {
           value={form.groups}
         />
       </label>
-      <label className="checkbox-field">
-        <input
-          checked={form.enabled}
-          onChange={(event) => setForm((current) => ({ ...current, enabled: event.target.checked }))}
-          type="checkbox"
-        />
-        <span>启用</span>
-      </label>
+      <CheckboxField
+        checked={form.enabled}
+        label="启用"
+        onCheckedChange={(enabled) => setForm((current) => ({ ...current, enabled }))}
+      />
       <Button disabled={pending} type="submit">
         添加节点
       </Button>
