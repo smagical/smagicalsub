@@ -1,6 +1,7 @@
 import { parseSubscription } from "@smagicalsub/subscription";
 import type { SourceRefreshAllDto, SourceRefreshDto } from "@smagicalsub/shared";
 import type { Env } from "../../env";
+import type { OwnerScope } from "../../lib/auth-scope";
 import { replaceSourceNodes } from "./source-node.repository";
 import {
   createRefreshJob,
@@ -11,8 +12,8 @@ import { findSourceById, listEnabledSourceIds } from "./source.repository";
 
 const sourceRawKeyPrefix = "source_raw";
 
-export async function refreshSource(env: Env, sourceId: string): Promise<SourceRefreshDto | null> {
-  const source = await findSourceById(env.DB, sourceId);
+export async function refreshSource(env: Env, sourceId: string, scope?: OwnerScope): Promise<SourceRefreshDto | null> {
+  const source = await findSourceById(env.DB, sourceId, scope);
 
   if (!source) {
     return null;
@@ -40,7 +41,7 @@ export async function refreshSource(env: Env, sourceId: string): Promise<SourceR
 
     const nodes = parseSubscription(content);
     // 源节点按快照替换，确保上游删除节点后本地不会残留旧节点。
-    const nodeCount = await replaceSourceNodes(env.DB, sourceId, nodes);
+    const nodeCount = await replaceSourceNodes(env.DB, sourceId, nodes, source.owner_id);
     await markSourceRefreshStatus(env.DB, sourceId, "success");
     await markRefreshJobFinished(env.DB, jobId, "success", `Parsed ${nodeCount} nodes`);
 
@@ -62,13 +63,13 @@ export async function refreshSource(env: Env, sourceId: string): Promise<SourceR
   }
 }
 
-export async function refreshEnabledSources(env: Env): Promise<SourceRefreshAllDto> {
-  const sourceIds = await listEnabledSourceIds(env.DB);
+export async function refreshEnabledSources(env: Env, scope?: OwnerScope): Promise<SourceRefreshAllDto> {
+  const sourceIds = await listEnabledSourceIds(env.DB, scope);
   const results: SourceRefreshDto[] = [];
 
   // Worker 刷新外部订阅源时串行执行，降低上游限速和 Worker 子请求峰值风险。
   for (const sourceId of sourceIds) {
-    const result = await refreshSource(env, sourceId);
+    const result = await refreshSource(env, sourceId, scope);
 
     if (result) {
       results.push(result);

@@ -5,6 +5,7 @@ import type { BootstrapAdminInput, LoginInput, SiteSettingsDto } from "@smagical
 import { useState, type FormEvent, type ReactNode } from "react";
 import { BrandHeader } from "../shared/BrandHeader";
 import { FilterField } from "../shared/FilterField";
+import { AuthMarketing } from "./AuthMarketing";
 
 type LoginPanelProps = {
   error?: string | null;
@@ -91,15 +92,18 @@ export function StatusPanel({ description, settings, title }: { description: str
 
 function AuthCard({ children, description, settings, title }: { children: ReactNode; description: string; settings: SiteSettingsDto; title: string }) {
   return (
-    <main className="app-shell grid min-h-screen place-items-center p-6">
-      <Card className="w-full max-w-sm border-t-[3px] border-t-primary/70 bg-gradient-to-br from-card via-card to-primary/5">
-        <CardHeader>
-          <BrandHeader className="mb-2" settings={settings} />
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        {children ? <CardContent>{children}</CardContent> : null}
-      </Card>
+    <main className="app-shell min-h-screen p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+        <AuthMarketing settings={settings} />
+        <Card className="w-full border-t-[3px] border-t-primary/70 bg-gradient-to-br from-card via-card to-primary/5 shadow-xl">
+          <CardHeader>
+            <BrandHeader className="mb-2 lg:hidden" settings={settings} />
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </CardHeader>
+          {children ? <CardContent>{children}</CardContent> : null}
+        </Card>
+      </div>
     </main>
   );
 }

@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { createSubscribeTokenSchema, failure, success, updateSubscribeTokenSchema } from "@smagicalsub/shared";
 import { z } from "zod";
 import type { AppContext } from "../../env";
+import { ownerScope, type OwnerScope } from "../../lib/auth-scope";
 import { listResponse } from "../../lib/list-response";
 import { findProfileById } from "../profiles/profile.repository";
 import { deleteGeneratedSubscriptionCache } from "../subscribe/subscribe-cache";
@@ -20,32 +21,33 @@ const idParamSchema = z.object({
 });
 
 tokenRoutes.get("/", async (c) => {
-  const tokens = await listSubscribeTokens(c.env.DB);
+  const tokens = await listSubscribeTokens(c.env.DB, ownerScope(c.var.authUser));
   return c.json(success(listResponse(tokens)));
 });
 
 tokenRoutes.post("/", zValidator("json", createSubscribeTokenSchema), async (c) => {
   const input = c.req.valid("json");
-  const invalidProfile = await validateProfileBinding(c.env.DB, input.profile_id);
+  const scope = ownerScope(c.var.authUser);
+  const invalidProfile = await validateProfileBinding(c.env.DB, input.profile_id, scope);
 
   if (invalidProfile) {
     return invalidProfile;
   }
 
-  const ownerId = c.var.authUser.id === "admin-token" ? null : c.var.authUser.id;
-  const token = await createSubscribeToken(c.env.DB, input, ownerId);
+  const token = await createSubscribeToken(c.env.DB, input, scope.ownerId);
   return c.json(success(token), 201);
 });
 
 tokenRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json", updateSubscribeTokenSchema), async (c) => {
   const input = c.req.valid("json");
-  const invalidProfile = await validateProfileBinding(c.env.DB, input.profile_id);
+  const scope = ownerScope(c.var.authUser);
+  const invalidProfile = await validateProfileBinding(c.env.DB, input.profile_id, scope);
 
   if (invalidProfile) {
     return invalidProfile;
   }
 
-  const token = await updateSubscribeToken(c.env.DB, c.req.valid("param").id, input);
+  const token = await updateSubscribeToken(c.env.DB, c.req.valid("param").id, input, scope);
 
   if (!token) {
     return c.json(failure({ code: "TOKEN_NOT_FOUND", message: "订阅令牌不存在" }), 404);
@@ -56,7 +58,7 @@ tokenRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json",
 });
 
 tokenRoutes.post("/:id/reset", zValidator("param", idParamSchema), async (c) => {
-  const result = await resetSubscribeToken(c.env.DB, c.req.valid("param").id);
+  const result = await resetSubscribeToken(c.env.DB, c.req.valid("param").id, ownerScope(c.var.authUser));
 
   if (!result?.token) {
     return c.json(failure({ code: "TOKEN_NOT_FOUND", message: "订阅令牌不存在" }), 404);
@@ -67,7 +69,7 @@ tokenRoutes.post("/:id/reset", zValidator("param", idParamSchema), async (c) => 
 });
 
 tokenRoutes.delete("/:id", zValidator("param", idParamSchema), async (c) => {
-  const token = await deleteSubscribeToken(c.env.DB, c.req.valid("param").id);
+  const token = await deleteSubscribeToken(c.env.DB, c.req.valid("param").id, ownerScope(c.var.authUser));
 
   if (!token) {
     return c.json(failure({ code: "TOKEN_NOT_FOUND", message: "订阅令牌不存在" }), 404);
@@ -77,12 +79,12 @@ tokenRoutes.delete("/:id", zValidator("param", idParamSchema), async (c) => {
   return c.json(success({ id: token.id }));
 });
 
-async function validateProfileBinding(db: D1Database, profileId: string | null | undefined) {
+async function validateProfileBinding(db: D1Database, profileId: string | null | undefined, scope: OwnerScope) {
   if (!profileId) {
     return null;
   }
 
-  const profile = await findProfileById(db, profileId);
+  const profile = await findProfileById(db, profileId, scope);
 
   if (!profile) {
     return Response.json(failure({ code: "PROFILE_NOT_FOUND", message: "配置档不存在" }), { status: 404 });

@@ -34,6 +34,7 @@ export const subscriptionSources = sqliteTable("subscription_sources", {
 
 export const nodes = sqliteTable("nodes", {
   id: text("id").primaryKey(),
+  ownerId: text("owner_id").references(() => users.id, { onDelete: "set null" }),
   sourceId: text("source_id").references(() => subscriptionSources.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   protocol: text("protocol").notNull(),

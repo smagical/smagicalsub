@@ -11,7 +11,7 @@ type ExistingSourceNode = {
   enabled: number;
 };
 
-export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes: ParsedNode[]) {
+export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes: ParsedNode[], ownerId: string | null) {
   // 刷新源节点时保留用户维护的名称、分组和启停状态，避免上游更新覆盖本地整理结果。
   const previousNodes = await listExistingSourceNodes(db, sourceId);
   const previousByKey = new Map(previousNodes.map((node) => [sourceNodeKey(node), node]));
@@ -26,11 +26,12 @@ export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes
     statements.push(
       db
         .prepare(
-          `INSERT INTO nodes (id, source_id, name, protocol, server, port, tags, config_json, enabled)
-           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
+          `INSERT INTO nodes (id, owner_id, source_id, name, protocol, server, port, tags, config_json, enabled)
+           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`
         )
         .bind(
           previous?.id ?? crypto.randomUUID(),
+          ownerId,
           sourceId,
           previous?.name ?? node.name,
           node.protocol,

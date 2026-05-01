@@ -13,6 +13,7 @@ export type SubscribeTokenRow = {
 
 export type ActiveSubscribeTokenRow = {
   id: string;
+  owner_id: string | null;
   token: string;
   name: string;
   profile_id: string | null;

@@ -1,5 +1,6 @@
 export type SourceRow = {
   id: string;
+  owner_id: string | null;
   name: string;
   url: string;
   enabled: number;
@@ -9,4 +10,3 @@ export type SourceRow = {
   created_at: string;
   updated_at: string;
 };
-

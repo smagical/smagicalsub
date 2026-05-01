@@ -1,26 +1,31 @@
 import type { CreateProfileInput, UpdateProfileInput } from "@smagicalsub/shared";
+import { ownerWhere, type OwnerScope } from "../../lib/auth-scope";
 import type { ProfileRow } from "./profile.types";
 
-export async function listProfiles(db: D1Database) {
+export async function listProfiles(db: D1Database, scope?: OwnerScope) {
+  const filter = scope ? ownerWhere(scope) : { params: [] as string[], sql: "" };
   const result = await db
     .prepare(
       `SELECT id, owner_id, name, description, default_strategy, enabled, created_at, updated_at
        FROM profiles
+       WHERE 1 = 1${filter.sql}
        ORDER BY created_at DESC`
     )
+    .bind(...filter.params)
     .all<ProfileRow>();
 
   return result.results ?? [];
 }
 
-export async function findProfileById(db: D1Database, id: string) {
+export async function findProfileById(db: D1Database, id: string, scope?: OwnerScope) {
+  const filter = scope ? ownerWhere(scope) : { params: [] as string[], sql: "" };
   return db
     .prepare(
       `SELECT id, owner_id, name, description, default_strategy, enabled, created_at, updated_at
        FROM profiles
-       WHERE id = ?1`
+       WHERE id = ?${filter.sql}`
     )
-    .bind(id)
+    .bind(id, ...filter.params)
     .first<ProfileRow>();
 }
 
@@ -38,8 +43,8 @@ export async function createProfile(db: D1Database, input: CreateProfileInput, o
   return findProfileById(db, id);
 }
 
-export async function updateProfile(db: D1Database, id: string, input: UpdateProfileInput) {
-  const current = await findProfileById(db, id);
+export async function updateProfile(db: D1Database, id: string, input: UpdateProfileInput, scope?: OwnerScope) {
+  const current = await findProfileById(db, id, scope);
 
   if (!current) {
     return null;
@@ -64,11 +69,11 @@ export async function updateProfile(db: D1Database, id: string, input: UpdatePro
     )
     .run();
 
-  return findProfileById(db, id);
+  return findProfileById(db, id, scope);
 }
 
-export async function deleteProfile(db: D1Database, id: string) {
-  const current = await findProfileById(db, id);
+export async function deleteProfile(db: D1Database, id: string, scope?: OwnerScope) {
+  const current = await findProfileById(db, id, scope);
 
   if (!current) {
     return false;

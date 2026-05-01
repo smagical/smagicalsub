@@ -1,39 +1,46 @@
 import type { CreateSubscriptionSourceInput, UpdateSubscriptionSourceInput } from "@smagicalsub/shared";
+import { ownerWhere, type OwnerScope } from "../../lib/auth-scope";
 import type { SourceRow } from "./source.types";
 
-export async function listSources(db: D1Database) {
+export async function listSources(db: D1Database, scope?: OwnerScope) {
+  const filter = scope ? ownerWhere(scope) : { params: [] as string[], sql: "" };
   const result = await db
     .prepare(
-      `SELECT id, name, url, enabled, last_status, last_error, last_fetched_at, created_at, updated_at
+      `SELECT id, owner_id, name, url, enabled, last_status, last_error, last_fetched_at, created_at, updated_at
        FROM subscription_sources
+       WHERE 1 = 1${filter.sql}
        ORDER BY created_at DESC`
     )
+    .bind(...filter.params)
     .all<SourceRow>();
 
   return result.results ?? [];
 }
 
-export async function listEnabledSourceIds(db: D1Database) {
+export async function listEnabledSourceIds(db: D1Database, scope?: OwnerScope) {
+  const filter = scope ? ownerWhere(scope) : { params: [] as string[], sql: "" };
   const result = await db
     .prepare(
       `SELECT id
        FROM subscription_sources
-       WHERE enabled = 1
+       WHERE enabled = 1${filter.sql}
        ORDER BY created_at DESC`
     )
+    .bind(...filter.params)
     .all<{ id: string }>();
 
   return (result.results ?? []).map((row) => row.id);
 }
 
-export async function findSourceById(db: D1Database, id: string) {
+export async function findSourceById(db: D1Database, id: string, scope?: OwnerScope) {
+  const filter = scope ? ownerWhere(scope, "owner_id") : { params: [] as string[], sql: "" };
   return db
     .prepare(
-      `SELECT id, name, url, enabled, last_status, last_error, last_fetched_at, created_at, updated_at
+      `SELECT id, owner_id, name, url, enabled, last_status, last_error, last_fetched_at, created_at, updated_at
        FROM subscription_sources
-       WHERE id = ?1`
+       WHERE id = ?${filter.sql}`
     )
-    .bind(id)
+    .bind(id, ...filter.params)
     .first<SourceRow>();
 }
 
@@ -51,8 +58,8 @@ export async function createSource(db: D1Database, input: CreateSubscriptionSour
   return findSourceById(db, id);
 }
 
-export async function updateSource(db: D1Database, id: string, input: UpdateSubscriptionSourceInput) {
-  const current = await findSourceById(db, id);
+export async function updateSource(db: D1Database, id: string, input: UpdateSubscriptionSourceInput, scope?: OwnerScope) {
+  const current = await findSourceById(db, id, scope);
 
   if (!current) {
     return null;
@@ -73,11 +80,11 @@ export async function updateSource(db: D1Database, id: string, input: UpdateSubs
     .bind(next.name, next.url, next.enabled, id)
     .run();
 
-  return findSourceById(db, id);
+  return findSourceById(db, id, scope);
 }
 
-export async function deleteSource(db: D1Database, id: string) {
-  const current = await findSourceById(db, id);
+export async function deleteSource(db: D1Database, id: string, scope?: OwnerScope) {
+  const current = await findSourceById(db, id, scope);
 
   if (!current) {
     return false;

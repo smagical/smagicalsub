@@ -1,4 +1,5 @@
 import type { CreateSubscribeTokenInput, UpdateSubscribeTokenInput } from "@smagicalsub/shared";
+import type { OwnerScope } from "../../lib/auth-scope";
 import { findSubscribeTokenById } from "./token-reader.repository";
 
 export {
@@ -31,8 +32,8 @@ export async function createSubscribeToken(db: D1Database, input: CreateSubscrib
   return findSubscribeTokenById(db, id);
 }
 
-export async function updateSubscribeToken(db: D1Database, id: string, input: UpdateSubscribeTokenInput) {
-  const current = await findSubscribeTokenById(db, id);
+export async function updateSubscribeToken(db: D1Database, id: string, input: UpdateSubscribeTokenInput, scope?: OwnerScope) {
+  const current = await findSubscribeTokenById(db, id, scope);
 
   if (!current) {
     return null;
@@ -56,11 +57,11 @@ export async function updateSubscribeToken(db: D1Database, id: string, input: Up
     )
     .run();
 
-  return findSubscribeTokenById(db, id);
+  return findSubscribeTokenById(db, id, scope);
 }
 
-export async function resetSubscribeToken(db: D1Database, id: string) {
-  const current = await findSubscribeTokenById(db, id);
+export async function resetSubscribeToken(db: D1Database, id: string, scope?: OwnerScope) {
+  const current = await findSubscribeTokenById(db, id, scope);
 
   if (!current) {
     return null;
@@ -78,12 +79,12 @@ export async function resetSubscribeToken(db: D1Database, id: string) {
 
   return {
     oldToken: current.token,
-    token: await findSubscribeTokenById(db, id)
+    token: await findSubscribeTokenById(db, id, scope)
   };
 }
 
-export async function deleteSubscribeToken(db: D1Database, id: string) {
-  const current = await findSubscribeTokenById(db, id);
+export async function deleteSubscribeToken(db: D1Database, id: string, scope?: OwnerScope) {
+  const current = await findSubscribeTokenById(db, id, scope);
 
   if (!current) {
     return null;

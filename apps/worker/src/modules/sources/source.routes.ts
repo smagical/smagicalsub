@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { createSubscriptionSourceSchema, failure, success, updateSubscriptionSourceSchema } from "@smagicalsub/shared";
 import { z } from "zod";
 import type { AppContext, Env } from "../../env";
+import { ownerScope, type OwnerScope } from "../../lib/auth-scope";
 import { listResponse } from "../../lib/list-response";
 import { deleteGeneratedSubscriptionCaches } from "../subscribe/subscribe-cache";
 import { listSubscribeTokenValues } from "../tokens/token.repository";
@@ -15,50 +16,54 @@ const idParamSchema = z.object({
 });
 
 sourceRoutes.get("/", async (c) => {
-  const sources = await listSources(c.env.DB);
+  const sources = await listSources(c.env.DB, ownerScope(c.var.authUser));
   return c.json(success(listResponse(sources)));
 });
 
 sourceRoutes.post("/", zValidator("json", createSubscriptionSourceSchema), async (c) => {
-  const ownerId = c.var.authUser.id === "admin-token" ? null : c.var.authUser.id;
+  const ownerId = ownerScope(c.var.authUser).ownerId;
   const source = await createSource(c.env.DB, c.req.valid("json"), ownerId);
   return c.json(success(source), 201);
 });
 
 sourceRoutes.post("/refresh", async (c) => {
-  const result = await refreshEnabledSources(c.env);
+  const scope = ownerScope(c.var.authUser);
+  const result = await refreshEnabledSources(c.env, scope);
 
   if (result.success > 0) {
-    await deleteAllSubscriptionCaches(c.env);
+    await deleteAllSubscriptionCaches(c.env, scope);
   }
 
   return c.json(success(result));
 });
 
 sourceRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json", updateSubscriptionSourceSchema), async (c) => {
-  const source = await updateSource(c.env.DB, c.req.valid("param").id, c.req.valid("json"));
+  const scope = ownerScope(c.var.authUser);
+  const source = await updateSource(c.env.DB, c.req.valid("param").id, c.req.valid("json"), scope);
 
   if (!source) {
     return c.json(failure({ code: "SOURCE_NOT_FOUND", message: "订阅源不存在" }), 404);
   }
 
-  await deleteAllSubscriptionCaches(c.env);
+  await deleteAllSubscriptionCaches(c.env, scope);
   return c.json(success(source));
 });
 
 sourceRoutes.delete("/:id", zValidator("param", idParamSchema), async (c) => {
-  const deleted = await deleteSource(c.env.DB, c.req.valid("param").id);
+  const scope = ownerScope(c.var.authUser);
+  const deleted = await deleteSource(c.env.DB, c.req.valid("param").id, scope);
 
   if (!deleted) {
     return c.json(failure({ code: "SOURCE_NOT_FOUND", message: "订阅源不存在" }), 404);
   }
 
-  await deleteAllSubscriptionCaches(c.env);
+  await deleteAllSubscriptionCaches(c.env, scope);
   return c.json(success({ id: c.req.valid("param").id }));
 });
 
 sourceRoutes.post("/:id/refresh", zValidator("param", idParamSchema), async (c) => {
-  const result = await refreshSource(c.env, c.req.valid("param").id);
+  const scope = ownerScope(c.var.authUser);
+  const result = await refreshSource(c.env, c.req.valid("param").id, scope);
 
   if (!result) {
     return c.json(failure({ code: "SOURCE_NOT_FOUND", message: "订阅源不存在" }), 404);
@@ -68,11 +73,11 @@ sourceRoutes.post("/:id/refresh", zValidator("param", idParamSchema), async (c) 
     return c.json(failure({ code: "SOURCE_REFRESH_FAILED", message: "订阅源刷新失败" }), 502);
   }
 
-  await deleteAllSubscriptionCaches(c.env);
+  await deleteAllSubscriptionCaches(c.env, scope);
   return c.json(success(result));
 });
 
-async function deleteAllSubscriptionCaches(env: Env) {
-  const tokenValues = await listSubscribeTokenValues(env.DB);
+async function deleteAllSubscriptionCaches(env: Env, scope: OwnerScope) {
+  const tokenValues = await listSubscribeTokenValues(env.DB, scope);
   await deleteGeneratedSubscriptionCaches(env.KV, tokenValues);
 }

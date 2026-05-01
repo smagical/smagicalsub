@@ -35,7 +35,7 @@ subscribeRoutes.get("/:token", async (c) => {
     return subscriptionResponse(cached, format);
   }
 
-  const nodes = await listEnabledRenderableNodes(c.env.DB);
+  const nodes = await listEnabledRenderableNodes(c.env.DB, tokenRow.owner_id);
   const profileName = tokenRow.profile_name ?? tokenRow.name;
   const defaultStrategy = tokenRow.profile_default_strategy ?? "Proxy";
   const rules = tokenRow.profile_id ? await listEnabledProfileRuleText(c.env.DB, tokenRow.profile_id) : [];

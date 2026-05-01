@@ -29,6 +29,7 @@ test("logs in and sends the session token with API requests", async ({ page }) =
 
   await page.goto("/");
   await expect(page.getByText("管理员访问")).toBeVisible();
+  await expect(page.getByText("多格式输出")).toBeVisible();
 
   await page.getByLabel("邮箱").fill("admin@example.com");
   await page.getByLabel("密码").fill("password123");

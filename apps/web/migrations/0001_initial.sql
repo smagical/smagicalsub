@@ -106,4 +106,3 @@ CREATE INDEX idx_nodes_enabled ON nodes(enabled);
 CREATE INDEX idx_profile_rules_profile_id ON profile_rules(profile_id);
 CREATE INDEX idx_subscribe_tokens_token ON subscribe_tokens(token);
 CREATE INDEX idx_access_logs_token_id ON access_logs(token_id);
-

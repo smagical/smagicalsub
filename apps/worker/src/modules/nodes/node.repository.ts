@@ -1,22 +1,26 @@
 import { parseNodeUri } from "@smagicalsub/subscription";
 import type { CreateNodeInput, UpdateNodeInput } from "@smagicalsub/shared";
+import { ownerWhere, type OwnerScope } from "../../lib/auth-scope";
 import { toNodeDto, toRenderableNode } from "./node.mapper";
 import type { NodeRow, RenderableNodeRow } from "./node.types";
 
-export async function listNodes(db: D1Database) {
+export async function listNodes(db: D1Database, scope?: OwnerScope) {
+  const filter = scope ? ownerWhere(scope) : { params: [] as string[], sql: "" };
   const result = await db
     .prepare(
-      `SELECT id, source_id, name, protocol, server, port, tags, enabled, updated_at
+      `SELECT id, owner_id, source_id, name, protocol, server, port, tags, enabled, updated_at
        FROM nodes
+       WHERE 1 = 1${filter.sql}
        ORDER BY updated_at DESC, name ASC`
     )
+    .bind(...filter.params)
     .all<NodeRow>();
 
   return (result.results ?? []).map(toNodeDto);
 }
 
-export async function listNodeGroups(db: D1Database) {
-  const nodes = await listNodes(db);
+export async function listNodeGroups(db: D1Database, scope?: OwnerScope) {
+  const nodes = await listNodes(db, scope);
   const groups = new Set<string>();
 
   // 当前阶段分组复用 nodes.tags JSON 字段，列表页从节点聚合出可选分组。
@@ -29,20 +33,21 @@ export async function listNodeGroups(db: D1Database) {
   return Array.from(groups).sort((a, b) => a.localeCompare(b));
 }
 
-export async function findNodeById(db: D1Database, id: string) {
+export async function findNodeById(db: D1Database, id: string, scope?: OwnerScope) {
+  const filter = scope ? ownerWhere(scope) : { params: [] as string[], sql: "" };
   const row = await db
     .prepare(
-      `SELECT id, source_id, name, protocol, server, port, tags, enabled, updated_at
+      `SELECT id, owner_id, source_id, name, protocol, server, port, tags, enabled, updated_at
        FROM nodes
-       WHERE id = ?1`
+       WHERE id = ?${filter.sql}`
     )
-    .bind(id)
+    .bind(id, ...filter.params)
     .first<NodeRow>();
 
   return row ? toNodeDto(row) : null;
 }
 
-export async function createManualNode(db: D1Database, input: CreateNodeInput) {
+export async function createManualNode(db: D1Database, input: CreateNodeInput, ownerId: string | null = null) {
   const parsed = parseNodeUri(input.uri);
 
   if (!parsed) {
@@ -55,11 +60,12 @@ export async function createManualNode(db: D1Database, input: CreateNodeInput) {
   // 手动节点和订阅源节点共用 nodes 表，source_id=NULL 表示用户手动维护。
   await db
     .prepare(
-      `INSERT INTO nodes (id, source_id, name, protocol, server, port, tags, config_json, enabled)
-       VALUES (?1, NULL, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`
+      `INSERT INTO nodes (id, owner_id, source_id, name, protocol, server, port, tags, config_json, enabled)
+       VALUES (?1, ?2, NULL, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
     )
     .bind(
       id,
+      ownerId,
       name,
       parsed.protocol,
       parsed.server ?? null,
@@ -74,8 +80,8 @@ export async function createManualNode(db: D1Database, input: CreateNodeInput) {
   return findNodeById(db, id);
 }
 
-export async function updateNode(db: D1Database, id: string, input: UpdateNodeInput) {
-  const current = await findNodeById(db, id);
+export async function updateNode(db: D1Database, id: string, input: UpdateNodeInput, scope?: OwnerScope) {
+  const current = await findNodeById(db, id, scope);
 
   if (!current) {
     return null;
@@ -98,26 +104,32 @@ export async function updateNode(db: D1Database, id: string, input: UpdateNodeIn
     )
     .run();
 
-  return findNodeById(db, id);
+  return findNodeById(db, id, scope);
 }
 
-export async function deleteNode(db: D1Database, id: string) {
+export async function deleteNode(db: D1Database, id: string, scope?: OwnerScope) {
+  const current = await findNodeById(db, id, scope);
+
+  if (!current) {
+    return false;
+  }
+
   const result = await db.prepare(`DELETE FROM nodes WHERE id = ?1`).bind(id).run();
   return result.meta.changes > 0;
 }
 
-export async function listEnabledRenderableNodes(db: D1Database) {
+export async function listEnabledRenderableNodes(db: D1Database, ownerId?: string | null) {
+  const ownerSql = typeof ownerId === "string" ? " AND nodes.owner_id = ?" : "";
+  const statement = db.prepare(
+    `SELECT nodes.id, nodes.name, nodes.protocol, nodes.config_json, nodes.tags
+     FROM nodes
+     LEFT JOIN subscription_sources ON subscription_sources.id = nodes.source_id
+     WHERE nodes.enabled = 1
+       AND (nodes.source_id IS NULL OR subscription_sources.enabled = 1)${ownerSql}
+     ORDER BY nodes.name ASC`
+  );
   // 订阅渲染只读取最小字段，降低 Worker 生成订阅时的 D1 查询和反序列化成本。
-  const result = await db
-    .prepare(
-      `SELECT nodes.id, nodes.name, nodes.protocol, nodes.config_json, nodes.tags
-       FROM nodes
-       LEFT JOIN subscription_sources ON subscription_sources.id = nodes.source_id
-       WHERE nodes.enabled = 1
-         AND (nodes.source_id IS NULL OR subscription_sources.enabled = 1)
-       ORDER BY nodes.name ASC`
-    )
-    .all<RenderableNodeRow>();
+  const result = await (typeof ownerId === "string" ? statement.bind(ownerId) : statement).all<RenderableNodeRow>();
 
   return (result.results ?? []).map(toRenderableNode);
 }

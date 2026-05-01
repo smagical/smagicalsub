@@ -1,5 +1,6 @@
 export type NodeRow = {
   id: string;
+  owner_id: string | null;
   source_id: string | null;
   name: string;
   protocol: string;
