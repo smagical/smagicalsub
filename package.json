@@ -12,12 +12,15 @@
     "build": "pnpm --filter @smagicalsub/web build",
     "deploy": "pnpm --filter @smagicalsub/web deploy",
     "test": "pnpm -r --if-present test",
+    "test:e2e": "pnpm build && playwright test",
+    "test:e2e:install": "playwright install chromium",
     "typecheck": "pnpm -r --if-present typecheck",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "pnpm --filter @smagicalsub/web db:migrate:local",
     "db:migrate:remote": "pnpm --filter @smagicalsub/web db:migrate:remote"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "drizzle-kit": "^0.31.7",
     "typescript": "^5.9.0",
     "vitest": "^4.1.5"

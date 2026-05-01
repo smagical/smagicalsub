@@ -150,3 +150,7 @@ vite.config.ts.timestamp-*
 .turbo/
 .idea/
 .codex-backup/
+
+# Test artifacts
+test-results/
+playwright-report/

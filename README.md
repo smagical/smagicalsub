@@ -58,11 +58,12 @@ pnpm db:migrate:remote
 
 ```bash
 pnpm test
+pnpm test:e2e
 pnpm typecheck
 pnpm build
 ```
 
-当前测试覆盖订阅 URI 解析、Clash/v2rayN/明文/sing-box 渲染，以及 Worker 管理员令牌提取和授权判断。
+当前测试覆盖订阅 URI 解析、Clash/v2rayN/明文/sing-box 渲染、Worker 管理员令牌提取和授权判断、Cloudflare Workers 运行时健康检查/管理接口拦截，以及浏览器端控制台导航和管理员令牌流程。
 
 ## 订阅格式
 
@@ -119,13 +120,13 @@ pnpm build
 - 前端已迁移到 Tailwind CSS v4 + shadcn/ui 组件体系，旧全局样式已收敛到 `apps/web/src/styles.css`。
 - 管理 API 已支持 `ADMIN_TOKEN` 保护，公开订阅仍使用订阅令牌保护。
 - 删除配置档时会显式解绑令牌并清理规则，避免外键行为不一致导致订阅令牌引用失效配置档。
-- 已接入 Vitest，覆盖订阅解析/渲染和管理令牌保护的核心逻辑。
+- 已接入 Vitest、Cloudflare Workers Vitest pool 和 Playwright E2E，覆盖核心逻辑、Worker 运行时和浏览器流程。
 
 ## 仍需确认
 
 - 用户账号登录、会话续期和多用户隔离的 schema 已预留；当前先采用单管理员令牌保护管理 API。
 - 生产部署前必须替换 `apps/web/wrangler.jsonc` 中的 D1 database id 和 KV namespace id。
-- 当前已有单元测试，但还没有浏览器端 E2E 测试和 Cloudflare Workers 运行时集成测试。
+- 是否继续实现更完整的用户系统，包括首个管理员初始化、密码/第三方登录、会话续期和角色权限。
 
 ## 开发约定
 
