@@ -68,8 +68,20 @@ export async function updateProfile(db: D1Database, id: string, input: UpdatePro
 }
 
 export async function deleteProfile(db: D1Database, id: string) {
-  const result = await db.prepare(`DELETE FROM profiles WHERE id = ?1`).bind(id).run();
-  return result.meta.changes > 0;
+  const current = await findProfileById(db, id);
+
+  if (!current) {
+    return false;
+  }
+
+  // D1/SQLite 外键约束在不同执行环境中可能配置不同，这里显式解绑令牌并清理规则。
+  await db.batch([
+    db.prepare(`DELETE FROM profile_rules WHERE profile_id = ?1`).bind(id),
+    db.prepare(`UPDATE subscribe_tokens SET profile_id = NULL WHERE profile_id = ?1`).bind(id),
+    db.prepare(`DELETE FROM profiles WHERE id = ?1`).bind(id)
+  ]);
+
+  return true;
 }
 
 function normalizeNullableText(value: string | null | undefined) {

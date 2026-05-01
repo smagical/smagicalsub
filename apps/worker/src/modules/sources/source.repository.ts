@@ -48,10 +48,7 @@ export async function createSource(db: D1Database, input: CreateSubscriptionSour
     .bind(id, input.name, input.url, input.enabled ? 1 : 0)
     .run();
 
-  return {
-    id,
-    ...input
-  };
+  return findSourceById(db, id);
 }
 
 export async function updateSource(db: D1Database, id: string, input: UpdateSubscriptionSourceInput) {

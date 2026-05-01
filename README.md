@@ -39,6 +39,7 @@ pnpm dev
 ## 数据库
 
 先在 Cloudflare 创建 D1 数据库与 KV namespace，然后把 `apps/web/wrangler.jsonc` 里的占位 ID 替换成真实值。
+迁移文件位于 `apps/web/migrations`，由 wrangler 从 `apps/web` 包执行。
 
 ```bash
 pnpm db:migrate:local
@@ -91,6 +92,20 @@ pnpm db:migrate:remote
 概览页会从刷新任务、订阅访问、订阅源和令牌记录中聚合最近事件，并提供一键批量刷新已启用订阅源的快捷入口。
 
 配置档规则支持新增、编辑、上移、下移、启停和删除，并按排序升序写入 Clash 订阅；如果没有 `MATCH` 规则，会自动追加 `MATCH,<默认策略>` 兜底。v2rayN、明文和 sing-box 当前不转换配置档规则。
+
+## 当前完成度
+
+- Cloudflare Workers 前后端同部署入口已完成，`/api/*`、`/sub/*` 走 Worker，静态页面走 Workers Static Assets。
+- 订阅源、单节点、节点分组、批量节点操作、配置档、配置档规则、令牌、访问日志和概览页已完成基础闭环。
+- Clash、v2rayN Base64、明文 URI、sing-box 四类订阅输出已完成；明文和 v2rayN 会保留原始 URI。
+- 前端已迁移到 Tailwind CSS v4 + shadcn/ui 组件体系，旧全局样式已收敛到 `apps/web/src/styles.css`。
+- 删除配置档时会显式解绑令牌并清理规则，避免外键行为不一致导致订阅令牌引用失效配置档。
+
+## 仍需确认
+
+- 管理员登录、会话和多用户隔离的 schema 已预留，但安全策略尚未实现，需要先确认登录方式、管理员初始化和权限边界。
+- 生产部署前必须替换 `apps/web/wrangler.jsonc` 中的 D1 database id 和 KV namespace id。
+- 当前只有类型检查和生产构建校验，尚未引入单元测试或端到端测试套件。
 
 ## 开发约定
 

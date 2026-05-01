@@ -25,19 +25,41 @@ export async function deleteJson<T>(url: string): Promise<T> {
 }
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...(init?.body ? { "Content-Type": "application/json" } : undefined),
-      ...init?.headers
-    }
-  });
-  const payload = (await response.json()) as ApiResponse<T>;
+  let response: Response;
+
+  try {
+    response = await fetch(url, {
+      ...init,
+      headers: {
+        Accept: "application/json",
+        ...(init?.body ? { "Content-Type": "application/json" } : undefined),
+        ...init?.headers
+      }
+    });
+  } catch {
+    throw new Error("网络请求失败，请确认本地 Worker 或 Cloudflare 部署可访问");
+  }
+
+  const payload = await readApiPayload<T>(response);
 
   if (!payload.ok) {
     throw new Error(payload.error.message);
   }
 
   return payload.data;
+}
+
+async function readApiPayload<T>(response: Response): Promise<ApiResponse<T>> {
+  const contentType = response.headers.get("Content-Type") ?? "";
+
+  if (!contentType.includes("application/json")) {
+    const fallback = await response.text();
+    throw new Error(fallback.trim() || `请求失败，HTTP ${response.status}`);
+  }
+
+  try {
+    return (await response.json()) as ApiResponse<T>;
+  } catch {
+    throw new Error(`接口返回了无效 JSON，HTTP ${response.status}`);
+  }
 }
