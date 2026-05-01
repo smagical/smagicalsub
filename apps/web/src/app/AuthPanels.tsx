@@ -97,8 +97,10 @@ function AuthCard({ children, description, settings, title }: { children: ReactN
   return (
     <main className="app-shell min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-7xl items-center gap-8 lg:grid-cols-[minmax(0,1fr)_440px]">
-        <AuthMarketing settings={settings} />
-        <Card className="w-full border bg-card/95 shadow-2xl ring-1 ring-primary/10">
+        <div className="order-2 lg:order-1">
+          <AuthMarketing settings={settings} />
+        </div>
+        <Card className="order-1 w-full border bg-card/95 shadow-2xl ring-1 ring-primary/10 lg:order-2">
           <div className="accent-strip h-1" />
           <CardHeader className="gap-3 px-6 pt-6">
             <BrandHeader className="mb-2 lg:hidden" settings={settings} />
