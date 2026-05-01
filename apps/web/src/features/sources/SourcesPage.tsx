@@ -1,5 +1,5 @@
 import { EmptyState } from "../../shared/EmptyState";
-import { ModuleHeading } from "../../shared/ModuleHeading";
+import { ModulePanel } from "../../shared/ModulePanel";
 import { PageFeedback } from "../../shared/PageFeedback";
 import { SourceFilters } from "./SourceFilters";
 import { SourceForm } from "./SourceForm";
@@ -11,9 +11,7 @@ export function SourcesPage() {
   const page = useSourcesPage();
 
   return (
-    <section className="panel wide">
-      <ModuleHeading eyebrow="Sources" title="订阅源" description="管理上游订阅链接、刷新状态和拉取结果。" />
-
+    <ModulePanel eyebrow="Sources" title="订阅源" description="管理上游订阅链接、刷新状态和拉取结果。">
       <SourceForm form={page.form} pending={page.pending} setForm={page.setForm} onSubmit={page.createSource} />
       <SourceFilters
         exportDisabled={page.filteredSources.length === 0}
@@ -46,6 +44,6 @@ export function SourcesPage() {
           onToggleEnabled={page.toggleEnabled}
         />
       )}
-    </section>
+    </ModulePanel>
   );
 }

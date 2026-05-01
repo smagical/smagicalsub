@@ -11,13 +11,6 @@
   font-weight: 700;
 }
 
-.panel {
-  border: 1px solid #dfe5dc;
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 12px 28px rgb(31 42 35 / 6%);
-}
-
 .metric-card-content {
   display: flex;
   align-items: center;
@@ -66,27 +59,8 @@
   color: #9a2948;
 }
 
-.panel {
-  padding: 18px;
-}
-
-.panel.wide {
-  grid-column: 1 / -1;
-}
-
 .dashboard-card-wide {
   grid-column: 1 / -1;
-}
-
-.module-heading {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 18px;
-}
-
-.module-heading span {
-  color: #697168;
-  font-size: 14px;
 }
 
 .dashboard-action-grid {

@@ -1,5 +1,5 @@
 import { EmptyState } from "../../shared/EmptyState";
-import { ModuleHeading } from "../../shared/ModuleHeading";
+import { ModulePanel } from "../../shared/ModulePanel";
 import { PageFeedback } from "../../shared/PageFeedback";
 import { NodeBatchBar, NodeFilters } from "./NodeFilters";
 import { NodeForm } from "./NodeForm";
@@ -11,9 +11,7 @@ export function NodesPage() {
   const page = useNodesPage();
 
   return (
-    <section className="panel wide">
-      <ModuleHeading eyebrow="Nodes" title="节点" description="添加单个节点，按分组查看订阅源解析和手动维护的节点。" />
-
+    <ModulePanel eyebrow="Nodes" title="节点" description="添加单个节点，按分组查看订阅源解析和手动维护的节点。">
       <NodeForm form={page.form} pending={page.pending} setForm={page.setForm} onSubmit={page.createNode} />
       <NodeFilters
         exportDisabled={page.filteredNodes.length === 0}
@@ -55,6 +53,6 @@ export function NodesPage() {
           onToggleVisible={page.toggleVisible}
         />
       )}
-    </section>
+    </ModulePanel>
   );
 }

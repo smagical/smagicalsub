@@ -1,5 +1,5 @@
 import { EmptyState } from "../../shared/EmptyState";
-import { ModuleHeading } from "../../shared/ModuleHeading";
+import { ModulePanel } from "../../shared/ModulePanel";
 import { PageFeedback } from "../../shared/PageFeedback";
 import { TokenFilters } from "./TokenFilters";
 import { TokenForm } from "./TokenForm";
@@ -11,8 +11,7 @@ export function TokensPage() {
   const page = useTokensPage();
 
   return (
-    <section className="panel wide">
-      <ModuleHeading eyebrow="Tokens" title="订阅令牌" description="创建订阅访问令牌，控制启停、过期、重置和删除。" />
+    <ModulePanel eyebrow="Tokens" title="订阅令牌" description="创建订阅访问令牌，控制启停、过期、重置和删除。">
       <TokenForm form={page.form} pending={page.pending} profiles={page.profiles} setForm={page.setForm} onSubmit={page.createToken} />
       <TokenFilters
         copyFormat={page.copyFormat}
@@ -47,6 +46,6 @@ export function TokensPage() {
           onToggleEnabled={page.toggleEnabled}
         />
       )}
-    </section>
+    </ModulePanel>
   );
 }

@@ -1,5 +1,5 @@
 import { EmptyState } from "../../shared/EmptyState";
-import { ModuleHeading } from "../../shared/ModuleHeading";
+import { ModulePanel } from "../../shared/ModulePanel";
 import { PageFeedback } from "../../shared/PageFeedback";
 import { ProfileFilters } from "./ProfileFilters";
 import { ProfileForm } from "./ProfileForm";
@@ -12,9 +12,7 @@ export function ProfilesPage() {
   const page = useProfilesPage();
 
   return (
-    <section className="panel wide">
-      <ModuleHeading eyebrow="Profiles" title="配置档" description="维护订阅配置档，后续规则和令牌绑定会基于这里扩展。" />
-
+    <ModulePanel eyebrow="Profiles" title="配置档" description="维护订阅配置档，后续规则和令牌绑定会基于这里扩展。">
       <ProfileForm form={page.form} pending={page.pending} setForm={page.setForm} onSubmit={page.createProfile} />
       <ProfileFilters
         exportDisabled={page.filteredProfiles.length === 0}
@@ -50,6 +48,6 @@ export function ProfilesPage() {
         profile={page.selectedProfile}
         setNotice={page.setNotice}
       />
-    </section>
+    </ModulePanel>
   );
 }

@@ -8,7 +8,7 @@ import { downloadCsv } from "../../lib/download-csv";
 import { EmptyState } from "../../shared/EmptyState";
 import { FilterBar } from "../../shared/FilterBar";
 import { FilterField } from "../../shared/FilterField";
-import { ModuleHeading } from "../../shared/ModuleHeading";
+import { ModulePanel } from "../../shared/ModulePanel";
 import { PageFeedback } from "../../shared/PageFeedback";
 import { listAccessLogs } from "./api";
 import { LogsTable } from "./LogsTable";
@@ -48,8 +48,7 @@ export function LogsPage() {
   }
 
   return (
-    <section className="panel wide">
-      <ModuleHeading eyebrow="Logs" title="访问日志" description="查看最近 100 条订阅访问记录，用于排查令牌和客户端请求。" />
+    <ModulePanel eyebrow="Logs" title="访问日志" description="查看最近 100 条订阅访问记录，用于排查令牌和客户端请求。">
       <FilterBar>
         <FilterField label="搜索日志">
           <Input
@@ -78,7 +77,7 @@ export function LogsPage() {
       ) : (
         <LogsTable logs={filteredLogs} onCopyPath={(path) => void copyPath(path)} onOpenPath={openPath} />
       )}
-    </section>
+    </ModulePanel>
   );
 }
 
