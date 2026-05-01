@@ -10,7 +10,7 @@ type DashboardEventsCardProps = {
 
 export function DashboardEventsCard({ events }: DashboardEventsCardProps) {
   return (
-    <Card className="dashboard-card-wide">
+    <Card className="col-span-full">
       <CardHeader>
         <div>
           <p className="eyebrow">Events</p>
@@ -21,15 +21,15 @@ export function DashboardEventsCard({ events }: DashboardEventsCardProps) {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="event-list">
+        <div className="flex flex-col gap-2.5">
           {events.length === 0 ? (
             <EmptyState label="暂无事件" />
           ) : (
             events.map((event) => (
-              <div className="event-item" key={event.id}>
+              <div className="flex min-h-11 items-center gap-3 rounded-md bg-muted/50 px-3 py-2 max-[560px]:items-start max-[560px]:flex-col" key={event.id}>
                 <EventStatusBadge status={event.status} />
                 <strong>{event.title}</strong>
-                <time>{event.time}</time>
+                <time className="ml-auto text-sm text-muted-foreground max-[560px]:ml-0">{event.time}</time>
               </div>
             ))
           )}

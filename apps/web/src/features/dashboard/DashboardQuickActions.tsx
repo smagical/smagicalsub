@@ -31,7 +31,7 @@ export function DashboardQuickActions({ error, notice, pending, onNavigate, onRe
         <CardTitle>快速操作</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="dashboard-action-grid">
+        <div className="grid grid-cols-3 gap-2.5 max-[920px]:grid-cols-1">
           {quickActions.map((action) => (
             <Button
               disabled={pending}

@@ -12,8 +12,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .content-grid,
-  .dashboard-action-grid {
+  .content-grid {
     grid-template-columns: 1fr;
   }
 
@@ -32,14 +31,8 @@
     font-size: 28px;
   }
 
-  .topbar,
-  .storage-item,
-  .event-item {
+  .topbar {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .event-item time {
-    margin-left: 0;
   }
 }
