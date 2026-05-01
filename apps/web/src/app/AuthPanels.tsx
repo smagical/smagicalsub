@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { BootstrapAdminInput, LoginInput, SiteSettingsDto } from "@smagicalsub/shared";
+import { ArrowRight, CheckCircle2, KeyRound } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { BrandHeader } from "../shared/BrandHeader";
 import { FilterField } from "../shared/FilterField";
@@ -32,8 +33,9 @@ export function LoginPanel({ error, pending = false, settings, onLogin }: LoginP
           <Input onChange={(event) => setForm({ ...form, password: event.target.value })} required type="password" value={form.password} />
         </FilterField>
         <PanelError message={error} />
-        <Button disabled={pending} type="submit">
+        <Button disabled={pending} size="lg" type="submit">
           进入控制台
+          <ArrowRight data-icon="inline-end" />
         </Button>
       </form>
     </AuthCard>
@@ -74,8 +76,9 @@ export function BootstrapPanel({ error, pending = false, requiresToken, settings
           </FilterField>
         ) : null}
         <PanelError message={error} />
-        <Button disabled={pending} type="submit">
+        <Button disabled={pending} size="lg" type="submit">
           创建管理员
+          <ArrowRight data-icon="inline-end" />
         </Button>
       </form>
     </AuthCard>
@@ -93,15 +96,31 @@ export function StatusPanel({ description, settings, title }: { description: str
 function AuthCard({ children, description, settings, title }: { children: ReactNode; description: string; settings: SiteSettingsDto; title: string }) {
   return (
     <main className="app-shell min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-7xl items-center gap-8 lg:grid-cols-[minmax(0,1fr)_440px]">
         <AuthMarketing settings={settings} />
-        <Card className="w-full border-t-[3px] border-t-primary/70 bg-gradient-to-br from-card via-card to-primary/5 shadow-xl">
-          <CardHeader>
+        <Card className="w-full border bg-card/95 shadow-2xl ring-1 ring-primary/10">
+          <div className="accent-strip h-1" />
+          <CardHeader className="gap-3 px-6 pt-6">
             <BrandHeader className="mb-2 lg:hidden" settings={settings} />
-            <CardTitle>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
+            <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-3">
+              <div className="grid size-9 place-items-center rounded-md bg-primary/10 text-primary">
+                <KeyRound className="size-4" />
+              </div>
+              <div>
+                <span className="block text-xs text-muted-foreground">安全入口</span>
+                <span className="text-sm font-medium">Session Token + Owner Scope</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <CardTitle className="text-2xl">{title}</CardTitle>
+              <CardDescription className="leading-6">{description}</CardDescription>
+            </div>
           </CardHeader>
-          {children ? <CardContent>{children}</CardContent> : null}
+          {children ? <CardContent className="px-6 pb-2">{children}</CardContent> : null}
+          <CardFooter className="flex-col items-start gap-2 px-6">
+            <TrustLine text="管理员可统一维护用户和全局资源" />
+            <TrustLine text="普通用户默认只访问自己的节点和订阅" />
+          </CardFooter>
         </Card>
       </div>
     </main>
@@ -110,4 +129,13 @@ function AuthCard({ children, description, settings, title }: { children: ReactN
 
 function PanelError({ message }: { message?: string | null }) {
   return message ? <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{message}</p> : null;
+}
+
+function TrustLine({ text }: { text: string }) {
+  return (
+    <span className="flex items-center gap-2 text-xs text-muted-foreground">
+      <CheckCircle2 className="size-3.5" />
+      {text}
+    </span>
+  );
 }
