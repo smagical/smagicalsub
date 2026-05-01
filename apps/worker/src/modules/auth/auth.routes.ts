@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { bootstrapAdminSchema, changePasswordSchema, failure, loginSchema, success } from "@smagicalsub/shared";
 import type { AppContext } from "../../env";
 import { bearerTokenFromRequest } from "../../middleware/admin-auth";
+import { clearLoginFailures, loginRateLimitStatus, recordLoginFailure } from "./login-rate-limit";
 import { verifyPassword } from "./password";
 import { createSession, deleteOtherSessionsByToken, deleteSessionByToken } from "./session.repository";
 import { countUsers, createUser, findUserByEmail, updateUserPassword } from "./user.repository";
@@ -46,12 +47,21 @@ publicAuthRoutes.post("/bootstrap", zValidator("json", bootstrapAdminSchema), as
 
 publicAuthRoutes.post("/login", zValidator("json", loginSchema), async (c) => {
   const input = c.req.valid("json");
+  const ip = c.req.header("CF-Connecting-IP") ?? null;
+  const rateLimit = await loginRateLimitStatus(c.env, input.email, ip);
+
+  if (rateLimit.locked) {
+    return c.json(failure({ code: "LOGIN_RATE_LIMITED", message: "登录失败次数过多，请稍后再试" }), 429);
+  }
+
   const user = await findUserByEmail(c.env.DB, input.email);
 
   if (!user || !(await verifyPassword(input.password, user.password_hash))) {
+    await recordLoginFailure(c.env, input.email, ip);
     return c.json(failure({ code: "INVALID_CREDENTIALS", message: "邮箱或密码不正确" }), 401);
   }
 
+  await clearLoginFailures(c.env, input.email, ip);
   const session = await createSession(c.env.DB, user.id);
   return c.json(success({ ...session, user: { email: user.email, id: user.id, name: user.name, role: user.role } }));
 });
