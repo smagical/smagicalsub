@@ -36,9 +36,11 @@ pnpm install
 pnpm dev
 ```
 
-## 管理访问
+## 认证与权限
 
-管理 API 支持可选 `ADMIN_TOKEN` 保护。未设置时本地开发不拦截；设置后，除 `/api/health` 和 `/sub/*` 外的管理接口都需要前端输入管理员令牌，前端会以 `Authorization: Bearer <token>` 发送。
+管理 API 支持邮箱密码登录和 session token。首次启动时会进入管理员初始化流程；如果配置了 `ADMIN_TOKEN`，初始化首个管理员时必须提交该令牌。
+
+`ADMIN_TOKEN` 仍保留为管理员兜底入口和初始化保护令牌；普通用户通过登录接口获取 session token，前端会以 `Authorization: Bearer <token>` 发送。普通用户只能访问自己的订阅源、节点、配置档、令牌、访问日志和订阅输出，管理员可查看和维护全部资源。
 
 ```bash
 wrangler secret put ADMIN_TOKEN
@@ -61,9 +63,10 @@ pnpm test
 pnpm test:e2e
 pnpm typecheck
 pnpm build
+pnpm build:api
 ```
 
-当前测试覆盖订阅 URI 解析、Clash/v2rayN/明文/sing-box 渲染、Worker 管理员令牌提取和授权判断、Cloudflare Workers 运行时健康检查/管理接口拦截，以及浏览器端控制台导航和管理员令牌流程。
+当前测试覆盖订阅 URI 解析、Clash/v2rayN/明文/sing-box 渲染、Worker 管理员令牌提取和授权判断、Cloudflare Workers 运行时健康检查、首个管理员初始化、用户登录、多用户资源隔离，以及浏览器端控制台导航和登录流程。
 
 ## 订阅格式
 
@@ -118,15 +121,17 @@ pnpm build
 - 订阅源、单节点、节点分组、批量节点操作、配置档、配置档规则、令牌、访问日志和概览页已完成基础闭环。
 - Clash、v2rayN Base64、明文 URI、sing-box 四类订阅输出已完成；明文和 v2rayN 会保留原始 URI。
 - 前端已迁移到 Tailwind CSS v4 + shadcn/ui 组件体系，支持白天/夜晚主题，旧全局样式已收敛到 `apps/web/src/styles.css`。
-- 管理 API 已支持 `ADMIN_TOKEN` 保护，公开订阅仍使用订阅令牌保护。
+- 管理 API 已支持首个管理员初始化、邮箱密码登录、session token、多用户管理和普通用户资源隔离。
+- `ADMIN_TOKEN` 已保留为初始化保护和管理员兜底入口，公开订阅仍使用订阅令牌保护。
 - 删除配置档时会显式解绑令牌并清理规则，避免外键行为不一致导致订阅令牌引用失效配置档。
 - 已接入 Vitest、Cloudflare Workers Vitest pool 和 Playwright E2E，覆盖核心逻辑、Worker 运行时和浏览器流程。
 
-## 仍需确认
+## 后续计划
 
-- 用户账号登录、会话续期和多用户隔离的 schema 已预留；当前先采用单管理员令牌保护管理 API。
 - 生产部署前必须替换 `apps/web/wrangler.jsonc` 中的 D1 database id 和 KV namespace id。
-- 是否继续实现更完整的用户系统，包括首个管理员初始化、密码/第三方登录、会话续期和角色权限。
+- 完善用户自助能力，例如修改密码、会话续期、主动踢下线和登录失败限流。
+- 继续补齐特殊协议到 Clash/sing-box 的高保真映射；无法稳定映射的协议会继续通过明文和 v2rayN 输出保留原始 URI。
+- 补充生产运维能力，例如访问限流、审计日志、D1/KV 备份恢复流程和部署验收清单。
 
 ## 开发约定
 
@@ -140,5 +145,17 @@ pnpm build
 ## 部署
 
 ```bash
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm db:migrate:remote
 pnpm deploy
 ```
+
+部署前检查：
+
+- 在 Cloudflare 创建 D1 数据库和 KV namespace。
+- 将 [apps/web/wrangler.jsonc](apps/web/wrangler.jsonc) 中的 `database_id` 和 `kv_namespaces.id` 替换为真实资源 ID。
+- 按需设置 `ADMIN_TOKEN`：`wrangler secret put ADMIN_TOKEN`。
+- 执行 `pnpm db:migrate:remote` 后再部署，确保远程 D1 schema 与代码一致。
+- 首次打开站点后创建管理员账号；如果设置了 `ADMIN_TOKEN`，初始化表单需要填写同一个令牌。
