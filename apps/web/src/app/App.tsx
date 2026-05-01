@@ -76,12 +76,28 @@ export function App() {
 }
 
 function readTheme(): ThemeMode {
-  return localStorage.getItem("smagicalsub.theme") === "dark" ? "dark" : "light";
+  return browserStorage()?.getItem("smagicalsub.theme") === "dark" ? "dark" : "light";
 }
 
 function applyTheme(theme: ThemeMode) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
   document.documentElement.classList.toggle("dark", theme === "dark");
-  localStorage.setItem("smagicalsub.theme", theme);
+  browserStorage()?.setItem("smagicalsub.theme", theme);
+}
+
+function browserStorage() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
 function LoginPanel({ onLogin }: { onLogin: (token: string) => void }) {
@@ -93,8 +109,8 @@ function LoginPanel({ onLogin }: { onLogin: (token: string) => void }) {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center p-6">
-      <Card className="w-full max-w-sm">
+    <main className="app-shell grid min-h-screen place-items-center p-6">
+      <Card className="w-full max-w-sm border-t-[3px] border-t-primary/70 bg-gradient-to-br from-card via-card to-primary/5">
         <CardHeader>
           <CardTitle>管理员访问</CardTitle>
           <CardDescription>输入 Worker 环境变量 `ADMIN_TOKEN` 对应的令牌。</CardDescription>
@@ -114,8 +130,8 @@ function LoginPanel({ onLogin }: { onLogin: (token: string) => void }) {
 
 function StatusPanel({ description, title }: { description: string; title: string }) {
   return (
-    <main className="grid min-h-screen place-items-center p-6">
-      <Card className="w-full max-w-sm">
+    <main className="app-shell grid min-h-screen place-items-center p-6">
+      <Card className="w-full max-w-sm border-t-[3px] border-t-primary/70 bg-gradient-to-br from-card via-card to-primary/5">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>

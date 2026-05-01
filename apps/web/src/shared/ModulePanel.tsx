@@ -12,9 +12,9 @@ type ModulePanelProps = {
 
 export function ModulePanel({ children, className, description, eyebrow, title }: ModulePanelProps) {
   return (
-    <Card className={cn("col-span-full", className)}>
+    <Card className={cn("col-span-full border-t-[3px] border-t-primary/70 bg-gradient-to-br from-card via-card to-primary/5", className)}>
       <CardHeader>
-        <p className="text-xs font-semibold text-muted-foreground">{eyebrow}</p>
+        <p className="text-xs font-semibold text-primary">{eyebrow}</p>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
