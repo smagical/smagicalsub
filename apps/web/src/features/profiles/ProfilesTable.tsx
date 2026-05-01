@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ProfileDto } from "@smagicalsub/shared";
+import { ActionGroup } from "../../shared/ActionGroup";
 import { ConfirmButton } from "../../shared/ConfirmButton";
 import { StatusBadge } from "../../shared/StatusBadge";
 import type { ProfileEditFormState } from "./types";
@@ -118,19 +119,19 @@ function ProfileActions({
 }) {
   if (editing) {
     return (
-      <div className="table-actions">
+      <ActionGroup>
         <Button disabled={pending} onClick={() => onSaveEdit(profile)} size="sm" type="button">
           保存
         </Button>
         <Button disabled={pending} onClick={onCancelEdit} size="sm" type="button" variant="outline">
           取消
         </Button>
-      </div>
+      </ActionGroup>
     );
   }
 
   return (
-    <div className="table-actions">
+    <ActionGroup>
       <Button disabled={pending} onClick={() => onToggleEnabled(profile)} size="sm" type="button" variant="outline">
         {profile.enabled ? "停用" : "启用"}
       </Button>
@@ -150,6 +151,6 @@ function ProfileActions({
       >
         删除
       </ConfirmButton>
-    </div>
+    </ActionGroup>
   );
 }

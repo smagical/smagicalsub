@@ -1,6 +1,7 @@
 import type { SubscribeTokenDto } from "@smagicalsub/shared";
 import { Button } from "@/components/ui/button";
 import type { ComponentProps } from "react";
+import { ActionGroup } from "../../shared/ActionGroup";
 import { ConfirmButton } from "../../shared/ConfirmButton";
 
 type TokenActionsProps = {
@@ -32,15 +33,15 @@ export function TokenActions({
 }: TokenActionsProps) {
   if (editing) {
     return (
-      <div className="table-actions">
+      <ActionGroup>
         {actionButton("保存", "default", pending, () => onSaveEdit(token))}
         {actionButton("取消", "outline", pending, onCancelEdit)}
-      </div>
+      </ActionGroup>
     );
   }
 
   return (
-    <div className="table-actions">
+    <ActionGroup>
       {actionButton("复制", "outline", pending, () => onCopy(token))}
       {actionButton("打开", "ghost", pending, () => onOpen(token))}
       {actionButton("编辑", "outline", pending, () => onStartEdit(token))}
@@ -66,7 +67,7 @@ export function TokenActions({
       >
         删除
       </ConfirmButton>
-    </div>
+    </ActionGroup>
   );
 }
 

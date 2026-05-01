@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ProfileRuleDto } from "@smagicalsub/shared";
+import { ActionGroup } from "../../shared/ActionGroup";
 import { ConfirmButton } from "../../shared/ConfirmButton";
 import { StatusBadge } from "../../shared/StatusBadge";
 import type { ProfileRuleEditFormState } from "./types";
@@ -118,19 +119,19 @@ function RuleActions({
 }) {
   if (editing) {
     return (
-      <div className="table-actions">
+      <ActionGroup>
         <Button disabled={pending} onClick={() => onSaveEdit(rule)} size="sm" type="button">
           保存
         </Button>
         <Button disabled={pending} onClick={onCancelEdit} size="sm" type="button" variant="outline">
           取消
         </Button>
-      </div>
+      </ActionGroup>
     );
   }
 
   return (
-    <div className="table-actions">
+    <ActionGroup>
       <Button disabled={pending || !canMoveUp} onClick={() => onMove(rule, "up")} size="sm" type="button" variant="ghost">
         上移
       </Button>
@@ -153,6 +154,6 @@ function RuleActions({
       >
         删除
       </ConfirmButton>
-    </div>
+    </ActionGroup>
   );
 }

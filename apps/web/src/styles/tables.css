@@ -8,9 +8,3 @@
 .mono-cell {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
-
-.table-actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
