@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { CheckboxField } from "../../shared/CheckboxField";
+import { FilterField } from "../../shared/FilterField";
+import { FormGrid } from "../../shared/FormGrid";
 import type { NodeFormState } from "./types";
 import { parseGroups } from "./utils";
 
@@ -24,9 +26,8 @@ export function NodeForm({ form, pending, setForm, onSubmit }: NodeFormProps) {
   }
 
   return (
-    <form className="form-grid node-form" onSubmit={handleSubmit}>
-      <label className="wide-field">
-        <span>节点链接</span>
+    <FormGrid variant="node" onSubmit={handleSubmit}>
+      <FilterField label="节点链接">
         <Input
           onChange={(event) => setForm((current) => ({ ...current, uri: event.target.value }))}
           placeholder="ss:// / vmess:// / trojan:// / vless://"
@@ -34,25 +35,23 @@ export function NodeForm({ form, pending, setForm, onSubmit }: NodeFormProps) {
           type="text"
           value={form.uri}
         />
-      </label>
-      <label>
-        <span>显示名称</span>
+      </FilterField>
+      <FilterField label="显示名称">
         <Input
           onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
           placeholder="留空使用节点名称"
           type="text"
           value={form.name}
         />
-      </label>
-      <label>
-        <span>分组</span>
+      </FilterField>
+      <FilterField label="分组">
         <Input
           onChange={(event) => setForm((current) => ({ ...current, groups: event.target.value }))}
           placeholder="香港,日本,备用"
           type="text"
           value={form.groups}
         />
-      </label>
+      </FilterField>
       <CheckboxField
         checked={form.enabled}
         label="启用"
@@ -61,6 +60,6 @@ export function NodeForm({ form, pending, setForm, onSubmit }: NodeFormProps) {
       <Button disabled={pending} type="submit">
         添加节点
       </Button>
-    </form>
+    </FormGrid>
   );
 }

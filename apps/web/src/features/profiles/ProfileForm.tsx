@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { CheckboxField } from "../../shared/CheckboxField";
 import { FilterField } from "../../shared/FilterField";
+import { FormGrid } from "../../shared/FormGrid";
 import type { ProfileFormState } from "./types";
 import { toCreateProfileInput } from "./utils";
 
@@ -20,7 +21,7 @@ export function ProfileForm({ form, pending, setForm, onSubmit }: ProfileFormPro
   }
 
   return (
-    <form className="form-grid profile-form" onSubmit={handleSubmit}>
+    <FormGrid variant="profile" onSubmit={handleSubmit}>
       <FilterField label="名称">
         <Input
           onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
@@ -39,7 +40,7 @@ export function ProfileForm({ form, pending, setForm, onSubmit }: ProfileFormPro
           value={form.default_strategy}
         />
       </FilterField>
-      <FilterField className="wide-field" label="描述">
+      <FilterField label="描述">
         <Input
           onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
           placeholder="用于主力设备或备用线路"
@@ -55,6 +56,6 @@ export function ProfileForm({ form, pending, setForm, onSubmit }: ProfileFormPro
       <Button disabled={pending} type="submit">
         创建配置档
       </Button>
-    </form>
+    </FormGrid>
   );
 }

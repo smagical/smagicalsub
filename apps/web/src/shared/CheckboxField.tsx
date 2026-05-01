@@ -12,14 +12,14 @@ export function CheckboxField({ checked, disabled = false, label, onCheckedChang
   const id = useId();
 
   return (
-    <div className="checkbox-field">
+    <div className="inline-flex min-h-10 items-center gap-2">
       <Checkbox
         checked={checked}
         disabled={disabled}
         id={id}
         onCheckedChange={(value) => onCheckedChange(value === true)}
       />
-      <label htmlFor={id}>{label}</label>
+      <label className="text-xs font-semibold text-muted-foreground" htmlFor={id}>{label}</label>
     </div>
   );
 }

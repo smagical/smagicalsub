@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { CheckboxField } from "../../shared/CheckboxField";
 import { FilterField } from "../../shared/FilterField";
+import { FormGrid } from "../../shared/FormGrid";
 import type { SourceFormState } from "./types";
 
 type SourceFormProps = {
@@ -19,7 +20,7 @@ export function SourceForm({ form, pending, setForm, onSubmit }: SourceFormProps
   }
 
   return (
-    <form className="form-grid" onSubmit={handleSubmit}>
+    <FormGrid onSubmit={handleSubmit}>
       <FilterField label="名称">
         <Input
           onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
@@ -29,7 +30,7 @@ export function SourceForm({ form, pending, setForm, onSubmit }: SourceFormProps
           value={form.name}
         />
       </FilterField>
-      <FilterField className="wide-field" label="订阅链接">
+      <FilterField label="订阅链接">
         <Input
           onChange={(event) => setForm((current) => ({ ...current, url: event.target.value }))}
           placeholder="https://example.com/sub"
@@ -46,6 +47,6 @@ export function SourceForm({ form, pending, setForm, onSubmit }: SourceFormProps
       <Button disabled={pending} type="submit">
         创建
       </Button>
-    </form>
+    </FormGrid>
   );
 }

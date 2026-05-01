@@ -5,6 +5,7 @@ import type { Dispatch, FormEvent, SetStateAction } from "react";
 import type { ProfileDto } from "@smagicalsub/shared";
 import { CheckboxField } from "../../shared/CheckboxField";
 import { FilterField } from "../../shared/FilterField";
+import { FormGrid } from "../../shared/FormGrid";
 import type { TokenFormState } from "./types";
 import { toCreateTokenInput } from "./utils";
 
@@ -23,7 +24,7 @@ export function TokenForm({ form, pending, profiles, setForm, onSubmit }: TokenF
   }
 
   return (
-    <form className="form-grid token-form" onSubmit={handleSubmit}>
+    <FormGrid variant="token" onSubmit={handleSubmit}>
       <FilterField label="名称">
         <Input
           onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
@@ -61,6 +62,6 @@ export function TokenForm({ form, pending, profiles, setForm, onSubmit }: TokenF
       <Button disabled={pending} type="submit">
         创建令牌
       </Button>
-    </form>
+    </FormGrid>
   );
 }

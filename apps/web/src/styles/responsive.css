@@ -16,10 +16,6 @@
     grid-template-columns: 1fr;
   }
 
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
 }
 
 @media (max-width: 560px) {
