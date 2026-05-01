@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { NodeBatchActionInput } from "@smagicalsub/shared";
 import { ConfirmButton } from "../../shared/ConfirmButton";
+import { FilterBar } from "../../shared/FilterBar";
 import { FilterField } from "../../shared/FilterField";
 
 type NodeFiltersProps = {
@@ -26,7 +27,7 @@ export function NodeFilters({
   onSearchQueryChange
 }: NodeFiltersProps) {
   return (
-    <div className="filter-row">
+    <FilterBar>
       <FilterField label="搜索节点">
         <Input
           onChange={(event) => onSearchQueryChange(event.target.value)}
@@ -51,7 +52,7 @@ export function NodeFilters({
           导出 CSV
         </Button>
       ) : null}
-    </div>
+    </FilterBar>
   );
 }
 
@@ -75,7 +76,7 @@ export function NodeBatchBar({
   const disabled = pending || selectedCount === 0;
 
   return (
-    <div className="filter-row batch-row">
+    <FilterBar align="start">
       <Badge variant="secondary">已选择 {selectedCount} 个节点</Badge>
       <FilterField label="批量分组">
         <Input
@@ -110,6 +111,6 @@ export function NodeBatchBar({
       <Button disabled={disabled} onClick={onClearSelection} type="button" variant="ghost">
         清空选择
       </Button>
-    </div>
+    </FilterBar>
   );
 }

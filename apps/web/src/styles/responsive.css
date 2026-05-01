@@ -22,14 +22,6 @@
     grid-template-columns: 1fr;
   }
 
-  .filter-row {
-    justify-content: stretch;
-  }
-
-  .filter-row label {
-    width: 100%;
-  }
-
 }
 
 @media (max-width: 560px) {

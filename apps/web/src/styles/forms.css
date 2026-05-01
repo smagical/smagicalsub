@@ -45,28 +45,3 @@
   font-size: 13px;
   font-weight: 800;
 }
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-bottom: 14px;
-}
-
-.batch-row {
-  justify-content: flex-start;
-}
-
-.filter-row label {
-  display: grid;
-  gap: 6px;
-  min-width: 180px;
-}
-
-.filter-row span {
-  color: #596258;
-  font-size: 13px;
-  font-weight: 800;
-}

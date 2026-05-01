@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
+import { FilterBar } from "../../shared/FilterBar";
 import { FilterField } from "../../shared/FilterField";
 import { tokenSubscriptionFormats, type TokenSubscriptionFormat } from "./types";
 
@@ -22,7 +23,7 @@ export function TokenFilters({
   onSearchQueryChange
 }: TokenFiltersProps) {
   return (
-    <div className="filter-row">
+    <FilterBar>
       <FilterField label="搜索令牌">
         <Input
           onChange={(event) => onSearchQueryChange(event.target.value)}
@@ -43,6 +44,6 @@ export function TokenFilters({
       <Button disabled={exportDisabled} onClick={onExport} type="button" variant="outline">
         导出 CSV
       </Button>
-    </div>
+    </FilterBar>
   );
 }

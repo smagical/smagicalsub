@@ -6,6 +6,7 @@ import type { AccessLogDto } from "@smagicalsub/shared";
 import { useQuery } from "@tanstack/react-query";
 import { downloadCsv } from "../../lib/download-csv";
 import { EmptyState } from "../../shared/EmptyState";
+import { FilterBar } from "../../shared/FilterBar";
 import { FilterField } from "../../shared/FilterField";
 import { ModuleHeading } from "../../shared/ModuleHeading";
 import { PageFeedback } from "../../shared/PageFeedback";
@@ -49,7 +50,7 @@ export function LogsPage() {
   return (
     <section className="panel wide">
       <ModuleHeading eyebrow="Logs" title="访问日志" description="查看最近 100 条订阅访问记录，用于排查令牌和客户端请求。" />
-      <div className="filter-row">
+      <FilterBar>
         <FilterField label="搜索日志">
           <Input
             onChange={(event) => setSearchQuery(event.target.value)}
@@ -68,7 +69,7 @@ export function LogsPage() {
         <Button disabled={filteredLogs.length === 0} onClick={exportCsv} type="button" variant="outline">
           导出 CSV
         </Button>
-      </div>
+      </FilterBar>
 
       <PageFeedback error={query.error} notice={notice} />
 
