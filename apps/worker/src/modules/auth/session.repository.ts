@@ -21,6 +21,7 @@ export async function createSession(db: D1Database, userId: string) {
 }
 
 export async function findUserBySessionToken(db: D1Database, token: string): Promise<AuthUserDto | null> {
+  const tokenHash = await sessionTokenHash(token);
   const row = await db
     .prepare(
       `SELECT users.id, users.email, users.name, users.role
@@ -28,14 +29,25 @@ export async function findUserBySessionToken(db: D1Database, token: string): Pro
        INNER JOIN users ON users.id = sessions.user_id
        WHERE sessions.token_hash = ?1 AND sessions.expires_at > CURRENT_TIMESTAMP`
     )
-    .bind(await sha256Base64Url(token))
+    .bind(tokenHash)
     .first<AuthUserDto>();
 
   return row ? toAuthUser(row) : null;
 }
 
+export async function refreshSessionByToken(db: D1Database, token: string) {
+  await db
+    .prepare(
+      `UPDATE sessions
+       SET expires_at = ?1
+       WHERE token_hash = ?2 AND expires_at > CURRENT_TIMESTAMP`
+    )
+    .bind(toSqlTimestamp(new Date(Date.now() + sessionTtlSeconds * 1000)), await sessionTokenHash(token))
+    .run();
+}
+
 export async function deleteSessionByToken(db: D1Database, token: string) {
-  await db.prepare(`DELETE FROM sessions WHERE token_hash = ?1`).bind(await sha256Base64Url(token)).run();
+  await db.prepare(`DELETE FROM sessions WHERE token_hash = ?1`).bind(await sessionTokenHash(token)).run();
 }
 
 export async function deleteSessionsByUserId(db: D1Database, userId: string) {
@@ -47,6 +59,10 @@ export async function deleteOtherSessionsByToken(db: D1Database, userId: string,
     .prepare(`DELETE FROM sessions WHERE user_id = ?1 AND token_hash != ?2`)
     .bind(userId, await sha256Base64Url(token))
     .run();
+}
+
+export function sessionTokenHash(token: string) {
+  return sha256Base64Url(token);
 }
 
 function toSqlTimestamp(date: Date) {

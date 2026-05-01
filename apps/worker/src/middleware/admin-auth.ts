@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 import { failure, type AuthUserDto } from "@smagicalsub/shared";
 import type { AppContext } from "../env";
-import { findUserBySessionToken } from "../modules/auth/session.repository";
+import { findUserBySessionToken, refreshSessionByToken } from "../modules/auth/session.repository";
 
 const adminTokenUser: AuthUserDto = {
   id: "admin-token",
@@ -25,6 +25,7 @@ export const requireAuth: MiddlewareHandler<AppContext> = async (c, next) => {
 
     if (sessionUser) {
       c.set("authUser", sessionUser);
+      c.executionCtx.waitUntil(refreshSessionByToken(c.env.DB, requestToken));
       await next();
       return;
     }
