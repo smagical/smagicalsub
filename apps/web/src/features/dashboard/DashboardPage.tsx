@@ -37,9 +37,9 @@ export function DashboardPage({ health, onNavigate }: DashboardPageProps) {
     : null;
 
   return (
-    <div className="section-stack">
+    <div className="grid gap-[18px]">
       <DashboardMetrics totals={dashboard.totals} />
-      <section className="content-grid">
+      <section className="grid grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] gap-3.5 max-[920px]:grid-cols-1">
         <DashboardQuickActions
           error={refreshMutation.error}
           notice={refreshNotice}

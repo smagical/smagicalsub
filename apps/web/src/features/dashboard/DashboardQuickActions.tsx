@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cable, FileSliders, RefreshCw } from "lucide-react";
 import type { SectionId } from "../../app/navigation";
+import { Eyebrow } from "../../shared/Eyebrow";
 import { PageFeedback } from "../../shared/PageFeedback";
 
 const quickActions = [
@@ -27,7 +28,7 @@ export function DashboardQuickActions({ error, notice, pending, onNavigate, onRe
   return (
     <Card>
       <CardHeader>
-        <p className="eyebrow">Workflow</p>
+        <Eyebrow>Workflow</Eyebrow>
         <CardTitle>快速操作</CardTitle>
       </CardHeader>
       <CardContent>

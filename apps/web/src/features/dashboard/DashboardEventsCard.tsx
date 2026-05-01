@@ -3,6 +3,7 @@ import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/componen
 import type { DashboardDto } from "@smagicalsub/shared";
 import { ShieldCheck } from "lucide-react";
 import { EmptyState } from "../../shared/EmptyState";
+import { Eyebrow } from "../../shared/Eyebrow";
 
 type DashboardEventsCardProps = {
   events: DashboardDto["recentEvents"];
@@ -13,7 +14,7 @@ export function DashboardEventsCard({ events }: DashboardEventsCardProps) {
     <Card className="col-span-full">
       <CardHeader>
         <div>
-          <p className="eyebrow">Events</p>
+          <Eyebrow>Events</Eyebrow>
           <CardTitle>最近事件</CardTitle>
         </div>
         <CardAction>

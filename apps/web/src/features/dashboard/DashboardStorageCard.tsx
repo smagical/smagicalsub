@@ -1,6 +1,7 @@
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { HealthDto } from "@smagicalsub/shared";
 import { Database } from "lucide-react";
+import { Eyebrow } from "../../shared/Eyebrow";
 
 type DashboardStorageCardProps = {
   health?: HealthDto;
@@ -11,7 +12,7 @@ export function DashboardStorageCard({ health }: DashboardStorageCardProps) {
     <Card>
       <CardHeader>
         <div>
-          <p className="eyebrow">Storage</p>
+          <Eyebrow>Storage</Eyebrow>
           <CardTitle>D1 / KV 状态</CardTitle>
         </div>
         <CardAction>
