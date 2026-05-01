@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -75,7 +76,7 @@ export function NodeBatchBar({
 
   return (
     <div className="filter-row batch-row">
-      <span className="muted-text">已选择 {selectedCount} 个节点</span>
+      <Badge variant="secondary">已选择 {selectedCount} 个节点</Badge>
       <FilterField label="批量分组">
         <Input
           disabled={disabled}

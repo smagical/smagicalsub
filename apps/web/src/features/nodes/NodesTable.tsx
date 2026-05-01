@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -126,15 +127,15 @@ function textInput(label: string, value: string, pending: boolean, onChange: (va
 
 function GroupChips({ groups }: { groups: string[] }) {
   if (groups.length === 0) {
-    return <span className="muted-text">未分组</span>;
+    return <Badge variant="secondary">未分组</Badge>;
   }
 
   return (
-    <div className="group-chip-row">
+    <div className="inline-flex flex-wrap gap-1">
       {groups.map((group) => (
-        <span className="group-chip" key={group}>
+        <Badge key={group} variant="outline">
           {group}
-        </span>
+        </Badge>
       ))}
     </div>
   );

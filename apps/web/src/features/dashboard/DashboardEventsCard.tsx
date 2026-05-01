@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DashboardDto } from "@smagicalsub/shared";
 import { ShieldCheck } from "lucide-react";
@@ -26,7 +27,7 @@ export function DashboardEventsCard({ events }: DashboardEventsCardProps) {
           ) : (
             events.map((event) => (
               <div className="event-item" key={event.id}>
-                <span className={`status-dot ${event.status}`} />
+                <EventStatusBadge status={event.status} />
                 <strong>{event.title}</strong>
                 <time>{event.time}</time>
               </div>
@@ -36,4 +37,11 @@ export function DashboardEventsCard({ events }: DashboardEventsCardProps) {
       </CardContent>
     </Card>
   );
+}
+
+function EventStatusBadge({ status }: { status: DashboardDto["recentEvents"][number]["status"] }) {
+  const variant = status === "error" ? "destructive" : status === "warning" ? "secondary" : "default";
+  const label = status === "error" ? "失败" : status === "warning" ? "提醒" : "成功";
+
+  return <Badge variant={variant}>{label}</Badge>;
 }
