@@ -12,7 +12,6 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .metric-grid,
   .content-grid,
   .dashboard-action-grid {
     grid-template-columns: 1fr;

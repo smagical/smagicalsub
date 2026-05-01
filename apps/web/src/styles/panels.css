@@ -11,54 +11,6 @@
   font-weight: 700;
 }
 
-.metric-card-content {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 88px;
-}
-
-.metric-card-content span {
-  display: block;
-  color: #697168;
-  font-size: 14px;
-}
-
-.metric-card-content strong {
-  display: block;
-  margin-top: 4px;
-  font-size: 32px;
-  line-height: 1;
-}
-
-.metric-icon {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 8px;
-}
-
-.metric-card.green .metric-icon {
-  background: #d9f0df;
-  color: #1d6b3b;
-}
-
-.metric-card.blue .metric-icon {
-  background: #dbeafe;
-  color: #245a9a;
-}
-
-.metric-card.amber .metric-icon {
-  background: #f8e7bd;
-  color: #8a5b0c;
-}
-
-.metric-card.rose .metric-icon {
-  background: #f8d7df;
-  color: #9a2948;
-}
-
 .dashboard-card-wide {
   grid-column: 1 / -1;
 }

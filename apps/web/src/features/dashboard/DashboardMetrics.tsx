@@ -8,7 +8,7 @@ type DashboardMetricsProps = {
 
 export function DashboardMetrics({ totals }: DashboardMetricsProps) {
   return (
-    <section className="metric-grid" aria-label="关键指标">
+    <section className="grid grid-cols-4 gap-3.5 max-[920px]:grid-cols-1" aria-label="关键指标">
       <MetricCard label="订阅源" value={totals.sources} icon={Cable} tone="green" />
       <MetricCard label="节点" value={totals.nodes} icon={Server} tone="blue" />
       <MetricCard label="配置档" value={totals.profiles} icon={FileSliders} tone="amber" />
