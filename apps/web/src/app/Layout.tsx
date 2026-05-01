@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { LogOut, Moon, Signal, Sun } from "lucide-react";
-import type { HealthDto, SiteSettingsDto } from "@smagicalsub/shared";
+import type { AuthUserDto, HealthDto, SiteSettingsDto } from "@smagicalsub/shared";
 import { BrandHeader } from "../shared/BrandHeader";
 import { Eyebrow } from "../shared/Eyebrow";
 import { navigation, type SectionId } from "./navigation";
@@ -12,6 +12,7 @@ type LayoutProps = {
   activeSection: SectionId;
   health?: HealthDto;
   settings: SiteSettingsDto;
+  user?: AuthUserDto;
   children: ReactNode;
   theme: "dark" | "light";
   onLogout?: () => void;
@@ -26,11 +27,13 @@ const navToneClasses: Record<SectionId, string> = {
   profiles: "text-chart-3",
   tokens: "text-chart-4",
   logs: "text-primary",
-  settings: "text-chart-3"
+  settings: "text-chart-3",
+  users: "text-chart-5"
 };
 
-export function Layout({ activeSection, health, settings, children, theme, onLogout, onSectionChange, onThemeToggle }: LayoutProps) {
+export function Layout({ activeSection, health, settings, user, children, theme, onLogout, onSectionChange, onThemeToggle }: LayoutProps) {
   const ThemeIcon = theme === "dark" ? Sun : Moon;
+  const visibleNavigation = navigation.filter((item) => user?.role === "admin" || !["settings", "users"].includes(item.id));
 
   return (
     <main className="app-shell grid min-h-screen grid-cols-[260px_minmax(0,1fr)] max-[920px]:grid-cols-1">
@@ -40,7 +43,7 @@ export function Layout({ activeSection, health, settings, children, theme, onLog
         </div>
 
         <nav className="grid gap-1.5 max-[920px]:grid-cols-4 max-[560px]:grid-cols-2" aria-label="主导航">
-          {navigation.map((item) => (
+          {visibleNavigation.map((item) => (
             <Button
               className={cn(
                 "min-h-10 w-full justify-start gap-2.5 border-l-[3px] border-l-transparent px-3 text-sidebar-foreground/80 hover:bg-sidebar-accent/70",
@@ -71,6 +74,7 @@ export function Layout({ activeSection, health, settings, children, theme, onLog
               <Signal data-icon="inline-start" />
               <span>{health?.status ?? "waiting"}</span>
             </Badge>
+            {user ? <Badge variant="secondary">{user.name ?? user.email}</Badge> : null}
             <Button aria-label="切换主题" className="bg-card/70" onClick={onThemeToggle} type="button" variant="outline">
               <ThemeIcon data-icon="inline-start" />
               {theme === "dark" ? "白天" : "夜晚"}

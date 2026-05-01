@@ -9,16 +9,17 @@ export {
   listSubscribeTokenValuesByProfileId
 } from "./token-reader.repository";
 
-export async function createSubscribeToken(db: D1Database, input: CreateSubscribeTokenInput) {
+export async function createSubscribeToken(db: D1Database, input: CreateSubscribeTokenInput, ownerId: string | null = null) {
   const id = crypto.randomUUID();
 
   await db
     .prepare(
       `INSERT INTO subscribe_tokens (id, owner_id, profile_id, token, name, enabled, expires_at)
-       VALUES (?1, NULL, ?2, ?3, ?4, ?5, ?6)`
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
     )
     .bind(
       id,
+      ownerId,
       normalizeProfileId(input.profile_id),
       generateSubscribeToken(),
       input.name,

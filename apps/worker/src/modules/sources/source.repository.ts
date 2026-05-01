@@ -37,15 +37,15 @@ export async function findSourceById(db: D1Database, id: string) {
     .first<SourceRow>();
 }
 
-export async function createSource(db: D1Database, input: CreateSubscriptionSourceInput) {
+export async function createSource(db: D1Database, input: CreateSubscriptionSourceInput, ownerId: string | null = null) {
   const id = crypto.randomUUID();
 
   await db
     .prepare(
-      `INSERT INTO subscription_sources (id, name, url, enabled)
-       VALUES (?1, ?2, ?3, ?4)`
+      `INSERT INTO subscription_sources (id, owner_id, name, url, enabled)
+       VALUES (?1, ?2, ?3, ?4, ?5)`
     )
-    .bind(id, input.name, input.url, input.enabled ? 1 : 0)
+    .bind(id, ownerId, input.name, input.url, input.enabled ? 1 : 0)
     .run();
 
   return findSourceById(db, id);

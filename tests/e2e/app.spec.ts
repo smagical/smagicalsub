@@ -16,12 +16,9 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
   await page.getByRole("button", { exact: true, name: "节点" }).click();
   await expect(page.getByText("添加单个节点，按分组查看订阅源解析和手动维护的节点。")).toBeVisible();
   await expect(page.getByRole("button", { name: "添加节点" })).toBeVisible();
-
-  await page.getByRole("button", { exact: true, name: "设置" }).click();
-  await expect(page.getByText("动态设置控制台名称、副标题、标题图片和登录页文案。")).toBeVisible();
 });
 
-test("stores the admin token and sends it with API requests", async ({ page }) => {
+test("logs in and sends the session token with API requests", async ({ page }) => {
   let dashboardAuthorization = "";
   await mockApi(page, {
     authRequired: true,
@@ -33,11 +30,14 @@ test("stores the admin token and sends it with API requests", async ({ page }) =
   await page.goto("/");
   await expect(page.getByText("管理员访问")).toBeVisible();
 
-  await page.getByLabel("管理员令牌").fill("secret");
+  await page.getByLabel("邮箱").fill("admin@example.com");
+  await page.getByLabel("密码").fill("password123");
   await page.getByRole("button", { name: "进入控制台" }).click();
 
   await expect(page.getByRole("heading", { name: "订阅管理控制台" })).toBeVisible();
-  expect(dashboardAuthorization).toBe("Bearer secret");
+  await page.getByRole("button", { exact: true, name: "用户" }).click();
+  await expect(page.getByText("创建后台用户、调整角色，并为用户重置登录密码。")).toBeVisible();
+  expect(dashboardAuthorization).toBe("Bearer sess_e2e");
 });
 
 type MockOptions = {
@@ -67,6 +67,35 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
     };
   }
 
+  if (url.endsWith("/api/auth/status")) {
+    return {
+      ok: true,
+      data: {
+        authRequired: options.authRequired ?? false,
+        bootstrapRequired: false,
+        bootstrapRequiresToken: false
+      }
+    };
+  }
+
+  if (url.endsWith("/api/auth/login")) {
+    return {
+      ok: true,
+      data: {
+        expiresAt: "2026-06-01 00:00:00",
+        token: "sess_e2e",
+        user: { email: "admin@example.com", id: "user_admin", name: "Admin", role: "admin" }
+      }
+    };
+  }
+
+  if (url.endsWith("/api/auth/me")) {
+    return {
+      ok: true,
+      data: { email: "admin@example.com", id: "user_admin", name: "Admin", role: "admin" }
+    };
+  }
+
   if (url.endsWith("/api/dashboard")) {
     options.onDashboardRequest?.(authorization);
     return {
@@ -82,11 +111,29 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
     return {
       ok: true,
       data: {
-        loginDescription: "输入管理员令牌。",
+        loginDescription: "使用管理员或用户账号登录控制台。",
         loginTitle: "管理员访问",
         siteName: "测试订阅台",
         siteSubtitle: "多格式订阅管理",
         titleImageUrl: null
+      }
+    };
+  }
+
+  if (url.endsWith("/api/users")) {
+    return {
+      ok: true,
+      data: {
+        items: [
+          {
+            created_at: "2026-05-01 00:00:00",
+            email: "admin@example.com",
+            id: "user_admin",
+            name: "Admin",
+            role: "admin",
+            updated_at: "2026-05-01 00:00:00"
+          }
+        ]
       }
     };
   }

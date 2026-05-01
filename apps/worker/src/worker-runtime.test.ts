@@ -1,5 +1,29 @@
-import { SELF } from "cloudflare:test";
-import { describe, expect, it } from "vitest";
+import { env, SELF } from "cloudflare:test";
+import { beforeAll, describe, expect, it } from "vitest";
+
+const testEnv = env as typeof env & { DB: D1Database };
+
+beforeAll(async () => {
+  await testEnv.DB.batch([
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      name TEXT,
+      role TEXT NOT NULL DEFAULT 'user',
+      password_hash TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS sessions (
+      id TEXT PRIMARY KEY NOT NULL,
+      user_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`)
+  ]);
+});
 
 describe("worker runtime", () => {
   it("serves health from the Workers runtime", async () => {
@@ -44,6 +68,48 @@ describe("worker runtime", () => {
     expect(payload.data).toEqual(expect.objectContaining({ siteName: "自定义订阅台", titleImageUrl: "https://example.com/logo.png" }));
   });
 
+  it("bootstraps the first admin, logs in, and serves current user", async () => {
+    const bootstrapResponse = await SELF.fetch("https://example.com/api/auth/bootstrap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bootstrapToken: "secret", email: "admin@example.com", name: "Admin", password: "password123" })
+    });
+    const bootstrapPayload = (await bootstrapResponse.json()) as { data: { token: string; user: { role: string } } };
+
+    expect(bootstrapResponse.status).toBe(201);
+    expect(bootstrapPayload.data.user.role).toBe("admin");
+
+    const loginResponse = await SELF.fetch("https://example.com/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@example.com", password: "password123" })
+    });
+    const loginPayload = (await loginResponse.json()) as { data: { token: string } };
+    const meResponse = await SELF.fetch("https://example.com/api/auth/me", {
+      headers: { Authorization: `Bearer ${loginPayload.data.token}` }
+    });
+    const mePayload = (await meResponse.json()) as { data: { email: string } };
+
+    expect(loginResponse.status).toBe(200);
+    expect(mePayload.data.email).toBe("admin@example.com");
+  });
+
+  it("lets an admin create users and blocks non-admin user management", async () => {
+    const adminToken = await loginToken("admin@example.com", "password123");
+    const createResponse = await SELF.fetch("https://example.com/api/users", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${adminToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "user@example.com", name: "User", password: "password123", role: "user" })
+    });
+    const userToken = await loginToken("user@example.com", "password123");
+    const blockedResponse = await SELF.fetch("https://example.com/api/users", {
+      headers: { Authorization: `Bearer ${userToken}` }
+    });
+
+    expect(createResponse.status).toBe(201);
+    expect(blockedResponse.status).toBe(403);
+  });
+
   it("rejects management API requests without the admin token", async () => {
     const response = await SELF.fetch("https://example.com/api/dashboard");
     const payload = (await response.json()) as { ok: boolean; error: { code: string } };
@@ -55,3 +121,14 @@ describe("worker runtime", () => {
     });
   });
 });
+
+async function loginToken(email: string, password: string) {
+  const response = await SELF.fetch("https://example.com/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+  const payload = (await response.json()) as { data: { token: string } };
+
+  return payload.data.token;
+}

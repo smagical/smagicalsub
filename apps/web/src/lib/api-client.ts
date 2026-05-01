@@ -1,12 +1,25 @@
 import type { ApiResponse } from "@smagicalsub/shared";
 
 const adminTokenStorageKey = "smagicalsub.adminToken";
+const authTokenStorageKey = "smagicalsub.authToken";
 
 export function getAdminToken() {
-  return browserStorage()?.getItem(adminTokenStorageKey) ?? "";
+  return getAuthToken();
 }
 
 export function setAdminToken(token: string) {
+  setAuthToken(token);
+}
+
+export function clearAdminToken() {
+  clearAuthToken();
+}
+
+export function getAuthToken() {
+  return browserStorage()?.getItem(authTokenStorageKey) ?? browserStorage()?.getItem(adminTokenStorageKey) ?? "";
+}
+
+export function setAuthToken(token: string) {
   const storage = browserStorage();
   const normalized = token.trim();
 
@@ -15,13 +28,15 @@ export function setAdminToken(token: string) {
   }
 
   if (normalized) {
-    storage.setItem(adminTokenStorageKey, normalized);
-  } else {
+    storage.setItem(authTokenStorageKey, normalized);
     storage.removeItem(adminTokenStorageKey);
+  } else {
+    storage.removeItem(authTokenStorageKey);
   }
 }
 
-export function clearAdminToken() {
+export function clearAuthToken() {
+  browserStorage()?.removeItem(authTokenStorageKey);
   browserStorage()?.removeItem(adminTokenStorageKey);
 }
 
@@ -51,14 +66,14 @@ export async function deleteJson<T>(url: string): Promise<T> {
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   let response: Response;
-  const adminToken = getAdminToken();
+  const authToken = getAuthToken();
 
   try {
     response = await fetch(url, {
       ...init,
       headers: {
         Accept: "application/json",
-        ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : undefined),
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : undefined),
         ...(init?.body ? { "Content-Type": "application/json" } : undefined),
         ...init?.headers
       }

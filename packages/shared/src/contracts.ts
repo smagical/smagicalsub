@@ -32,12 +32,37 @@ export type SiteSettingsDto = {
   loginDescription: string;
 };
 
+export type UserRole = "admin" | "user";
+
+export type UserDto = {
+  id: string;
+  email: string;
+  name: string | null;
+  role: UserRole;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AuthUserDto = Pick<UserDto, "email" | "id" | "name" | "role">;
+
+export type AuthStatusDto = {
+  authRequired: boolean;
+  bootstrapRequired: boolean;
+  bootstrapRequiresToken: boolean;
+};
+
+export type LoginDto = {
+  token: string;
+  expiresAt: string;
+  user: AuthUserDto;
+};
+
 export const defaultSiteSettings: SiteSettingsDto = {
   siteName: "Smagical Sub",
   siteSubtitle: "多格式订阅管理",
   titleImageUrl: null,
   loginTitle: "管理员访问",
-  loginDescription: "输入 Worker 环境变量 `ADMIN_TOKEN` 对应的令牌。"
+  loginDescription: "使用管理员或用户账号登录控制台。"
 };
 
 export type SourceDto = {

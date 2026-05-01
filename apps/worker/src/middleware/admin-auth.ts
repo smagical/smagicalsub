@@ -1,21 +1,44 @@
 import type { MiddlewareHandler } from "hono";
-import { failure } from "@smagicalsub/shared";
-import type { Env } from "../env";
+import { failure, type AuthUserDto } from "@smagicalsub/shared";
+import type { AppContext } from "../env";
+import { findUserBySessionToken } from "../modules/auth/session.repository";
 
-export const requireAdminToken: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
+const adminTokenUser: AuthUserDto = {
+  id: "admin-token",
+  email: "admin-token@local",
+  name: "Admin Token",
+  role: "admin"
+};
+
+export const requireAuth: MiddlewareHandler<AppContext> = async (c, next) => {
   const expectedToken = c.env.ADMIN_TOKEN?.trim();
+  const requestToken = adminTokenFromRequest(c.req.header("Authorization"), c.req.header("X-Admin-Token"));
 
-  if (!expectedToken) {
+  if (expectedToken && requestToken === expectedToken) {
+    c.set("authUser", adminTokenUser);
     await next();
     return;
   }
 
-  // 生产环境只校验管理 API，公开订阅入口继续由订阅令牌保护。
-  if (!isAdminTokenAuthorized(expectedToken, c.req.header("Authorization"), c.req.header("X-Admin-Token"))) {
-    return c.json(failure({ code: "UNAUTHORIZED", message: "需要管理员令牌" }), 401);
+  if (requestToken) {
+    const sessionUser = await findUserBySessionToken(c.env.DB, requestToken);
+
+    if (sessionUser) {
+      c.set("authUser", sessionUser);
+      await next();
+      return;
+    }
   }
 
-  await next();
+  return c.json(failure({ code: "UNAUTHORIZED", message: "需要登录" }), 401);
+};
+
+export const requireAdminRole: MiddlewareHandler<AppContext> = async (c, next) => {
+  if (c.var.authUser.role !== "admin") {
+    return c.json(failure({ code: "FORBIDDEN", message: "需要管理员权限" }), 403);
+  }
+
+  return next();
 };
 
 export function isAdminTokenAuthorized(
@@ -37,6 +60,10 @@ export function adminTokenFromRequest(authorization: string | undefined, headerT
     return headerToken.trim();
   }
 
+  return bearerTokenFromRequest(authorization);
+}
+
+export function bearerTokenFromRequest(authorization: string | undefined) {
   const [scheme, token] = authorization?.split(/\s+/, 2) ?? [];
   return scheme?.toLowerCase() === "bearer" ? token?.trim() : undefined;
 }

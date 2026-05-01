@@ -6,10 +6,11 @@ import {
   Settings,
   type LucideIcon,
   Server,
-  TerminalSquare
+  TerminalSquare,
+  Users
 } from "lucide-react";
 
-export type SectionId = "dashboard" | "sources" | "nodes" | "profiles" | "tokens" | "logs" | "settings";
+export type SectionId = "dashboard" | "sources" | "nodes" | "profiles" | "tokens" | "logs" | "settings" | "users";
 
 export type NavigationItem = {
   id: SectionId;
@@ -24,5 +25,6 @@ export const navigation: NavigationItem[] = [
   { id: "profiles", label: "配置档", icon: FileSliders },
   { id: "tokens", label: "令牌", icon: KeyRound },
   { id: "logs", label: "日志", icon: TerminalSquare },
-  { id: "settings", label: "设置", icon: Settings }
+  { id: "settings", label: "设置", icon: Settings },
+  { id: "users", label: "用户", icon: Users }
 ];

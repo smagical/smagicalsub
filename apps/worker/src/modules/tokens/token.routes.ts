@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { createSubscribeTokenSchema, failure, success, updateSubscribeTokenSchema } from "@smagicalsub/shared";
 import { z } from "zod";
-import type { Env } from "../../env";
+import type { AppContext } from "../../env";
 import { listResponse } from "../../lib/list-response";
 import { findProfileById } from "../profiles/profile.repository";
 import { deleteGeneratedSubscriptionCache } from "../subscribe/subscribe-cache";
@@ -14,7 +14,7 @@ import {
   updateSubscribeToken
 } from "./token.repository";
 
-export const tokenRoutes = new Hono<{ Bindings: Env }>();
+export const tokenRoutes = new Hono<AppContext>();
 const idParamSchema = z.object({
   id: z.string().trim().min(1)
 });
@@ -32,7 +32,8 @@ tokenRoutes.post("/", zValidator("json", createSubscribeTokenSchema), async (c) 
     return invalidProfile;
   }
 
-  const token = await createSubscribeToken(c.env.DB, input);
+  const ownerId = c.var.authUser.id === "admin-token" ? null : c.var.authUser.id;
+  const token = await createSubscribeToken(c.env.DB, input, ownerId);
   return c.json(success(token), 201);
 });
 

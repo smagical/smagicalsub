@@ -1,13 +1,16 @@
 import { Hono } from "hono";
 import { success } from "@smagicalsub/shared";
-import type { Env } from "../env";
+import type { AppContext } from "../env";
+import { countUsers } from "../modules/auth/user.repository";
 
-export const healthRoutes = new Hono<{ Bindings: Env }>();
+export const healthRoutes = new Hono<AppContext>();
 
-healthRoutes.get("/", (c) => {
+healthRoutes.get("/", async (c) => {
+  const userCount = await countUsers(c.env.DB);
+
   return c.json(
     success({
-      authRequired: Boolean(c.env.ADMIN_TOKEN?.trim()),
+      authRequired: userCount > 0 || Boolean(c.env.ADMIN_TOKEN?.trim()),
       status: "ok",
       env: c.env.APP_ENV ?? "unknown",
       timestamp: new Date().toISOString()

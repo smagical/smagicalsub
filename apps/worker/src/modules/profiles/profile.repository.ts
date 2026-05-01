@@ -24,15 +24,15 @@ export async function findProfileById(db: D1Database, id: string) {
     .first<ProfileRow>();
 }
 
-export async function createProfile(db: D1Database, input: CreateProfileInput) {
+export async function createProfile(db: D1Database, input: CreateProfileInput, ownerId: string | null = null) {
   const id = crypto.randomUUID();
 
   await db
     .prepare(
       `INSERT INTO profiles (id, owner_id, name, description, default_strategy, enabled)
-       VALUES (?1, NULL, ?2, ?3, ?4, ?5)`
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
     )
-    .bind(id, input.name, normalizeNullableText(input.description), input.default_strategy, input.enabled ? 1 : 0)
+    .bind(id, ownerId, input.name, normalizeNullableText(input.description), input.default_strategy, input.enabled ? 1 : 0)
     .run();
 
   return findProfileById(db, id);

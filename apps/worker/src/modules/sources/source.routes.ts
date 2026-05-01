@@ -2,14 +2,14 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { createSubscriptionSourceSchema, failure, success, updateSubscriptionSourceSchema } from "@smagicalsub/shared";
 import { z } from "zod";
-import type { Env } from "../../env";
+import type { AppContext, Env } from "../../env";
 import { listResponse } from "../../lib/list-response";
 import { deleteGeneratedSubscriptionCaches } from "../subscribe/subscribe-cache";
 import { listSubscribeTokenValues } from "../tokens/token.repository";
 import { createSource, deleteSource, listSources, updateSource } from "./source.repository";
 import { refreshEnabledSources, refreshSource } from "./source.service";
 
-export const sourceRoutes = new Hono<{ Bindings: Env }>();
+export const sourceRoutes = new Hono<AppContext>();
 const idParamSchema = z.object({
   id: z.string().trim().min(1)
 });
@@ -20,7 +20,8 @@ sourceRoutes.get("/", async (c) => {
 });
 
 sourceRoutes.post("/", zValidator("json", createSubscriptionSourceSchema), async (c) => {
-  const source = await createSource(c.env.DB, c.req.valid("json"));
+  const ownerId = c.var.authUser.id === "admin-token" ? null : c.var.authUser.id;
+  const source = await createSource(c.env.DB, c.req.valid("json"), ownerId);
   return c.json(success(source), 201);
 });
 

@@ -1,35 +1,36 @@
 import { Toaster } from "@/components/ui/sonner";
 import { useEffect, useState } from "react";
 import { defaultSiteSettings, type HealthDto } from "@smagicalsub/shared";
-import { useQuery } from "@tanstack/react-query";
-import { DashboardPage } from "../features/dashboard/DashboardPage";
-import { LogsPage } from "../features/access-logs/LogsPage";
-import { NodesPage } from "../features/nodes/NodesPage";
-import { ProfilesPage } from "../features/profiles/ProfilesPage";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { bootstrapAdmin, getAuthStatus, getCurrentUser, login, logout } from "../features/auth/api";
 import { getSiteSettings } from "../features/settings/api";
-import { SettingsPage } from "../features/settings/SettingsPage";
-import { SourcesPage } from "../features/sources/SourcesPage";
-import { TokensPage } from "../features/tokens/TokensPage";
-import { clearAdminToken, getAdminToken, getJson, setAdminToken } from "../lib/api-client";
-import { LoginPanel, StatusPanel } from "./AuthPanels";
+import { clearAuthToken, getAuthToken, getJson, setAuthToken } from "../lib/api-client";
+import { AppSections } from "./AppSections";
+import { BootstrapPanel, LoginPanel, StatusPanel } from "./AuthPanels";
 import { Layout } from "./Layout";
 import type { SectionId } from "./navigation";
 
 type ThemeMode = "dark" | "light";
 
 export function App() {
+  const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<SectionId>("dashboard");
-  const [adminToken, setAdminTokenState] = useState(getAdminToken);
+  const [authToken, setAuthTokenState] = useState(getAuthToken);
   const [theme, setTheme] = useState<ThemeMode>(readTheme);
   const settingsQuery = useQuery({ queryKey: ["site-settings"], queryFn: getSiteSettings, retry: false });
+  const authStatusQuery = useQuery({ queryKey: ["auth-status"], queryFn: getAuthStatus, retry: false });
+  const userQuery = useQuery({ queryKey: ["auth-me"], queryFn: getCurrentUser, enabled: Boolean(authToken), retry: false });
   const healthQuery = useQuery({
     queryKey: ["health"],
     queryFn: () => getJson<HealthDto>("/api/health"),
     retry: false
   });
   const health = healthQuery.data;
-  const authRequired = Boolean(health?.authRequired);
+  const authStatus = authStatusQuery.data;
+  const authRequired = Boolean(authStatus?.authRequired ?? health?.authRequired);
   const settings = settingsQuery.data ?? defaultSiteSettings;
+  const loginMutation = useMutation({ mutationFn: login, onSuccess: handleAuthSuccess });
+  const bootstrapMutation = useMutation({ mutationFn: bootstrapAdmin, onSuccess: handleAuthSuccess });
 
   useEffect(() => {
     applyTheme(theme);
@@ -39,24 +40,53 @@ export function App() {
     document.title = `${settings.siteName} - ${settings.siteSubtitle}`;
   }, [settings.siteName, settings.siteSubtitle]);
 
-  function handleLogin(token: string) {
-    setAdminToken(token);
-    setAdminTokenState(getAdminToken());
-  }
+  useEffect(() => {
+    if (userQuery.error) {
+      clearAuthToken();
+      setAuthTokenState("");
+    }
+  }, [userQuery.error]);
 
   function handleLogout() {
-    clearAdminToken();
-    setAdminTokenState("");
+    void logout();
+    clearAuthToken();
+    setAuthTokenState("");
+    queryClient.removeQueries({ queryKey: ["auth-me"] });
+  }
+
+  function handleAuthSuccess(result: { token: string }) {
+    setAuthToken(result.token);
+    setAuthTokenState(result.token);
+    void queryClient.invalidateQueries({ queryKey: ["auth-me"] });
   }
 
   let content;
 
-  if (!health && healthQuery.isLoading) {
+  if ((!health && healthQuery.isLoading) || authStatusQuery.isLoading) {
     content = <StatusPanel title="正在连接 Worker" description="正在读取运行状态。" settings={settings} />;
   } else if (healthQuery.error) {
     content = <StatusPanel title="连接失败" description={healthQuery.error.message} settings={settings} />;
-  } else if (authRequired && !adminToken) {
-    content = <LoginPanel settings={settings} onLogin={handleLogin} />;
+  } else if (authStatus?.bootstrapRequired && !authToken) {
+    content = (
+      <BootstrapPanel
+        error={errorMessage(bootstrapMutation.error)}
+        pending={bootstrapMutation.isPending}
+        requiresToken={authStatus.bootstrapRequiresToken}
+        settings={settings}
+        onBootstrap={(input) => bootstrapMutation.mutate(input)}
+      />
+    );
+  } else if (authRequired && !authToken) {
+    content = (
+      <LoginPanel
+        error={errorMessage(loginMutation.error)}
+        pending={loginMutation.isPending}
+        settings={settings}
+        onLogin={(input) => loginMutation.mutate(input)}
+      />
+    );
+  } else if (authRequired && authToken && userQuery.isLoading) {
+    content = <StatusPanel title="正在验证登录" description="正在读取当前用户信息。" settings={settings} />;
   } else {
     content = (
       <Layout
@@ -64,11 +94,12 @@ export function App() {
         health={health}
         settings={settings}
         theme={theme}
+        user={userQuery.data}
         onLogout={authRequired ? handleLogout : undefined}
         onSectionChange={setActiveSection}
         onThemeToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
       >
-        {renderSection(activeSection, health, setActiveSection)}
+        <AppSections health={health} section={activeSection} onNavigate={setActiveSection} />
       </Layout>
     );
   }
@@ -106,21 +137,6 @@ function browserStorage() {
   }
 }
 
-function renderSection(section: SectionId, health: HealthDto | undefined, onNavigate: (section: SectionId) => void) {
-  switch (section) {
-    case "dashboard":
-      return <DashboardPage health={health} onNavigate={onNavigate} />;
-    case "sources":
-      return <SourcesPage />;
-    case "nodes":
-      return <NodesPage />;
-    case "profiles":
-      return <ProfilesPage />;
-    case "tokens":
-      return <TokensPage />;
-    case "logs":
-      return <LogsPage />;
-    case "settings":
-      return <SettingsPage />;
-  }
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : null;
 }

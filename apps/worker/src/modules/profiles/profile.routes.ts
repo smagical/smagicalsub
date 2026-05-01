@@ -9,7 +9,7 @@ import {
   updateProfileSchema
 } from "@smagicalsub/shared";
 import { z } from "zod";
-import type { Env } from "../../env";
+import type { AppContext } from "../../env";
 import { listResponse } from "../../lib/list-response";
 import { deleteGeneratedSubscriptionCache } from "../subscribe/subscribe-cache";
 import { listSubscribeTokenValuesByProfileId } from "../tokens/token.repository";
@@ -17,7 +17,7 @@ import { deleteProfileSubscriptionCaches } from "./profile-cache";
 import { createProfileRule, deleteProfileRule, listProfileRules, updateProfileRule } from "./profile-rule.repository";
 import { createProfile, deleteProfile, findProfileById, listProfiles, updateProfile } from "./profile.repository";
 
-export const profileRoutes = new Hono<{ Bindings: Env }>();
+export const profileRoutes = new Hono<AppContext>();
 const idParamSchema = z.object({
   id: z.string().trim().min(1)
 });
@@ -31,7 +31,8 @@ profileRoutes.get("/", async (c) => {
 });
 
 profileRoutes.post("/", zValidator("json", createProfileSchema), async (c) => {
-  const profile = await createProfile(c.env.DB, c.req.valid("json"));
+  const ownerId = c.var.authUser.id === "admin-token" ? null : c.var.authUser.id;
+  const profile = await createProfile(c.env.DB, c.req.valid("json"), ownerId);
   return c.json(success(profile), 201);
 });
 
