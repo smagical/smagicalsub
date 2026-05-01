@@ -11,7 +11,6 @@
   font-weight: 700;
 }
 
-.metric-card,
 .panel {
   border: 1px solid #dfe5dc;
   border-radius: 8px;
@@ -19,21 +18,20 @@
   box-shadow: 0 12px 28px rgb(31 42 35 / 6%);
 }
 
-.metric-card {
+.metric-card-content {
   display: flex;
   align-items: center;
   gap: 14px;
-  min-height: 112px;
-  padding: 18px;
+  min-height: 88px;
 }
 
-.metric-card span {
+.metric-card-content span {
   display: block;
   color: #697168;
   font-size: 14px;
 }
 
-.metric-card strong {
+.metric-card-content strong {
   display: block;
   margin-top: 4px;
   font-size: 32px;
@@ -76,12 +74,8 @@
   grid-column: 1 / -1;
 }
 
-.panel-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
+.dashboard-card-wide {
+  grid-column: 1 / -1;
 }
 
 .module-heading {
@@ -95,29 +89,10 @@
   font-size: 14px;
 }
 
-.action-row {
+.dashboard-action-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-}
-
-.action-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 46px;
-  border: 1px solid #cfd9cd;
-  border-radius: 8px;
-  background: #f8faf6;
-  color: #20382d;
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.action-button:hover {
-  border-color: #91ad98;
-  background: #edf6ef;
 }
 
 .storage-list,

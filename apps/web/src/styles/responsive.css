@@ -14,7 +14,7 @@
 
   .metric-grid,
   .content-grid,
-  .action-row {
+  .dashboard-action-grid {
     grid-template-columns: 1fr;
   }
 
