@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
-import { LogOut, Signal } from "lucide-react";
+import { LogOut, Moon, Signal, Sun } from "lucide-react";
 import type { HealthDto } from "@smagicalsub/shared";
 import { Eyebrow } from "../shared/Eyebrow";
 import { navigation, type SectionId } from "./navigation";
@@ -11,11 +11,15 @@ type LayoutProps = {
   activeSection: SectionId;
   health?: HealthDto;
   children: ReactNode;
+  theme: "dark" | "light";
   onLogout?: () => void;
   onSectionChange: (section: SectionId) => void;
+  onThemeToggle: () => void;
 };
 
-export function Layout({ activeSection, health, children, onLogout, onSectionChange }: LayoutProps) {
+export function Layout({ activeSection, health, children, theme, onLogout, onSectionChange, onThemeToggle }: LayoutProps) {
+  const ThemeIcon = theme === "dark" ? Sun : Moon;
+
   return (
     <main className="grid min-h-screen grid-cols-[260px_minmax(0,1fr)] max-[920px]:grid-cols-1">
       <aside className="flex flex-col gap-7 border-r bg-sidebar px-[18px] py-6 max-[920px]:border-r-0 max-[920px]:border-b">
@@ -54,6 +58,10 @@ export function Layout({ activeSection, health, children, onLogout, onSectionCha
               <Signal data-icon="inline-start" />
               <span>{health?.status ?? "waiting"}</span>
             </Badge>
+            <Button aria-label="切换主题" onClick={onThemeToggle} type="button" variant="outline">
+              <ThemeIcon data-icon="inline-start" />
+              {theme === "dark" ? "白天" : "夜晚"}
+            </Button>
             {onLogout ? (
               <Button onClick={onLogout} type="button" variant="outline">
                 <LogOut data-icon="inline-start" />

@@ -8,6 +8,11 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "订阅管理控制台" })).toBeVisible();
   await expect(page.getByText("Cloudflare Workers")).toBeVisible();
 
+  await page.getByRole("button", { name: "切换主题" }).click();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await page.getByRole("button", { name: "切换主题" }).click();
+  await expect(page.locator("html")).not.toHaveClass(/dark/);
+
   await page.getByRole("button", { exact: true, name: "节点" }).click();
   await expect(page.getByText("添加单个节点，按分组查看订阅源解析和手动维护的节点。")).toBeVisible();
   await expect(page.getByRole("button", { name: "添加节点" })).toBeVisible();

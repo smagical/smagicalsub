@@ -117,7 +117,7 @@ pnpm build
 - Cloudflare Workers 前后端同部署入口已完成，`/api/*`、`/sub/*` 走 Worker，静态页面走 Workers Static Assets。
 - 订阅源、单节点、节点分组、批量节点操作、配置档、配置档规则、令牌、访问日志和概览页已完成基础闭环。
 - Clash、v2rayN Base64、明文 URI、sing-box 四类订阅输出已完成；明文和 v2rayN 会保留原始 URI。
-- 前端已迁移到 Tailwind CSS v4 + shadcn/ui 组件体系，旧全局样式已收敛到 `apps/web/src/styles.css`。
+- 前端已迁移到 Tailwind CSS v4 + shadcn/ui 组件体系，支持白天/夜晚主题，旧全局样式已收敛到 `apps/web/src/styles.css`。
 - 管理 API 已支持 `ADMIN_TOKEN` 保护，公开订阅仍使用订阅令牌保护。
 - 删除配置档时会显式解绑令牌并清理规则，避免外键行为不一致导致订阅令牌引用失效配置档。
 - 已接入 Vitest、Cloudflare Workers Vitest pool 和 Playwright E2E，覆盖核心逻辑、Worker 运行时和浏览器流程。

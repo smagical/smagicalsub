@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import type { HealthDto } from "@smagicalsub/shared";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
@@ -16,9 +16,12 @@ import { FilterField } from "../shared/FilterField";
 import { Layout } from "./Layout";
 import type { SectionId } from "./navigation";
 
+type ThemeMode = "dark" | "light";
+
 export function App() {
   const [activeSection, setActiveSection] = useState<SectionId>("dashboard");
   const [adminToken, setAdminTokenState] = useState(getAdminToken);
+  const [theme, setTheme] = useState<ThemeMode>(readTheme);
   const healthQuery = useQuery({
     queryKey: ["health"],
     queryFn: () => getJson<HealthDto>("/api/health"),
@@ -26,6 +29,10 @@ export function App() {
   });
   const health = healthQuery.data;
   const authRequired = Boolean(health?.authRequired);
+
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
 
   function handleLogin(token: string) {
     setAdminToken(token);
@@ -47,7 +54,14 @@ export function App() {
     content = <LoginPanel onLogin={handleLogin} />;
   } else {
     content = (
-      <Layout activeSection={activeSection} health={health} onLogout={authRequired ? handleLogout : undefined} onSectionChange={setActiveSection}>
+      <Layout
+        activeSection={activeSection}
+        health={health}
+        theme={theme}
+        onLogout={authRequired ? handleLogout : undefined}
+        onSectionChange={setActiveSection}
+        onThemeToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
+      >
         {renderSection(activeSection, health, setActiveSection)}
       </Layout>
     );
@@ -59,6 +73,15 @@ export function App() {
       <Toaster position="top-right" richColors />
     </>
   );
+}
+
+function readTheme(): ThemeMode {
+  return localStorage.getItem("smagicalsub.theme") === "dark" ? "dark" : "light";
+}
+
+function applyTheme(theme: ThemeMode) {
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  localStorage.setItem("smagicalsub.theme", theme);
 }
 
 function LoginPanel({ onLogin }: { onLogin: (token: string) => void }) {

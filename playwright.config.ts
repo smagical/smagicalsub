@@ -11,8 +11,9 @@ export default defineConfig({
     trace: "retain-on-failure"
   },
   webServer: {
-    command: "pnpm --filter @smagicalsub/web preview -- --host 127.0.0.1 --port 4173 --strictPort",
-    reuseExistingServer: !process.env.CI,
+    command: "pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    cwd: "apps/web",
+    reuseExistingServer: true,
     timeout: 120_000,
     url: "http://127.0.0.1:4173"
   },
