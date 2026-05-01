@@ -77,9 +77,9 @@ export function TokensTable({
                   token.name
                 )}
               </TableCell>
-              <TableCell className="mono-cell">{maskToken(token.token)}</TableCell>
+              <TableCell className="font-mono">{maskToken(token.token)}</TableCell>
               <TableCell>{profileSelect(token, profiles, pending, onProfileChange)}</TableCell>
-              <TableCell className="mono-cell truncate-cell">{subscriptionFormatPath(token.token, copyFormat)}</TableCell>
+              <TableCell className="max-w-md truncate font-mono">{subscriptionFormatPath(token.token, copyFormat)}</TableCell>
               <TableCell>{editing ? editExpiresAt(editForm, pending, onEditFormChange) : token.expires_at ?? "永不过期"}</TableCell>
               <TableCell>{token.last_used_at ?? "未使用"}</TableCell>
               <TableCell>

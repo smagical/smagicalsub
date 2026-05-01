@@ -4,7 +4,6 @@
 @import "./styles/panels.css";
 @import "./styles/sections.css";
 @import "./styles/forms.css";
-@import "./styles/tables.css";
 @import "./styles/responsive.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";

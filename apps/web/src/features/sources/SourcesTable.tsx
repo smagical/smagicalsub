@@ -63,8 +63,8 @@ export function SourcesTable({
               </TableCell>
               <TableCell>{source.last_status ?? "-"}</TableCell>
               <TableCell>{source.last_fetched_at ?? "未刷新"}</TableCell>
-              <TableCell className="truncate-cell">{source.last_error ?? "-"}</TableCell>
-              <TableCell className="truncate-cell">
+              <TableCell className="max-w-md truncate">{source.last_error ?? "-"}</TableCell>
+              <TableCell className="max-w-md truncate">
                 {editing
                   ? sourceInput("订阅源链接", editForm.url, pending, (url) => onEditFormChange({ ...editForm, url }))
                   : source.url}

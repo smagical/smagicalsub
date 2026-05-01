@@ -55,7 +55,7 @@ export function ProfileRulesTable({
                   ? editInput("规则排序", editForm.position, pending, (position) => onEditFormChange({ ...editForm, position }), "number")
                   : rule.position}
               </TableCell>
-              <TableCell className="mono-cell truncate-cell">
+              <TableCell className="max-w-md truncate font-mono">
                 {editing
                   ? editInput("规则内容", editForm.rule, pending, (value) => onEditFormChange({ ...editForm, rule: value }), "text")
                   : rule.rule}

@@ -27,9 +27,9 @@ export function LogsTable({ logs, onCopyPath, onOpenPath }: LogsTableProps) {
           <TableRow key={log.id}>
             <TableCell>{log.created_at}</TableCell>
             <TableCell>{log.token_name ?? "已删除令牌"}</TableCell>
-            <TableCell className="mono-cell">{log.path}</TableCell>
+            <TableCell className="font-mono">{log.path}</TableCell>
             <TableCell>{log.ip ?? "-"}</TableCell>
-            <TableCell className="truncate-cell">{log.user_agent ?? "-"}</TableCell>
+            <TableCell className="max-w-md truncate">{log.user_agent ?? "-"}</TableCell>
             <TableCell>
               <ActionGroup>
                 <Button onClick={() => onCopyPath(log.path)} size="sm" type="button" variant="outline">复制</Button>
