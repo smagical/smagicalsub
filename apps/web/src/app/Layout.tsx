@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -46,10 +47,10 @@ export function Layout({ activeSection, health, children, onSectionChange }: Lay
             <p className="eyebrow">Cloudflare Workers</p>
             <h1>订阅管理控制台</h1>
           </div>
-          <div className="runtime-pill">
-            <Signal size={16} />
+          <Badge className="h-9 gap-2 px-3" variant="outline">
+            <Signal data-icon="inline-start" />
             <span>{health?.status ?? "waiting"}</span>
-          </div>
+          </Badge>
         </header>
 
         {children}
