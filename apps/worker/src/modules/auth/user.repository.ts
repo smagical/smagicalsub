@@ -68,6 +68,15 @@ export async function updateUser(db: D1Database, id: string, input: UpdateUserIn
   return findUserById(db, id);
 }
 
+export async function updateUserPassword(db: D1Database, id: string, password: string) {
+  await db
+    .prepare(`UPDATE users SET password_hash = ?1, updated_at = CURRENT_TIMESTAMP WHERE id = ?2`)
+    .bind(await hashPassword(password), id)
+    .run();
+
+  return findUserById(db, id);
+}
+
 export async function deleteUser(db: D1Database, id: string) {
   const current = await findUserById(db, id);
 

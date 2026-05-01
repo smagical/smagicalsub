@@ -42,6 +42,13 @@ export async function deleteSessionsByUserId(db: D1Database, userId: string) {
   await db.prepare(`DELETE FROM sessions WHERE user_id = ?1`).bind(userId).run();
 }
 
+export async function deleteOtherSessionsByToken(db: D1Database, userId: string, token: string) {
+  await db
+    .prepare(`DELETE FROM sessions WHERE user_id = ?1 AND token_hash != ?2`)
+    .bind(userId, await sha256Base64Url(token))
+    .run();
+}
+
 function toSqlTimestamp(date: Date) {
   return date.toISOString().slice(0, 19).replace("T", " ");
 }

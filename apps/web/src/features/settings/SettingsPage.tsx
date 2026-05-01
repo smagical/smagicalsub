@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { defaultSiteSettings, type SiteSettingsDto } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent } from "react";
+import { changePassword } from "../auth/api";
 import { BrandHeader } from "../../shared/BrandHeader";
 import { FilterField } from "../../shared/FilterField";
 import { ModulePanel } from "../../shared/ModulePanel";
@@ -17,16 +18,26 @@ type SettingsFormState = {
   loginDescription: string;
 };
 
+type PasswordFormState = {
+  currentPassword: string;
+  newPassword: string;
+};
+
 export function SettingsPage() {
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({ queryKey: ["site-settings"], queryFn: getSiteSettings, retry: false });
   const [form, setForm] = useState(() => settingsToForm(defaultSiteSettings));
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "" });
   const mutation = useMutation({
     mutationFn: updateSiteSettings,
     onSuccess: async (settings) => {
       queryClient.setQueryData(["site-settings"], settings);
       await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
     }
+  });
+  const passwordMutation = useMutation({
+    mutationFn: changePassword,
+    onSuccess: () => setPasswordForm({ currentPassword: "", newPassword: "" })
   });
 
   useEffect(() => {
@@ -40,8 +51,14 @@ export function SettingsPage() {
     mutation.mutate(formToPayload(form));
   }
 
+  function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    passwordMutation.mutate(passwordForm);
+  }
+
   const previewSettings = formToPreview(form);
   const notice = mutation.isSuccess ? "站点品牌设置已保存" : null;
+  const passwordNotice = passwordMutation.isSuccess ? "登录密码已更新，请重新登录其他设备" : null;
 
   return (
     <ModulePanel eyebrow="Settings" title="站点设置" description="动态设置控制台名称、副标题、标题图片和登录页文案。">
@@ -60,12 +77,29 @@ export function SettingsPage() {
           保存设置
         </Button>
       </form>
-      <PageFeedback error={mutation.error ?? settingsQuery.error} notice={notice} />
+      <form className="grid gap-4 rounded-md border bg-background/70 p-4" onSubmit={handlePasswordSubmit}>
+        <div>
+          <h3 className="text-base font-semibold">账号安全</h3>
+          <p className="mt-1 text-sm text-muted-foreground">修改当前登录账号密码，更新后会清理该账号的其他会话。</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 max-[920px]:grid-cols-1">
+          <PasswordInput label="当前密码" name="currentPassword" value={passwordForm.currentPassword} onChange={setPasswordValue} />
+          <PasswordInput label="新密码" name="newPassword" value={passwordForm.newPassword} onChange={setPasswordValue} />
+        </div>
+        <Button className="w-fit" disabled={passwordMutation.isPending} type="submit">
+          更新密码
+        </Button>
+      </form>
+      <PageFeedback error={passwordMutation.error ?? mutation.error ?? settingsQuery.error} notice={passwordNotice ?? notice} />
     </ModulePanel>
   );
 
   function setFormValue(name: keyof SettingsFormState, value: string) {
     setForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function setPasswordValue(name: keyof PasswordFormState, value: string) {
+    setPasswordForm((current) => ({ ...current, [name]: value }));
   }
 }
 
@@ -87,6 +121,24 @@ function SettingsInput({
   return (
     <FilterField className="min-w-0" label={label}>
       <Input onChange={(event) => onChange(name, event.target.value)} required={required} type={type} value={value} />
+    </FilterField>
+  );
+}
+
+function PasswordInput({
+  label,
+  name,
+  onChange,
+  value
+}: {
+  label: string;
+  name: keyof PasswordFormState;
+  onChange: (name: keyof PasswordFormState, value: string) => void;
+  value: string;
+}) {
+  return (
+    <FilterField className="min-w-0" label={label}>
+      <Input autoComplete="current-password" minLength={8} onChange={(event) => onChange(name, event.target.value)} required type="password" value={value} />
     </FilterField>
   );
 }

@@ -1,11 +1,11 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { bootstrapAdminSchema, failure, loginSchema, success } from "@smagicalsub/shared";
+import { bootstrapAdminSchema, changePasswordSchema, failure, loginSchema, success } from "@smagicalsub/shared";
 import type { AppContext } from "../../env";
 import { bearerTokenFromRequest } from "../../middleware/admin-auth";
 import { verifyPassword } from "./password";
-import { createSession, deleteSessionByToken } from "./session.repository";
-import { countUsers, createUser, findUserByEmail } from "./user.repository";
+import { createSession, deleteOtherSessionsByToken, deleteSessionByToken } from "./session.repository";
+import { countUsers, createUser, findUserByEmail, updateUserPassword } from "./user.repository";
 
 export const publicAuthRoutes = new Hono<AppContext>();
 export const authRoutes = new Hono<AppContext>();
@@ -67,3 +67,17 @@ publicAuthRoutes.post("/logout", async (c) => {
 });
 
 authRoutes.get("/me", (c) => c.json(success(c.var.authUser)));
+
+authRoutes.post("/password", zValidator("json", changePasswordSchema), async (c) => {
+  const user = await findUserByEmail(c.env.DB, c.var.authUser.email);
+  const input = c.req.valid("json");
+
+  if (!user || !(await verifyPassword(input.currentPassword, user.password_hash))) {
+    return c.json(failure({ code: "INVALID_CURRENT_PASSWORD", message: "当前密码不正确" }), 401);
+  }
+
+  await updateUserPassword(c.env.DB, user.id, input.newPassword);
+  await deleteOtherSessionsByToken(c.env.DB, user.id, bearerTokenFromRequest(c.req.header("Authorization")) ?? "");
+
+  return c.json(success({ ok: true }));
+});

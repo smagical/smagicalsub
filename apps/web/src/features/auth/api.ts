@@ -1,4 +1,4 @@
-import type { AuthStatusDto, AuthUserDto, BootstrapAdminInput, LoginDto, LoginInput } from "@smagicalsub/shared";
+import type { AuthStatusDto, AuthUserDto, BootstrapAdminInput, ChangePasswordInput, LoginDto, LoginInput } from "@smagicalsub/shared";
 import { getJson, postJson } from "../../lib/api-client";
 
 export function getAuthStatus() {
@@ -19,4 +19,8 @@ export function getCurrentUser() {
 
 export function logout() {
   return postJson<{ ok: boolean }>("/api/auth/logout");
+}
+
+export function changePassword(input: ChangePasswordInput) {
+  return postJson<{ ok: boolean }>("/api/auth/password", input);
 }
