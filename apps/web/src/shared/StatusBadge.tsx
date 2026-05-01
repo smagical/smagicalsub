@@ -1,5 +1,6 @@
+import { Badge } from "@/components/ui/badge";
+
 export function StatusBadge({ enabled }: { enabled: number | boolean }) {
   const isEnabled = Boolean(enabled);
-  return <span className={isEnabled ? "status-badge enabled" : "status-badge disabled"}>{isEnabled ? "启用" : "停用"}</span>;
+  return <Badge variant={isEnabled ? "secondary" : "outline"}>{isEnabled ? "启用" : "停用"}</Badge>;
 }
-

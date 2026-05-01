@@ -1,4 +1,5 @@
 import type { NodeDto } from "@smagicalsub/shared";
+import { Button } from "@/components/ui/button";
 
 type NodeActionsProps = {
   editing: boolean;
@@ -24,27 +25,27 @@ export function NodeActions({
   if (editing) {
     return (
       <div className="table-actions">
-        <button className="primary-button" disabled={pending} onClick={() => onSaveEdit(node)} type="button">
+        <Button disabled={pending} onClick={() => onSaveEdit(node)} type="button">
           保存
-        </button>
-        <button className="secondary-button" disabled={pending} onClick={onCancelEdit} type="button">
+        </Button>
+        <Button disabled={pending} onClick={onCancelEdit} type="button" variant="outline">
           取消
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="table-actions">
-      <button className="secondary-button" disabled={pending} onClick={() => onToggleEnabled(node)} type="button">
+      <Button disabled={pending} onClick={() => onToggleEnabled(node)} type="button" variant="outline">
         {node.enabled ? "停用" : "启用"}
-      </button>
-      <button className="secondary-button" disabled={pending} onClick={() => onStartEdit(node)} type="button">
+      </Button>
+      <Button disabled={pending} onClick={() => onStartEdit(node)} type="button" variant="outline">
         编辑
-      </button>
-      <button className="danger-button" disabled={pending} onClick={() => onDelete(node)} type="button">
+      </Button>
+      <Button disabled={pending} onClick={() => onDelete(node)} type="button" variant="destructive">
         删除
-      </button>
+      </Button>
     </div>
   );
 }

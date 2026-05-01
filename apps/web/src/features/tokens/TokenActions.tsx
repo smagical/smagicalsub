@@ -1,4 +1,6 @@
 import type { SubscribeTokenDto } from "@smagicalsub/shared";
+import { Button } from "@/components/ui/button";
+import type { ComponentProps } from "react";
 
 type TokenActionsProps = {
   editing: boolean;
@@ -30,28 +32,28 @@ export function TokenActions({
   if (editing) {
     return (
       <div className="table-actions">
-        {actionButton("保存", "primary-button", pending, () => onSaveEdit(token))}
-        {actionButton("取消", "secondary-button", pending, onCancelEdit)}
+        {actionButton("保存", "default", pending, () => onSaveEdit(token))}
+        {actionButton("取消", "outline", pending, onCancelEdit)}
       </div>
     );
   }
 
   return (
     <div className="table-actions">
-      {actionButton("复制", "secondary-button", pending, () => onCopy(token))}
-      {actionButton("打开", "inline-button", pending, () => onOpen(token))}
-      {actionButton("编辑", "secondary-button", pending, () => onStartEdit(token))}
-      {actionButton(token.enabled ? "停用" : "启用", "secondary-button", pending, () => onToggleEnabled(token))}
-      {actionButton("重置", "secondary-button", pending, () => onReset(token))}
-      {actionButton("删除", "danger-button", pending, () => onDelete(token))}
+      {actionButton("复制", "outline", pending, () => onCopy(token))}
+      {actionButton("打开", "ghost", pending, () => onOpen(token))}
+      {actionButton("编辑", "outline", pending, () => onStartEdit(token))}
+      {actionButton(token.enabled ? "停用" : "启用", "outline", pending, () => onToggleEnabled(token))}
+      {actionButton("重置", "outline", pending, () => onReset(token))}
+      {actionButton("删除", "destructive", pending, () => onDelete(token))}
     </div>
   );
 }
 
-function actionButton(label: string, className: string, pending: boolean, onClick: () => void) {
+function actionButton(label: string, variant: ComponentProps<typeof Button>["variant"], pending: boolean, onClick: () => void) {
   return (
-    <button className={className} disabled={pending} onClick={onClick} type="button">
+    <Button disabled={pending} onClick={onClick} type="button" variant={variant}>
       {label}
-    </button>
+    </Button>
   );
 }

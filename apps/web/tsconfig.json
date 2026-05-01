@@ -1,6 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@smagicalsub/shared": ["../../packages/shared/src/index.ts"],
+      "@smagicalsub/db": ["../../packages/db/src/index.ts"],
+      "@smagicalsub/subscription": ["../../packages/subscription/src/index.ts"]
+    },
     "types": ["@cloudflare/workers-types", "vite/client", "node"],
     "jsx": "react-jsx"
   },

@@ -7,6 +7,7 @@
 - TypeScript 全栈
 - pnpm workspace
 - React + Vite
+- Tailwind CSS + shadcn/ui
 - Cloudflare Workers Static Assets
 - Hono
 - D1 + KV
@@ -96,6 +97,7 @@ pnpm db:migrate:remote
 - 文件按模块拆分，TS/TSX/CSS 文件接近 160 行时优先拆分。
 - 复杂流程必须写简短注释，说明为什么这样做，不写重复代码含义的注释。
 - 前端功能按 `features/*` 拆分，通用 UI 放到 `shared/*`。
+- 新 UI 优先使用 `src/components/ui/*` 下的 shadcn/ui 组件，旧自定义 CSS 按模块渐进迁移。
 - Worker 后端按 `modules/*` 拆分，路由、repository、service 分开维护。
 - 订阅格式相关逻辑放在 `packages/subscription/src/renderers/*`，不要继续堆到单一文件。
 
