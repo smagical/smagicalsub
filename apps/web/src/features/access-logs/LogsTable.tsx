@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { AccessLogDto } from "@smagicalsub/shared";
 
 type LogsTableProps = {
@@ -9,34 +10,34 @@ type LogsTableProps = {
 
 export function LogsTable({ logs, onCopyPath, onOpenPath }: LogsTableProps) {
   return (
-    <table className="data-table">
-      <thead>
-        <tr>
-          <th>时间</th>
-          <th>令牌</th>
-          <th>路径</th>
-          <th>IP</th>
-          <th>User Agent</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>时间</TableHead>
+          <TableHead>令牌</TableHead>
+          <TableHead>路径</TableHead>
+          <TableHead>IP</TableHead>
+          <TableHead>User Agent</TableHead>
+          <TableHead>操作</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {logs.map((log) => (
-          <tr key={log.id}>
-            <td>{log.created_at}</td>
-            <td>{log.token_name ?? "已删除令牌"}</td>
-            <td className="mono-cell">{log.path}</td>
-            <td>{log.ip ?? "-"}</td>
-            <td className="truncate-cell">{log.user_agent ?? "-"}</td>
-            <td>
+          <TableRow key={log.id}>
+            <TableCell>{log.created_at}</TableCell>
+            <TableCell>{log.token_name ?? "已删除令牌"}</TableCell>
+            <TableCell className="mono-cell">{log.path}</TableCell>
+            <TableCell>{log.ip ?? "-"}</TableCell>
+            <TableCell className="truncate-cell">{log.user_agent ?? "-"}</TableCell>
+            <TableCell>
               <div className="table-actions">
                 <Button onClick={() => onCopyPath(log.path)} size="sm" type="button" variant="outline">复制</Button>
                 <Button onClick={() => onOpenPath(log.path)} size="sm" type="button" variant="ghost">打开</Button>
               </div>
-            </td>
-          </tr>
+            </TableCell>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }

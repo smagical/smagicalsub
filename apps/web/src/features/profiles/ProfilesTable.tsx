@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ProfileDto } from "@smagicalsub/shared";
 import { ConfirmButton } from "../../shared/ConfirmButton";
 import { StatusBadge } from "../../shared/StatusBadge";
@@ -33,45 +34,45 @@ export function ProfilesTable({
   onToggleEnabled
 }: ProfilesTableProps) {
   return (
-    <table className="data-table">
-      <thead>
-        <tr>
-          <th>名称</th>
-          <th>默认策略</th>
-          <th>描述</th>
-          <th>状态</th>
-          <th>更新时间</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>名称</TableHead>
+          <TableHead>默认策略</TableHead>
+          <TableHead>描述</TableHead>
+          <TableHead>状态</TableHead>
+          <TableHead>更新时间</TableHead>
+          <TableHead>操作</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {profiles.map((profile) => {
           const editing = editingProfileId === profile.id;
 
           return (
-            <tr key={profile.id}>
-              <td>
+            <TableRow key={profile.id}>
+              <TableCell>
                 {editing ? profileInput("配置档名称", editForm.name, pending, (name) => onEditFormChange({ ...editForm, name })) : profile.name}
-              </td>
-              <td>
+              </TableCell>
+              <TableCell>
                 {editing
                   ? profileInput("默认策略", editForm.default_strategy, pending, (default_strategy) =>
                       onEditFormChange({ ...editForm, default_strategy })
                     )
                   : profile.default_strategy}
-              </td>
-              <td>
+              </TableCell>
+              <TableCell>
                 {editing
                   ? profileInput("配置档描述", editForm.description, pending, (description) =>
                       onEditFormChange({ ...editForm, description })
                     )
                   : profile.description ?? "-"}
-              </td>
-              <td>
+              </TableCell>
+              <TableCell>
                 <StatusBadge enabled={profile.enabled} />
-              </td>
-              <td>{profile.updated_at}</td>
-              <td>
+              </TableCell>
+              <TableCell>{profile.updated_at}</TableCell>
+              <TableCell>
                 <ProfileActions
                   editing={editing}
                   pending={pending}
@@ -83,24 +84,18 @@ export function ProfilesTable({
                   onStartEdit={onStartEdit}
                   onToggleEnabled={onToggleEnabled}
                 />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           );
         })}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 
 function profileInput(label: string, value: string, pending: boolean, onChange: (value: string) => void) {
   return (
-    <Input
-      aria-label={label}
-      disabled={pending}
-      onChange={(event) => onChange(event.target.value)}
-      type="text"
-      value={value}
-    />
+    <Input aria-label={label} disabled={pending} onChange={(event) => onChange(event.target.value)} type="text" value={value} />
   );
 }
 

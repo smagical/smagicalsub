@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ProfileRuleDto } from "@smagicalsub/shared";
 import { ConfirmButton } from "../../shared/ConfirmButton";
 import { StatusBadge } from "../../shared/StatusBadge";
@@ -33,35 +34,35 @@ export function ProfileRulesTable({
   onToggleEnabled
 }: ProfileRulesTableProps) {
   return (
-    <table className="data-table compact-table">
-      <thead>
-        <tr>
-          <th>排序</th>
-          <th>规则</th>
-          <th>状态</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>排序</TableHead>
+          <TableHead>规则</TableHead>
+          <TableHead>状态</TableHead>
+          <TableHead>操作</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {rules.map((rule, index) => {
           const editing = editingRuleId === rule.id;
 
           return (
-            <tr key={rule.id}>
-              <td>
+            <TableRow key={rule.id}>
+              <TableCell>
                 {editing
                   ? editInput("规则排序", editForm.position, pending, (position) => onEditFormChange({ ...editForm, position }), "number")
                   : rule.position}
-              </td>
-              <td className="mono-cell truncate-cell">
+              </TableCell>
+              <TableCell className="mono-cell truncate-cell">
                 {editing
                   ? editInput("规则内容", editForm.rule, pending, (value) => onEditFormChange({ ...editForm, rule: value }), "text")
                   : rule.rule}
-              </td>
-              <td>
+              </TableCell>
+              <TableCell>
                 <StatusBadge enabled={rule.enabled} />
-              </td>
-              <td>
+              </TableCell>
+              <TableCell>
                 <RuleActions
                   editing={editing}
                   pending={pending}
@@ -75,12 +76,12 @@ export function ProfileRulesTable({
                   canMoveDown={index < rules.length - 1}
                   canMoveUp={index > 0}
                 />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           );
         })}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 

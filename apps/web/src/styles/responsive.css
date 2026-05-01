@@ -30,11 +30,6 @@
     width: 100%;
   }
 
-  .data-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
 }
 
 @media (max-width: 560px) {
@@ -57,4 +52,3 @@
     margin-left: 0;
   }
 }
-

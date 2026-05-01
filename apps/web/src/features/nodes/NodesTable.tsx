@@ -1,5 +1,6 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { NodeDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
 import { NodeActions } from "./NodeActions";
@@ -39,47 +40,47 @@ export function NodesTable({
   onToggleVisible
 }: NodesTableProps) {
   return (
-    <table className="data-table">
-      <thead>
-        <tr>
-          <th>{selectionInput("选择当前列表节点", allVisibleSelected, pending || nodes.length === 0, onToggleVisible)}</th>
-          <th>名称</th>
-          <th>协议</th>
-          <th>服务端</th>
-          <th>端口</th>
-          <th>分组</th>
-          <th>状态</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>{selectionInput("选择当前列表节点", allVisibleSelected, pending || nodes.length === 0, onToggleVisible)}</TableHead>
+          <TableHead>名称</TableHead>
+          <TableHead>协议</TableHead>
+          <TableHead>服务端</TableHead>
+          <TableHead>端口</TableHead>
+          <TableHead>分组</TableHead>
+          <TableHead>状态</TableHead>
+          <TableHead>操作</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {nodes.map((node) => {
           const editing = editingNodeId === node.id;
 
           return (
-            <tr key={node.id}>
-              <td>
+            <TableRow key={node.id}>
+              <TableCell>
                 {selectionInput(`选择节点 ${node.name}`, selectedNodeIds.includes(node.id), pending, (checked) =>
                   onToggleSelected(node.id, checked)
                 )}
-              </td>
-              <td>
+              </TableCell>
+              <TableCell>
                 {editing ? textInput("节点名称", editForm.name, pending, (name) => onEditFormChange({ ...editForm, name })) : node.name}
-              </td>
-              <td>{node.protocol}</td>
-              <td>{node.server ?? "-"}</td>
-              <td>{node.port ?? "-"}</td>
-              <td>
+              </TableCell>
+              <TableCell>{node.protocol}</TableCell>
+              <TableCell>{node.server ?? "-"}</TableCell>
+              <TableCell>{node.port ?? "-"}</TableCell>
+              <TableCell>
                 {editing ? (
                   textInput("节点分组", editForm.groups, pending, (groups) => onEditFormChange({ ...editForm, groups }), "香港,日本,备用")
                 ) : (
                   <GroupChips groups={node.groups} />
                 )}
-              </td>
-              <td>
+              </TableCell>
+              <TableCell>
                 <StatusBadge enabled={node.enabled} />
-              </td>
-              <td>
+              </TableCell>
+              <TableCell>
                 <NodeActions
                   editing={editing}
                   node={node}
@@ -90,12 +91,12 @@ export function NodesTable({
                   onStartEdit={onStartEdit}
                   onToggleEnabled={onToggleEnabled}
                 />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           );
         })}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 

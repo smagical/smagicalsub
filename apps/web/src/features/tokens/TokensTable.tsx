@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ProfileDto, SubscribeTokenDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
 import { TokenActions } from "./TokenActions";
@@ -44,26 +45,26 @@ export function TokensTable({
   onToggleEnabled
 }: TokensTableProps) {
   return (
-    <table className="data-table">
-      <thead>
-        <tr>
-          <th>名称</th>
-          <th>令牌</th>
-          <th>配置档</th>
-          <th>订阅路径</th>
-          <th>过期时间</th>
-          <th>最近使用</th>
-          <th>状态</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>名称</TableHead>
+          <TableHead>令牌</TableHead>
+          <TableHead>配置档</TableHead>
+          <TableHead>订阅路径</TableHead>
+          <TableHead>过期时间</TableHead>
+          <TableHead>最近使用</TableHead>
+          <TableHead>状态</TableHead>
+          <TableHead>操作</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {tokens.map((token) => {
           const editing = editingTokenId === token.id;
 
           return (
-            <tr key={token.id}>
-              <td>
+            <TableRow key={token.id}>
+              <TableCell>
                 {editing ? (
                   <Input
                     aria-label="令牌名称"
@@ -75,16 +76,16 @@ export function TokensTable({
                 ) : (
                   token.name
                 )}
-              </td>
-              <td className="mono-cell">{maskToken(token.token)}</td>
-              <td>{profileSelect(token, profiles, pending, onProfileChange)}</td>
-              <td className="mono-cell truncate-cell">{subscriptionFormatPath(token.token, copyFormat)}</td>
-              <td>{editing ? editExpiresAt(editForm, pending, onEditFormChange) : token.expires_at ?? "永不过期"}</td>
-              <td>{token.last_used_at ?? "未使用"}</td>
-              <td>
+              </TableCell>
+              <TableCell className="mono-cell">{maskToken(token.token)}</TableCell>
+              <TableCell>{profileSelect(token, profiles, pending, onProfileChange)}</TableCell>
+              <TableCell className="mono-cell truncate-cell">{subscriptionFormatPath(token.token, copyFormat)}</TableCell>
+              <TableCell>{editing ? editExpiresAt(editForm, pending, onEditFormChange) : token.expires_at ?? "永不过期"}</TableCell>
+              <TableCell>{token.last_used_at ?? "未使用"}</TableCell>
+              <TableCell>
                 <StatusBadge enabled={token.enabled} />
-              </td>
-              <td>
+              </TableCell>
+              <TableCell>
                 <TokenActions
                   editing={editing}
                   pending={pending}
@@ -98,12 +99,12 @@ export function TokensTable({
                   onStartEdit={onStartEdit}
                   onToggleEnabled={onToggleEnabled}
                 />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           );
         })}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 function editExpiresAt(editForm: TokenEditFormState, pending: boolean, onEditFormChange: (form: TokenEditFormState) => void) {
