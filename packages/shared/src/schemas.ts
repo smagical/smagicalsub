@@ -119,6 +119,26 @@ export const updateSubscribeTokenSchema = z
 
 export type UpdateSubscribeTokenInput = z.infer<typeof updateSubscribeTokenSchema>;
 
+const titleImageUrlSchema = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.string().trim().url().max(500).nullable()
+);
+
+export const siteSettingsSchema = z.object({
+  siteName: z.string().trim().min(1).max(48),
+  siteSubtitle: z.string().trim().min(1).max(80),
+  titleImageUrl: titleImageUrlSchema,
+  loginTitle: z.string().trim().min(1).max(80),
+  loginDescription: z.string().trim().min(1).max(180)
+});
+
+export const updateSiteSettingsSchema = siteSettingsSchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  "At least one field must be provided"
+);
+
+export type UpdateSiteSettingsInput = z.infer<typeof updateSiteSettingsSchema>;
+
 export const subscribeTokenSchema = z.object({
   id: z.string(),
   name: z.string(),

@@ -8,6 +8,7 @@ import { dashboardRoutes } from "./modules/dashboard/dashboard.routes";
 import { healthRoutes } from "./routes/health";
 import { nodeRoutes } from "./modules/nodes/node.routes";
 import { profileRoutes } from "./modules/profiles/profile.routes";
+import { publicSettingsRoutes, settingsRoutes } from "./modules/settings/settings.routes";
 import { sourceRoutes } from "./modules/sources/source.routes";
 import { subscribeRoutes } from "./modules/subscribe/subscribe.routes";
 import { tokenRoutes } from "./modules/tokens/token.routes";
@@ -16,8 +17,10 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", logger());
 app.route("/api/health", healthRoutes);
+app.route("/api/site-settings", publicSettingsRoutes);
 app.use("/api/*", requireAdminToken);
 app.route("/api/dashboard", dashboardRoutes);
+app.route("/api/site-settings", settingsRoutes);
 app.route("/api/sources", sourceRoutes);
 app.route("/api/nodes", nodeRoutes);
 app.route("/api/profiles", profileRoutes);

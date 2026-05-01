@@ -3,13 +3,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { LogOut, Moon, Signal, Sun } from "lucide-react";
-import type { HealthDto } from "@smagicalsub/shared";
+import type { HealthDto, SiteSettingsDto } from "@smagicalsub/shared";
+import { BrandHeader } from "../shared/BrandHeader";
 import { Eyebrow } from "../shared/Eyebrow";
 import { navigation, type SectionId } from "./navigation";
 
 type LayoutProps = {
   activeSection: SectionId;
   health?: HealthDto;
+  settings: SiteSettingsDto;
   children: ReactNode;
   theme: "dark" | "light";
   onLogout?: () => void;
@@ -23,26 +25,21 @@ const navToneClasses: Record<SectionId, string> = {
   nodes: "text-chart-5",
   profiles: "text-chart-3",
   tokens: "text-chart-4",
-  logs: "text-primary"
+  logs: "text-primary",
+  settings: "text-chart-3"
 };
 
-export function Layout({ activeSection, health, children, theme, onLogout, onSectionChange, onThemeToggle }: LayoutProps) {
+export function Layout({ activeSection, health, settings, children, theme, onLogout, onSectionChange, onThemeToggle }: LayoutProps) {
   const ThemeIcon = theme === "dark" ? Sun : Moon;
 
   return (
     <main className="app-shell grid min-h-screen grid-cols-[260px_minmax(0,1fr)] max-[920px]:grid-cols-1">
       <aside className="sidebar-shell flex flex-col gap-7 border-r px-[18px] py-6 max-[920px]:border-r-0 max-[920px]:border-b">
         <div className="rounded-xl border border-sidebar-border/70 bg-card/55 p-3 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="brand-mark grid size-[42px] place-items-center rounded-md font-extrabold text-primary-foreground shadow-sm ring-1 ring-sidebar-ring/25">S</div>
-            <div>
-              <strong className="block">smagicalsub</strong>
-              <span className="block text-sm text-muted-foreground">Clash 订阅管理</span>
-            </div>
-          </div>
+          <BrandHeader settings={settings} />
         </div>
 
-        <nav className="grid gap-1.5 max-[920px]:grid-cols-3" aria-label="主导航">
+        <nav className="grid gap-1.5 max-[920px]:grid-cols-4 max-[560px]:grid-cols-2" aria-label="主导航">
           {navigation.map((item) => (
             <Button
               className={cn(

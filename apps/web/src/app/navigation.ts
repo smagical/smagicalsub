@@ -3,12 +3,13 @@ import {
   Cable,
   FileSliders,
   KeyRound,
+  Settings,
   type LucideIcon,
   Server,
   TerminalSquare
 } from "lucide-react";
 
-export type SectionId = "dashboard" | "sources" | "nodes" | "profiles" | "tokens" | "logs";
+export type SectionId = "dashboard" | "sources" | "nodes" | "profiles" | "tokens" | "logs" | "settings";
 
 export type NavigationItem = {
   id: SectionId;
@@ -22,6 +23,6 @@ export const navigation: NavigationItem[] = [
   { id: "nodes", label: "节点", icon: Server },
   { id: "profiles", label: "配置档", icon: FileSliders },
   { id: "tokens", label: "令牌", icon: KeyRound },
-  { id: "logs", label: "日志", icon: TerminalSquare }
+  { id: "logs", label: "日志", icon: TerminalSquare },
+  { id: "settings", label: "设置", icon: Settings }
 ];
-

@@ -16,6 +16,9 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
   await page.getByRole("button", { exact: true, name: "节点" }).click();
   await expect(page.getByText("添加单个节点，按分组查看订阅源解析和手动维护的节点。")).toBeVisible();
   await expect(page.getByRole("button", { name: "添加节点" })).toBeVisible();
+
+  await page.getByRole("button", { exact: true, name: "设置" }).click();
+  await expect(page.getByText("动态设置控制台名称、副标题、标题图片和登录页文案。")).toBeVisible();
 });
 
 test("stores the admin token and sends it with API requests", async ({ page }) => {
@@ -71,6 +74,19 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
       data: {
         totals: { nodes: 0, profiles: 0, sources: 0, tokens: 0 },
         recentEvents: []
+      }
+    };
+  }
+
+  if (url.endsWith("/api/site-settings")) {
+    return {
+      ok: true,
+      data: {
+        loginDescription: "输入管理员令牌。",
+        loginTitle: "管理员访问",
+        siteName: "测试订阅台",
+        siteSubtitle: "多格式订阅管理",
+        titleImageUrl: null
       }
     };
   }

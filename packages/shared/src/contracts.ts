@@ -24,6 +24,22 @@ export type DashboardDto = {
   }>;
 };
 
+export type SiteSettingsDto = {
+  siteName: string;
+  siteSubtitle: string;
+  titleImageUrl: string | null;
+  loginTitle: string;
+  loginDescription: string;
+};
+
+export const defaultSiteSettings: SiteSettingsDto = {
+  siteName: "Smagical Sub",
+  siteSubtitle: "多格式订阅管理",
+  titleImageUrl: null,
+  loginTitle: "管理员访问",
+  loginDescription: "输入 Worker 环境变量 `ADMIN_TOKEN` 对应的令牌。"
+};
+
 export type SourceDto = {
   id: string;
   name: string;
