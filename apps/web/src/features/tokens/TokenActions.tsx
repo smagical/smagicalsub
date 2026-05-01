@@ -52,7 +52,7 @@ export function TokenActions({
 
 function actionButton(label: string, variant: ComponentProps<typeof Button>["variant"], pending: boolean, onClick: () => void) {
   return (
-    <Button disabled={pending} onClick={onClick} type="button" variant={variant}>
+    <Button disabled={pending} onClick={onClick} size="sm" type="button" variant={variant}>
       {label}
     </Button>
   );

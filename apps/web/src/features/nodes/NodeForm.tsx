@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import type { NodeFormState } from "./types";
 import { parseGroups } from "./utils";
@@ -24,7 +26,7 @@ export function NodeForm({ form, pending, setForm, onSubmit }: NodeFormProps) {
     <form className="form-grid node-form" onSubmit={handleSubmit}>
       <label className="wide-field">
         <span>节点链接</span>
-        <input
+        <Input
           onChange={(event) => setForm((current) => ({ ...current, uri: event.target.value }))}
           placeholder="ss:// / vmess:// / trojan:// / vless://"
           required
@@ -34,7 +36,7 @@ export function NodeForm({ form, pending, setForm, onSubmit }: NodeFormProps) {
       </label>
       <label>
         <span>显示名称</span>
-        <input
+        <Input
           onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
           placeholder="留空使用节点名称"
           type="text"
@@ -43,7 +45,7 @@ export function NodeForm({ form, pending, setForm, onSubmit }: NodeFormProps) {
       </label>
       <label>
         <span>分组</span>
-        <input
+        <Input
           onChange={(event) => setForm((current) => ({ ...current, groups: event.target.value }))}
           placeholder="香港,日本,备用"
           type="text"
@@ -58,10 +60,9 @@ export function NodeForm({ form, pending, setForm, onSubmit }: NodeFormProps) {
         />
         <span>启用</span>
       </label>
-      <button className="primary-button" disabled={pending} type="submit">
+      <Button disabled={pending} type="submit">
         添加节点
-      </button>
+      </Button>
     </form>
   );
 }
-

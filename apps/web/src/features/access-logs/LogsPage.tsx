@@ -1,8 +1,12 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useMemo, useState } from "react";
 import type { AccessLogDto } from "@smagicalsub/shared";
 import { useQuery } from "@tanstack/react-query";
 import { downloadCsv } from "../../lib/download-csv";
 import { EmptyState } from "../../shared/EmptyState";
+import { FilterField } from "../../shared/FilterField";
 import { ModuleHeading } from "../../shared/ModuleHeading";
 import { listAccessLogs } from "./api";
 import { LogsTable } from "./LogsTable";
@@ -45,30 +49,34 @@ export function LogsPage() {
     <section className="panel wide">
       <ModuleHeading eyebrow="Logs" title="访问日志" description="查看最近 100 条订阅访问记录，用于排查令牌和客户端请求。" />
       <div className="filter-row">
-        <label>
-          <span>搜索日志</span>
-          <input
+        <FilterField label="搜索日志">
+          <Input
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="令牌 / 路径 / IP / User Agent"
             type="search"
             value={searchQuery}
           />
-        </label>
-        <label>
-          <span>令牌状态</span>
-          <select onChange={(event) => setTokenFilter(event.target.value)} value={tokenFilter}>
+        </FilterField>
+        <FilterField label="令牌状态">
+          <NativeSelect onChange={(event) => setTokenFilter(event.target.value)} value={tokenFilter}>
             <option value="all">全部日志</option>
             <option value="active-token">现有令牌</option>
             <option value="deleted-token">已删除令牌</option>
-          </select>
-        </label>
-        <button className="secondary-button" disabled={filteredLogs.length === 0} onClick={exportCsv} type="button">导出 CSV</button>
+          </NativeSelect>
+        </FilterField>
+        <Button disabled={filteredLogs.length === 0} onClick={exportCsv} type="button" variant="outline">
+          导出 CSV
+        </Button>
       </div>
 
       {notice ? <p className="success-text">{notice}</p> : null}
       {query.error instanceof Error ? <p className="error-text">{query.error.message}</p> : null}
 
-      {filteredLogs.length === 0 ? <EmptyState label={emptyLabel} /> : <LogsTable logs={filteredLogs} onCopyPath={(path) => void copyPath(path)} onOpenPath={openPath} />}
+      {filteredLogs.length === 0 ? (
+        <EmptyState label={emptyLabel} />
+      ) : (
+        <LogsTable logs={filteredLogs} onCopyPath={(path) => void copyPath(path)} onOpenPath={openPath} />
+      )}
     </section>
   );
 }

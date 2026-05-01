@@ -1,5 +1,9 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import type { ProfileDto } from "@smagicalsub/shared";
+import { FilterField } from "../../shared/FilterField";
 import type { TokenFormState } from "./types";
 import { toCreateTokenInput } from "./utils";
 
@@ -19,19 +23,17 @@ export function TokenForm({ form, pending, profiles, setForm, onSubmit }: TokenF
 
   return (
     <form className="form-grid token-form" onSubmit={handleSubmit}>
-      <label>
-        <span>名称</span>
-        <input
+      <FilterField label="名称">
+        <Input
           onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
           placeholder="默认订阅"
           required
           type="text"
           value={form.name}
         />
-      </label>
-      <label>
-        <span>配置档</span>
-        <select
+      </FilterField>
+      <FilterField label="配置档">
+        <NativeSelect
           onChange={(event) => setForm((current) => ({ ...current, profile_id: event.target.value }))}
           value={form.profile_id}
         >
@@ -41,16 +43,15 @@ export function TokenForm({ form, pending, profiles, setForm, onSubmit }: TokenF
               {profile.name}
             </option>
           ))}
-        </select>
-      </label>
-      <label>
-        <span>过期时间</span>
-        <input
+        </NativeSelect>
+      </FilterField>
+      <FilterField label="过期时间">
+        <Input
           onChange={(event) => setForm((current) => ({ ...current, expires_at: event.target.value }))}
           type="datetime-local"
           value={form.expires_at}
         />
-      </label>
+      </FilterField>
       <label className="checkbox-field">
         <input
           checked={form.enabled}
@@ -59,9 +60,9 @@ export function TokenForm({ form, pending, profiles, setForm, onSubmit }: TokenF
         />
         <span>启用</span>
       </label>
-      <button className="primary-button" disabled={pending} type="submit">
+      <Button disabled={pending} type="submit">
         创建令牌
-      </button>
+      </Button>
     </form>
   );
 }

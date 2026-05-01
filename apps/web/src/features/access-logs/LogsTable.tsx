@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { AccessLogDto } from "@smagicalsub/shared";
 
 type LogsTableProps = {
@@ -29,8 +30,8 @@ export function LogsTable({ logs, onCopyPath, onOpenPath }: LogsTableProps) {
             <td className="truncate-cell">{log.user_agent ?? "-"}</td>
             <td>
               <div className="table-actions">
-                <button className="secondary-button" onClick={() => onCopyPath(log.path)} type="button">复制</button>
-                <button className="inline-button" onClick={() => onOpenPath(log.path)} type="button">打开</button>
+                <Button onClick={() => onCopyPath(log.path)} size="sm" type="button" variant="outline">复制</Button>
+                <Button onClick={() => onOpenPath(log.path)} size="sm" type="button" variant="ghost">打开</Button>
               </div>
             </td>
           </tr>

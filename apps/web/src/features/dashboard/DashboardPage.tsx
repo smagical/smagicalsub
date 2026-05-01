@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { DashboardDto, HealthDto } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cable, Database, FileSliders, KeyRound, RefreshCw, Server, ShieldCheck } from "lucide-react";
@@ -7,15 +8,7 @@ import type { SectionId } from "../../app/navigation";
 import { refreshAllSources } from "../sources/api";
 import { getDashboard } from "./api";
 
-const fallbackDashboard: DashboardDto = {
-  totals: {
-    sources: 0,
-    nodes: 0,
-    profiles: 0,
-    tokens: 0
-  },
-  recentEvents: []
-};
+const fallbackDashboard: DashboardDto = { totals: { sources: 0, nodes: 0, profiles: 0, tokens: 0 }, recentEvents: [] };
 
 const quickActions = [
   { label: "添加订阅源", icon: Cable, target: "sources" },
@@ -28,10 +21,7 @@ const quickActions = [
   target?: SectionId;
 }>;
 
-type DashboardPageProps = {
-  health?: HealthDto;
-  onNavigate: (section: SectionId) => void;
-};
+type DashboardPageProps = { health?: HealthDto; onNavigate: (section: SectionId) => void };
 
 export function DashboardPage({ health, onNavigate }: DashboardPageProps) {
   const queryClient = useQueryClient();
@@ -73,13 +63,25 @@ export function DashboardPage({ health, onNavigate }: DashboardPageProps) {
           </div>
           <div className="action-row">
             {quickActions.map((action) => (
-              <button className="action-button" disabled={refreshMutation.isPending} key={action.label} onClick={() => runQuickAction(action, onNavigate, () => refreshMutation.mutate())} type="button">
-                <action.icon size={18} />
+              <Button
+                className="action-button"
+                disabled={refreshMutation.isPending}
+                key={action.label}
+                onClick={() => runQuickAction(action, onNavigate, () => refreshMutation.mutate())}
+                type="button"
+                variant="outline"
+              >
+                <action.icon data-icon="inline-start" />
                 <span>{action.label}</span>
-              </button>
+              </Button>
             ))}
           </div>
-          {refreshResult ? <p className="success-text">刷新完成：成功 {refreshResult.success} 个，失败 {refreshResult.failed} 个，解析 {refreshResult.nodeCount} 个节点</p> : null}
+          {refreshResult ? (
+            <p className="success-text">
+              刷新完成：成功 {refreshResult.success} 个，失败 {refreshResult.failed} 个，解析{" "}
+              {refreshResult.nodeCount} 个节点
+            </p>
+          ) : null}
           {refreshMutation.error instanceof Error ? <p className="error-text">{refreshMutation.error.message}</p> : null}
         </div>
 

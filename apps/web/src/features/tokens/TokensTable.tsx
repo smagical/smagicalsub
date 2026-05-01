@@ -1,3 +1,5 @@
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import type { ProfileDto, SubscribeTokenDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
 import { TokenActions } from "./TokenActions";
@@ -63,7 +65,7 @@ export function TokensTable({
             <tr key={token.id}>
               <td>
                 {editing ? (
-                  <input
+                  <Input
                     aria-label="令牌名称"
                     disabled={pending}
                     onChange={(event) => onEditFormChange({ ...editForm, name: event.target.value })}
@@ -106,7 +108,7 @@ export function TokensTable({
 }
 function editExpiresAt(editForm: TokenEditFormState, pending: boolean, onEditFormChange: (form: TokenEditFormState) => void) {
   return (
-    <input
+    <Input
       aria-label="令牌过期时间"
       disabled={pending}
       onChange={(event) => onEditFormChange({ ...editForm, expires_at: event.target.value })}
@@ -122,7 +124,11 @@ function profileSelect(
   onProfileChange: (token: SubscribeTokenDto, profileId: string | null) => void
 ) {
   return (
-    <select disabled={pending} onChange={(event) => onProfileChange(token, event.target.value || null)} value={token.profile_id ?? ""}>
+    <NativeSelect
+      disabled={pending}
+      onChange={(event) => onProfileChange(token, event.target.value || null)}
+      value={token.profile_id ?? ""}
+    >
       <option value="">不绑定</option>
       {profiles.map((profile) => (
         <option key={profile.id} value={profile.id}>
@@ -130,7 +136,7 @@ function profileSelect(
         </option>
       ))}
       {missingProfileOption(token, profiles)}
-    </select>
+    </NativeSelect>
   );
 }
 

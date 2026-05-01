@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { SourceDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
 import type { SourceEditFormState } from "./types";
@@ -48,7 +50,11 @@ export function SourcesTable({
 
           return (
             <tr key={source.id}>
-              <td>{editing ? sourceInput("订阅源名称", editForm.name, pending, (name) => onEditFormChange({ ...editForm, name })) : source.name}</td>
+              <td>
+                {editing
+                  ? sourceInput("订阅源名称", editForm.name, pending, (name) => onEditFormChange({ ...editForm, name }))
+                  : source.name}
+              </td>
               <td>
                 <StatusBadge enabled={source.enabled} />
               </td>
@@ -56,7 +62,9 @@ export function SourcesTable({
               <td>{source.last_fetched_at ?? "未刷新"}</td>
               <td className="truncate-cell">{source.last_error ?? "-"}</td>
               <td className="truncate-cell">
-                {editing ? sourceInput("订阅源链接", editForm.url, pending, (url) => onEditFormChange({ ...editForm, url })) : source.url}
+                {editing
+                  ? sourceInput("订阅源链接", editForm.url, pending, (url) => onEditFormChange({ ...editForm, url }))
+                  : source.url}
               </td>
               <td>
                 <SourceActions
@@ -80,7 +88,15 @@ export function SourcesTable({
 }
 
 function sourceInput(label: string, value: string, pending: boolean, onChange: (value: string) => void) {
-  return <input aria-label={label} disabled={pending} onChange={(event) => onChange(event.target.value)} type="text" value={value} />;
+  return (
+    <Input
+      aria-label={label}
+      disabled={pending}
+      onChange={(event) => onChange(event.target.value)}
+      type="text"
+      value={value}
+    />
+  );
 }
 
 function SourceActions({
@@ -107,30 +123,30 @@ function SourceActions({
   if (editing) {
     return (
       <div className="table-actions">
-        <button className="primary-button" disabled={pending} onClick={() => onSaveEdit(source)} type="button">
+        <Button disabled={pending} onClick={() => onSaveEdit(source)} size="sm" type="button">
           保存
-        </button>
-        <button className="secondary-button" disabled={pending} onClick={onCancelEdit} type="button">
+        </Button>
+        <Button disabled={pending} onClick={onCancelEdit} size="sm" type="button" variant="outline">
           取消
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="table-actions">
-      <button className="inline-button" disabled={pending} onClick={() => onRefresh(source.id)} type="button">
+      <Button disabled={pending} onClick={() => onRefresh(source.id)} size="sm" type="button" variant="ghost">
         刷新
-      </button>
-      <button className="secondary-button" disabled={pending} onClick={() => onStartEdit(source)} type="button">
+      </Button>
+      <Button disabled={pending} onClick={() => onStartEdit(source)} size="sm" type="button" variant="outline">
         编辑
-      </button>
-      <button className="secondary-button" disabled={pending} onClick={() => onToggleEnabled(source)} type="button">
+      </Button>
+      <Button disabled={pending} onClick={() => onToggleEnabled(source)} size="sm" type="button" variant="outline">
         {source.enabled ? "停用" : "启用"}
-      </button>
-      <button className="danger-button" disabled={pending} onClick={() => onDelete(source)} type="button">
+      </Button>
+      <Button disabled={pending} onClick={() => onDelete(source)} size="sm" type="button" variant="destructive">
         删除
-      </button>
+      </Button>
     </div>
   );
 }

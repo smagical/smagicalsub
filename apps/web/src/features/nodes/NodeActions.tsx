@@ -25,10 +25,10 @@ export function NodeActions({
   if (editing) {
     return (
       <div className="table-actions">
-        <Button disabled={pending} onClick={() => onSaveEdit(node)} type="button">
+        <Button disabled={pending} onClick={() => onSaveEdit(node)} size="sm" type="button">
           保存
         </Button>
-        <Button disabled={pending} onClick={onCancelEdit} type="button" variant="outline">
+        <Button disabled={pending} onClick={onCancelEdit} size="sm" type="button" variant="outline">
           取消
         </Button>
       </div>
@@ -37,13 +37,13 @@ export function NodeActions({
 
   return (
     <div className="table-actions">
-      <Button disabled={pending} onClick={() => onToggleEnabled(node)} type="button" variant="outline">
+      <Button disabled={pending} onClick={() => onToggleEnabled(node)} size="sm" type="button" variant="outline">
         {node.enabled ? "停用" : "启用"}
       </Button>
-      <Button disabled={pending} onClick={() => onStartEdit(node)} type="button" variant="outline">
+      <Button disabled={pending} onClick={() => onStartEdit(node)} size="sm" type="button" variant="outline">
         编辑
       </Button>
-      <Button disabled={pending} onClick={() => onDelete(node)} type="button" variant="destructive">
+      <Button disabled={pending} onClick={() => onDelete(node)} size="sm" type="button" variant="destructive">
         删除
       </Button>
     </div>

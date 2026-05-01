@@ -1,4 +1,8 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import type { NodeBatchActionInput } from "@smagicalsub/shared";
+import { FilterField } from "../../shared/FilterField";
 
 type NodeFiltersProps = {
   exportDisabled?: boolean;
@@ -21,18 +25,16 @@ export function NodeFilters({
 }: NodeFiltersProps) {
   return (
     <div className="filter-row">
-      <label>
-        <span>搜索节点</span>
-        <input
+      <FilterField label="搜索节点">
+        <Input
           onChange={(event) => onSearchQueryChange(event.target.value)}
           placeholder="名称 / 协议 / 服务端 / 分组"
           type="search"
           value={searchQuery}
         />
-      </label>
-      <label>
-        <span>分组筛选</span>
-        <select onChange={(event) => onGroupFilterChange(event.target.value)} value={groupFilter}>
+      </FilterField>
+      <FilterField label="分组筛选">
+        <NativeSelect onChange={(event) => onGroupFilterChange(event.target.value)} value={groupFilter}>
           <option value="all">全部节点</option>
           <option value="ungrouped">未分组</option>
           {groups.map((group) => (
@@ -40,12 +42,12 @@ export function NodeFilters({
               {group}
             </option>
           ))}
-        </select>
-      </label>
+        </NativeSelect>
+      </FilterField>
       {onExport ? (
-        <button className="secondary-button" disabled={exportDisabled} onClick={onExport} type="button">
+        <Button disabled={exportDisabled} onClick={onExport} type="button" variant="outline">
           导出 CSV
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -73,34 +75,33 @@ export function NodeBatchBar({
   return (
     <div className="filter-row batch-row">
       <span className="muted-text">已选择 {selectedCount} 个节点</span>
-      <label>
-        <span>批量分组</span>
-        <input
+      <FilterField label="批量分组">
+        <Input
           disabled={disabled}
           onChange={(event) => onBatchGroupsChange(event.target.value)}
           placeholder="香港,日本,备用"
           type="text"
           value={batchGroups}
         />
-      </label>
-      <button className="secondary-button" disabled={disabled} onClick={() => onAction("enable")} type="button">
+      </FilterField>
+      <Button disabled={disabled} onClick={() => onAction("enable")} type="button" variant="outline">
         启用
-      </button>
-      <button className="secondary-button" disabled={disabled} onClick={() => onAction("disable")} type="button">
+      </Button>
+      <Button disabled={disabled} onClick={() => onAction("disable")} type="button" variant="outline">
         停用
-      </button>
-      <button className="secondary-button" disabled={disabled} onClick={() => onAction("set-groups")} type="button">
+      </Button>
+      <Button disabled={disabled} onClick={() => onAction("set-groups")} type="button" variant="outline">
         覆盖分组
-      </button>
-      <button className="secondary-button" disabled={disabled} onClick={() => onAction("append-groups")} type="button">
+      </Button>
+      <Button disabled={disabled} onClick={() => onAction("append-groups")} type="button" variant="outline">
         追加分组
-      </button>
-      <button className="danger-button" disabled={disabled} onClick={() => onAction("delete")} type="button">
+      </Button>
+      <Button disabled={disabled} onClick={() => onAction("delete")} type="button" variant="destructive">
         删除
-      </button>
-      <button className="inline-button" disabled={disabled} onClick={onClearSelection} type="button">
+      </Button>
+      <Button disabled={disabled} onClick={onClearSelection} type="button" variant="ghost">
         清空选择
-      </button>
+      </Button>
     </div>
   );
 }

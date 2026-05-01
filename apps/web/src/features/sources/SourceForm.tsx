@@ -1,4 +1,7 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
+import { FilterField } from "../../shared/FilterField";
 import type { SourceFormState } from "./types";
 
 type SourceFormProps = {
@@ -16,26 +19,24 @@ export function SourceForm({ form, pending, setForm, onSubmit }: SourceFormProps
 
   return (
     <form className="form-grid" onSubmit={handleSubmit}>
-      <label>
-        <span>名称</span>
-        <input
+      <FilterField label="名称">
+        <Input
           onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
           placeholder="我的订阅"
           required
           type="text"
           value={form.name}
         />
-      </label>
-      <label className="wide-field">
-        <span>订阅链接</span>
-        <input
+      </FilterField>
+      <FilterField className="wide-field" label="订阅链接">
+        <Input
           onChange={(event) => setForm((current) => ({ ...current, url: event.target.value }))}
           placeholder="https://example.com/sub"
           required
           type="url"
           value={form.url}
         />
-      </label>
+      </FilterField>
       <label className="checkbox-field">
         <input
           checked={form.enabled}
@@ -44,10 +45,9 @@ export function SourceForm({ form, pending, setForm, onSubmit }: SourceFormProps
         />
         <span>启用</span>
       </label>
-      <button className="primary-button" disabled={pending} type="submit">
+      <Button disabled={pending} type="submit">
         创建
-      </button>
+      </Button>
     </form>
   );
 }
-

@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { ProfileDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
 import type { ProfileEditFormState } from "./types";
@@ -47,9 +49,23 @@ export function ProfilesTable({
 
           return (
             <tr key={profile.id}>
-              <td>{editing ? profileInput("配置档名称", editForm.name, pending, (name) => onEditFormChange({ ...editForm, name })) : profile.name}</td>
-              <td>{editing ? profileInput("默认策略", editForm.default_strategy, pending, (default_strategy) => onEditFormChange({ ...editForm, default_strategy })) : profile.default_strategy}</td>
-              <td>{editing ? profileInput("配置档描述", editForm.description, pending, (description) => onEditFormChange({ ...editForm, description })) : profile.description ?? "-"}</td>
+              <td>
+                {editing ? profileInput("配置档名称", editForm.name, pending, (name) => onEditFormChange({ ...editForm, name })) : profile.name}
+              </td>
+              <td>
+                {editing
+                  ? profileInput("默认策略", editForm.default_strategy, pending, (default_strategy) =>
+                      onEditFormChange({ ...editForm, default_strategy })
+                    )
+                  : profile.default_strategy}
+              </td>
+              <td>
+                {editing
+                  ? profileInput("配置档描述", editForm.description, pending, (description) =>
+                      onEditFormChange({ ...editForm, description })
+                    )
+                  : profile.description ?? "-"}
+              </td>
               <td>
                 <StatusBadge enabled={profile.enabled} />
               </td>
@@ -76,7 +92,15 @@ export function ProfilesTable({
 }
 
 function profileInput(label: string, value: string, pending: boolean, onChange: (value: string) => void) {
-  return <input aria-label={label} disabled={pending} onChange={(event) => onChange(event.target.value)} type="text" value={value} />;
+  return (
+    <Input
+      aria-label={label}
+      disabled={pending}
+      onChange={(event) => onChange(event.target.value)}
+      type="text"
+      value={value}
+    />
+  );
 }
 
 function ProfileActions({
@@ -89,25 +113,40 @@ function ProfileActions({
   onSaveEdit,
   onStartEdit,
   onToggleEnabled
-}: Pick<ProfilesTableProps, "onCancelEdit" | "onDelete" | "onManageRules" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"> & {
+}: Pick<
+  ProfilesTableProps,
+  "onCancelEdit" | "onDelete" | "onManageRules" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"
+> & {
   editing: boolean;
   profile: ProfileDto;
 }) {
   if (editing) {
     return (
       <div className="table-actions">
-        <button className="primary-button" disabled={pending} onClick={() => onSaveEdit(profile)} type="button">保存</button>
-        <button className="secondary-button" disabled={pending} onClick={onCancelEdit} type="button">取消</button>
+        <Button disabled={pending} onClick={() => onSaveEdit(profile)} size="sm" type="button">
+          保存
+        </Button>
+        <Button disabled={pending} onClick={onCancelEdit} size="sm" type="button" variant="outline">
+          取消
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="table-actions">
-      <button className="secondary-button" disabled={pending} onClick={() => onToggleEnabled(profile)} type="button">{profile.enabled ? "停用" : "启用"}</button>
-      <button className="secondary-button" disabled={pending} onClick={() => onManageRules(profile)} type="button">规则</button>
-      <button className="secondary-button" disabled={pending} onClick={() => onStartEdit(profile)} type="button">编辑</button>
-      <button className="danger-button" disabled={pending} onClick={() => onDelete(profile)} type="button">删除</button>
+      <Button disabled={pending} onClick={() => onToggleEnabled(profile)} size="sm" type="button" variant="outline">
+        {profile.enabled ? "停用" : "启用"}
+      </Button>
+      <Button disabled={pending} onClick={() => onManageRules(profile)} size="sm" type="button" variant="outline">
+        规则
+      </Button>
+      <Button disabled={pending} onClick={() => onStartEdit(profile)} size="sm" type="button" variant="outline">
+        编辑
+      </Button>
+      <Button disabled={pending} onClick={() => onDelete(profile)} size="sm" type="button" variant="destructive">
+        删除
+      </Button>
     </div>
   );
 }

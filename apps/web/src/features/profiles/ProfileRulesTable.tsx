@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { ProfileRuleDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
 import type { ProfileRuleEditFormState } from "./types";
@@ -45,9 +47,15 @@ export function ProfileRulesTable({
 
           return (
             <tr key={rule.id}>
-              <td>{editing ? editInput("规则排序", editForm.position, pending, (position) => onEditFormChange({ ...editForm, position }), "number") : rule.position}</td>
+              <td>
+                {editing
+                  ? editInput("规则排序", editForm.position, pending, (position) => onEditFormChange({ ...editForm, position }), "number")
+                  : rule.position}
+              </td>
               <td className="mono-cell truncate-cell">
-                {editing ? editInput("规则内容", editForm.rule, pending, (value) => onEditFormChange({ ...editForm, rule: value }), "text") : rule.rule}
+                {editing
+                  ? editInput("规则内容", editForm.rule, pending, (value) => onEditFormChange({ ...editForm, rule: value }), "text")
+                  : rule.rule}
               </td>
               <td>
                 <StatusBadge enabled={rule.enabled} />
@@ -76,7 +84,16 @@ export function ProfileRulesTable({
 }
 
 function editInput(label: string, value: string, pending: boolean, onChange: (value: string) => void, type: "number" | "text") {
-  return <input aria-label={label} disabled={pending} min={type === "number" ? 0 : undefined} onChange={(event) => onChange(event.target.value)} type={type} value={value} />;
+  return (
+    <Input
+      aria-label={label}
+      disabled={pending}
+      min={type === "number" ? 0 : undefined}
+      onChange={(event) => onChange(event.target.value)}
+      type={type}
+      value={value}
+    />
+  );
 }
 
 function RuleActions({
@@ -100,19 +117,33 @@ function RuleActions({
   if (editing) {
     return (
       <div className="table-actions">
-        <button className="primary-button" disabled={pending} onClick={() => onSaveEdit(rule)} type="button">保存</button>
-        <button className="secondary-button" disabled={pending} onClick={onCancelEdit} type="button">取消</button>
+        <Button disabled={pending} onClick={() => onSaveEdit(rule)} size="sm" type="button">
+          保存
+        </Button>
+        <Button disabled={pending} onClick={onCancelEdit} size="sm" type="button" variant="outline">
+          取消
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="table-actions">
-      <button className="inline-button" disabled={pending || !canMoveUp} onClick={() => onMove(rule, "up")} type="button">上移</button>
-      <button className="inline-button" disabled={pending || !canMoveDown} onClick={() => onMove(rule, "down")} type="button">下移</button>
-      <button className="secondary-button" disabled={pending} onClick={() => onToggleEnabled(rule)} type="button">{rule.enabled ? "停用" : "启用"}</button>
-      <button className="secondary-button" disabled={pending} onClick={() => onStartEdit(rule)} type="button">编辑</button>
-      <button className="danger-button" disabled={pending} onClick={() => onDelete(rule)} type="button">删除</button>
+      <Button disabled={pending || !canMoveUp} onClick={() => onMove(rule, "up")} size="sm" type="button" variant="ghost">
+        上移
+      </Button>
+      <Button disabled={pending || !canMoveDown} onClick={() => onMove(rule, "down")} size="sm" type="button" variant="ghost">
+        下移
+      </Button>
+      <Button disabled={pending} onClick={() => onToggleEnabled(rule)} size="sm" type="button" variant="outline">
+        {rule.enabled ? "停用" : "启用"}
+      </Button>
+      <Button disabled={pending} onClick={() => onStartEdit(rule)} size="sm" type="button" variant="outline">
+        编辑
+      </Button>
+      <Button disabled={pending} onClick={() => onDelete(rule)} size="sm" type="button" variant="destructive">
+        删除
+      </Button>
     </div>
   );
 }

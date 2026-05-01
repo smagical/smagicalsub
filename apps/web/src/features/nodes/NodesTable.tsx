@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import type { NodeDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
 import { NodeActions } from "./NodeActions";
@@ -57,7 +58,9 @@ export function NodesTable({
           return (
             <tr key={node.id}>
               <td>
-                {selectionInput(`选择节点 ${node.name}`, selectedNodeIds.includes(node.id), pending, (checked) => onToggleSelected(node.id, checked))}
+                {selectionInput(`选择节点 ${node.name}`, selectedNodeIds.includes(node.id), pending, (checked) =>
+                  onToggleSelected(node.id, checked)
+                )}
               </td>
               <td>
                 {editing ? textInput("节点名称", editForm.name, pending, (name) => onEditFormChange({ ...editForm, name })) : node.name}
@@ -96,11 +99,28 @@ export function NodesTable({
 }
 
 function selectionInput(label: string, checked: boolean, disabled: boolean, onChange: (checked: boolean) => void) {
-  return <input aria-label={label} checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} type="checkbox" />;
+  return (
+    <input
+      aria-label={label}
+      checked={checked}
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.checked)}
+      type="checkbox"
+    />
+  );
 }
 
 function textInput(label: string, value: string, pending: boolean, onChange: (value: string) => void, placeholder?: string) {
-  return <input aria-label={label} disabled={pending} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} type="text" value={value} />;
+  return (
+    <Input
+      aria-label={label}
+      disabled={pending}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      type="text"
+      value={value}
+    />
+  );
 }
 
 function GroupChips({ groups }: { groups: string[] }) {

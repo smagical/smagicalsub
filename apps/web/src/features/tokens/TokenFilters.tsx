@@ -1,3 +1,7 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { FilterField } from "../../shared/FilterField";
 import { tokenSubscriptionFormats, type TokenSubscriptionFormat } from "./types";
 
 type TokenFiltersProps = {
@@ -9,26 +13,36 @@ type TokenFiltersProps = {
   onSearchQueryChange: (query: string) => void;
 };
 
-export function TokenFilters({ copyFormat, exportDisabled, searchQuery, onCopyFormatChange, onExport, onSearchQueryChange }: TokenFiltersProps) {
+export function TokenFilters({
+  copyFormat,
+  exportDisabled,
+  searchQuery,
+  onCopyFormatChange,
+  onExport,
+  onSearchQueryChange
+}: TokenFiltersProps) {
   return (
     <div className="filter-row">
-      <label>
-        <span>搜索令牌</span>
-        <input onChange={(event) => onSearchQueryChange(event.target.value)} placeholder="名称 / 令牌 / 配置档" type="search" value={searchQuery} />
-      </label>
-      <label>
-        <span>复制格式</span>
-        <select onChange={(event) => onCopyFormatChange(event.target.value as TokenSubscriptionFormat)} value={copyFormat}>
+      <FilterField label="搜索令牌">
+        <Input
+          onChange={(event) => onSearchQueryChange(event.target.value)}
+          placeholder="名称 / 令牌 / 配置档"
+          type="search"
+          value={searchQuery}
+        />
+      </FilterField>
+      <FilterField label="复制格式">
+        <NativeSelect onChange={(event) => onCopyFormatChange(event.target.value as TokenSubscriptionFormat)} value={copyFormat}>
           {tokenSubscriptionFormats.map((format) => (
             <option key={format.value} value={format.value}>
               {format.label}
             </option>
           ))}
-        </select>
-      </label>
-      <button className="secondary-button" disabled={exportDisabled} onClick={onExport} type="button">
+        </NativeSelect>
+      </FilterField>
+      <Button disabled={exportDisabled} onClick={onExport} type="button" variant="outline">
         导出 CSV
-      </button>
+      </Button>
     </div>
   );
 }

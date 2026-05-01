@@ -17,30 +17,6 @@
   font-weight: 800;
 }
 
-.form-grid input[type="text"],
-.form-grid input[type="url"],
-.form-grid input[type="datetime-local"],
-.form-grid input[type="number"],
-.form-grid select,
-.filter-row input,
-.filter-row select {
-  width: 100%;
-  min-height: 40px;
-  border: 1px solid #cfd9cd;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #17201b;
-  padding: 0 12px;
-}
-
-.form-grid input:focus,
-.form-grid select:focus,
-.filter-row input:focus,
-.filter-row select:focus {
-  border-color: #6f9a7a;
-  outline: 2px solid #d9f0df;
-}
-
 .node-form {
   grid-template-columns: minmax(280px, 1.6fr) minmax(160px, 0.7fr) minmax(160px, 0.7fr) auto auto;
 }
@@ -67,48 +43,6 @@
 .checkbox-field input {
   width: 16px;
   height: 16px;
-}
-
-.primary-button,
-.secondary-button,
-.danger-button,
-.inline-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 800;
-  padding: 0 12px;
-}
-
-.primary-button {
-  min-height: 40px;
-  border: 1px solid #153c2d;
-  background: #153c2d;
-  color: #ffffff;
-}
-
-.secondary-button,
-.inline-button {
-  border: 1px solid #cfd9cd;
-  background: #f8faf6;
-  color: #20382d;
-}
-
-.danger-button {
-  border: 1px solid #f0c7c7;
-  background: #fff7f7;
-  color: #9c2f2f;
-}
-
-.primary-button:disabled,
-.secondary-button:disabled,
-.danger-button:disabled,
-.inline-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
 }
 
 .success-text,

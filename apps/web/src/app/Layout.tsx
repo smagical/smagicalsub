@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { Signal } from "lucide-react";
 import type { HealthDto } from "@smagicalsub/shared";
@@ -24,15 +26,16 @@ export function Layout({ activeSection, health, children, onSectionChange }: Lay
 
         <nav className="nav-list" aria-label="主导航">
           {navigation.map((item) => (
-            <button
-              className={item.id === activeSection ? "nav-item active" : "nav-item"}
+            <Button
+              className={cn("nav-item", item.id === activeSection && "active")}
               key={item.id}
               onClick={() => onSectionChange(item.id)}
               type="button"
+              variant="ghost"
             >
-              <item.icon size={18} />
+              <item.icon data-icon="inline-start" />
               <span>{item.label}</span>
-            </button>
+            </Button>
           ))}
         </nav>
       </aside>
@@ -54,4 +57,3 @@ export function Layout({ activeSection, health, children, onSectionChange }: Lay
     </main>
   );
 }
-
