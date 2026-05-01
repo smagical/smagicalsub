@@ -3,6 +3,7 @@ export type ListDto<T> = {
 };
 
 export type HealthDto = {
+  authRequired: boolean;
   status: string;
   env: string;
   timestamp: string;

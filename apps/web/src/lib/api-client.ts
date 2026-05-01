@@ -1,5 +1,30 @@
 import type { ApiResponse } from "@smagicalsub/shared";
 
+const adminTokenStorageKey = "smagicalsub.adminToken";
+
+export function getAdminToken() {
+  return browserStorage()?.getItem(adminTokenStorageKey) ?? "";
+}
+
+export function setAdminToken(token: string) {
+  const storage = browserStorage();
+  const normalized = token.trim();
+
+  if (!storage) {
+    return;
+  }
+
+  if (normalized) {
+    storage.setItem(adminTokenStorageKey, normalized);
+  } else {
+    storage.removeItem(adminTokenStorageKey);
+  }
+}
+
+export function clearAdminToken() {
+  browserStorage()?.removeItem(adminTokenStorageKey);
+}
+
 export async function getJson<T>(url: string): Promise<T> {
   return requestJson<T>(url);
 }
@@ -26,12 +51,14 @@ export async function deleteJson<T>(url: string): Promise<T> {
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   let response: Response;
+  const adminToken = getAdminToken();
 
   try {
     response = await fetch(url, {
       ...init,
       headers: {
         Accept: "application/json",
+        ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : undefined),
         ...(init?.body ? { "Content-Type": "application/json" } : undefined),
         ...init?.headers
       }
@@ -61,5 +88,17 @@ async function readApiPayload<T>(response: Response): Promise<ApiResponse<T>> {
     return (await response.json()) as ApiResponse<T>;
   } catch {
     throw new Error(`接口返回了无效 JSON，HTTP ${response.status}`);
+  }
+}
+
+function browserStorage() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
   }
 }

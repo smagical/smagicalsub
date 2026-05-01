@@ -36,6 +36,14 @@ pnpm install
 pnpm dev
 ```
 
+## 管理访问
+
+管理 API 支持可选 `ADMIN_TOKEN` 保护。未设置时本地开发不拦截；设置后，除 `/api/health` 和 `/sub/*` 外的管理接口都需要前端输入管理员令牌，前端会以 `Authorization: Bearer <token>` 发送。
+
+```bash
+wrangler secret put ADMIN_TOKEN
+```
+
 ## 数据库
 
 先在 Cloudflare 创建 D1 数据库与 KV namespace，然后把 `apps/web/wrangler.jsonc` 里的占位 ID 替换成真实值。
@@ -99,11 +107,12 @@ pnpm db:migrate:remote
 - 订阅源、单节点、节点分组、批量节点操作、配置档、配置档规则、令牌、访问日志和概览页已完成基础闭环。
 - Clash、v2rayN Base64、明文 URI、sing-box 四类订阅输出已完成；明文和 v2rayN 会保留原始 URI。
 - 前端已迁移到 Tailwind CSS v4 + shadcn/ui 组件体系，旧全局样式已收敛到 `apps/web/src/styles.css`。
+- 管理 API 已支持 `ADMIN_TOKEN` 保护，公开订阅仍使用订阅令牌保护。
 - 删除配置档时会显式解绑令牌并清理规则，避免外键行为不一致导致订阅令牌引用失效配置档。
 
 ## 仍需确认
 
-- 管理员登录、会话和多用户隔离的 schema 已预留，但安全策略尚未实现，需要先确认登录方式、管理员初始化和权限边界。
+- 用户账号登录、会话续期和多用户隔离的 schema 已预留；当前先采用单管理员令牌保护管理 API。
 - 生产部署前必须替换 `apps/web/wrangler.jsonc` 中的 D1 database id 和 KV namespace id。
 - 当前只有类型检查和生产构建校验，尚未引入单元测试或端到端测试套件。
 

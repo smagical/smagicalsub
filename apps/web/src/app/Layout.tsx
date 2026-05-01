@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
-import { Signal } from "lucide-react";
+import { LogOut, Signal } from "lucide-react";
 import type { HealthDto } from "@smagicalsub/shared";
 import { Eyebrow } from "../shared/Eyebrow";
 import { navigation, type SectionId } from "./navigation";
@@ -11,10 +11,11 @@ type LayoutProps = {
   activeSection: SectionId;
   health?: HealthDto;
   children: ReactNode;
+  onLogout?: () => void;
   onSectionChange: (section: SectionId) => void;
 };
 
-export function Layout({ activeSection, health, children, onSectionChange }: LayoutProps) {
+export function Layout({ activeSection, health, children, onLogout, onSectionChange }: LayoutProps) {
   return (
     <main className="grid min-h-screen grid-cols-[260px_minmax(0,1fr)] max-[920px]:grid-cols-1">
       <aside className="flex flex-col gap-7 border-r bg-sidebar px-[18px] py-6 max-[920px]:border-r-0 max-[920px]:border-b">
@@ -48,10 +49,18 @@ export function Layout({ activeSection, health, children, onSectionChange }: Lay
             <Eyebrow>Cloudflare Workers</Eyebrow>
             <h1 className="text-3xl font-semibold leading-tight">订阅管理控制台</h1>
           </div>
-          <Badge className="h-9 gap-2 px-3" variant="outline">
-            <Signal data-icon="inline-start" />
-            <span>{health?.status ?? "waiting"}</span>
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge className="h-9 gap-2 px-3" variant="outline">
+              <Signal data-icon="inline-start" />
+              <span>{health?.status ?? "waiting"}</span>
+            </Badge>
+            {onLogout ? (
+              <Button onClick={onLogout} type="button" variant="outline">
+                <LogOut data-icon="inline-start" />
+                退出
+              </Button>
+            ) : null}
+          </div>
         </header>
 
         {children}

@@ -1,5 +1,8 @@
 import { Toaster } from "@/components/ui/sonner";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useState, type FormEvent } from "react";
 import type { HealthDto } from "@smagicalsub/shared";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
@@ -8,25 +11,94 @@ import { NodesPage } from "../features/nodes/NodesPage";
 import { ProfilesPage } from "../features/profiles/ProfilesPage";
 import { SourcesPage } from "../features/sources/SourcesPage";
 import { TokensPage } from "../features/tokens/TokensPage";
-import { getJson } from "../lib/api-client";
+import { clearAdminToken, getAdminToken, getJson, setAdminToken } from "../lib/api-client";
+import { FilterField } from "../shared/FilterField";
 import { Layout } from "./Layout";
 import type { SectionId } from "./navigation";
 
 export function App() {
   const [activeSection, setActiveSection] = useState<SectionId>("dashboard");
+  const [adminToken, setAdminTokenState] = useState(getAdminToken);
   const healthQuery = useQuery({
     queryKey: ["health"],
     queryFn: () => getJson<HealthDto>("/api/health"),
     retry: false
   });
+  const health = healthQuery.data;
+  const authRequired = Boolean(health?.authRequired);
+
+  function handleLogin(token: string) {
+    setAdminToken(token);
+    setAdminTokenState(getAdminToken());
+  }
+
+  function handleLogout() {
+    clearAdminToken();
+    setAdminTokenState("");
+  }
+
+  let content;
+
+  if (!health && healthQuery.isLoading) {
+    content = <StatusPanel title="正在连接 Worker" description="正在读取运行状态。" />;
+  } else if (healthQuery.error) {
+    content = <StatusPanel title="连接失败" description={healthQuery.error.message} />;
+  } else if (authRequired && !adminToken) {
+    content = <LoginPanel onLogin={handleLogin} />;
+  } else {
+    content = (
+      <Layout activeSection={activeSection} health={health} onLogout={authRequired ? handleLogout : undefined} onSectionChange={setActiveSection}>
+        {renderSection(activeSection, health, setActiveSection)}
+      </Layout>
+    );
+  }
 
   return (
     <>
-      <Layout activeSection={activeSection} health={healthQuery.data} onSectionChange={setActiveSection}>
-        {renderSection(activeSection, healthQuery.data, setActiveSection)}
-      </Layout>
+      {content}
       <Toaster position="top-right" richColors />
     </>
+  );
+}
+
+function LoginPanel({ onLogin }: { onLogin: (token: string) => void }) {
+  const [token, setToken] = useState("");
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onLogin(token);
+  }
+
+  return (
+    <main className="grid min-h-screen place-items-center p-6">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>管理员访问</CardTitle>
+          <CardDescription>输入 Worker 环境变量 `ADMIN_TOKEN` 对应的令牌。</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+            <FilterField label="管理员令牌">
+              <Input autoFocus onChange={(event) => setToken(event.target.value)} required type="password" value={token} />
+            </FilterField>
+            <Button type="submit">进入控制台</Button>
+          </form>
+        </CardContent>
+      </Card>
+    </main>
+  );
+}
+
+function StatusPanel({ description, title }: { description: string; title: string }) {
+  return (
+    <main className="grid min-h-screen place-items-center p-6">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+      </Card>
+    </main>
   );
 }
 
