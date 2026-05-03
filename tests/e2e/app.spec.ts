@@ -67,3 +67,18 @@ test("builds profile rules from structured fields", async ({ page }) => {
 
   await expect(page.getByRole("textbox", { exact: true, name: "规则" })).toHaveValue("GEOIP,CN,DIRECT");
 });
+
+test("shows subscription output center for tokens", async ({ page }) => {
+  await mockApi(page);
+
+  await page.goto("/");
+  await page.getByRole("button", { exact: true, name: "令牌" }).click();
+  const outputCenter = page.getByRole("region", { name: "订阅输出中心" });
+
+  await expect(outputCenter).toBeVisible();
+  await expect(outputCenter.getByText("/sub/tok_e2e_default?format=clash")).toBeVisible();
+  await page.getByLabel("复制格式").selectOption("sing-box");
+
+  await expect(outputCenter.getByText("/sub/tok_e2e_default?format=sing-box")).toBeVisible();
+  await expect(outputCenter.getByText("输出 sing-box JSON 配置，适合服务端或新版客户端。")).toBeVisible();
+});

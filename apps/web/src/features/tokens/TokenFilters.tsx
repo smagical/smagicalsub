@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { FilterBar } from "../../shared/FilterBar";
 import { FilterField } from "../../shared/FilterField";
-import { tokenSubscriptionFormats, type TokenSubscriptionFormat } from "./types";
+import { tokenFormatHints, tokenSubscriptionFormats, type TokenSubscriptionFormat } from "./types";
 
 type TokenFiltersProps = {
   copyFormat: TokenSubscriptionFormat;
@@ -41,6 +41,7 @@ export function TokenFilters({
           ))}
         </NativeSelect>
       </FilterField>
+      <span className="min-w-[220px] text-sm text-muted-foreground">{tokenFormatHints[copyFormat]}</span>
       <Button disabled={exportDisabled} onClick={onExport} type="button" variant="outline">
         导出 CSV
       </Button>

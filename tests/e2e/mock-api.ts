@@ -117,6 +117,25 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
     return ok({ items: [] });
   }
 
+  if (url.endsWith("/api/tokens")) {
+    return ok({
+      items: [
+        {
+          created_at: "2026-05-01 00:00:00",
+          enabled: 1,
+          expires_at: null,
+          id: "token_default",
+          last_used_at: null,
+          name: "默认订阅",
+          owner_id: null,
+          profile_id: "profile_default",
+          profile_name: "默认配置",
+          token: "tok_e2e_default"
+        }
+      ]
+    });
+  }
+
   return ok({ items: [] });
 }
 
