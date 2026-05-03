@@ -36,12 +36,12 @@ export function SessionsTable({ pending, sessions, onRevoke }: SessionsTableProp
         <TableBody>
           {sessions.map((session) => (
             <TableRow key={session.id}>
-              <TableCell>{session.current ? <Badge>当前会话</Badge> : <Badge variant="secondary">其他设备</Badge>}</TableCell>
+              <TableCell>{session.current ? <Badge>当前会话</Badge> : <Badge variant="secondary">其他会话</Badge>}</TableCell>
               <TableCell className="font-mono text-xs">{session.created_at}</TableCell>
               <TableCell className="font-mono text-xs">{session.expires_at}</TableCell>
               <TableCell>
                 <ConfirmButton
-                  description="撤销后，该设备需要重新登录才能继续访问控制台。"
+                  description="撤销后，该会话需要重新登录才能继续访问控制台。"
                   disabled={pending || session.current}
                   onConfirm={() => onRevoke(session.id)}
                   title="撤销这个登录会话？"

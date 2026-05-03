@@ -39,7 +39,7 @@ export function SecuritySettings() {
   const notice = revokeMutation.isSuccess
     ? "登录会话已撤销"
     : passwordMutation.isSuccess
-      ? "登录密码已更新，请重新登录其他设备"
+      ? "登录密码已更新，其他会话需要重新登录"
       : null;
 
   return (
@@ -47,7 +47,7 @@ export function SecuritySettings() {
       <form className="grid gap-4" onSubmit={handlePasswordSubmit}>
         <div>
           <h3 className="text-base font-semibold">账号安全</h3>
-          <p className="mt-1 text-sm text-muted-foreground">修改密码会清理该账号的其他会话，也可以单独撤销某个设备。</p>
+          <p className="mt-1 text-sm text-muted-foreground">修改密码会清理该账号的其他会话，也可以单独撤销某个登录会话。</p>
         </div>
         <div className="grid grid-cols-2 gap-3 max-[920px]:grid-cols-1">
           <PasswordInput label="当前密码" name="currentPassword" value={passwordForm.currentPassword} onChange={setPasswordValue} />
