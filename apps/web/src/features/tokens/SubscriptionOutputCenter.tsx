@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
+import { Separator } from "@/components/ui/separator";
 import type { SubscribeTokenDto } from "@smagicalsub/shared";
 import { Copy, Download, ExternalLink, FileText } from "lucide-react";
 import { StatusBadge } from "../../shared/StatusBadge";
@@ -62,10 +63,18 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
             {formatBadges(props.token.token)}
           </div>
           <div className="flex flex-wrap items-center gap-2">{metaBadges(props.token)}</div>
-          <p className="font-mono text-xs text-foreground">{subscriptionFormatPath(props.token.token, props.copyFormat)}</p>
-          <p className="text-sm text-muted-foreground">{tokenFormatHints[props.copyFormat]}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">{actionButtons(props, previewReady)}</div>
+      </div>
+      <Separator className="my-4" />
+      <div className="grid gap-3 xl:grid-cols-[1fr_auto]">
+        <div className="grid gap-2">
+          <div className="rounded-md border bg-muted/40 px-3 py-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">当前订阅路径</p>
+            <p className="break-all font-mono text-xs text-foreground">{subscriptionFormatPath(props.token.token, props.copyFormat)}</p>
+          </div>
+          <p className="text-sm text-muted-foreground">{tokenFormatHints[props.copyFormat]}</p>
+        </div>
       </div>
       {props.previewError ? <p className="mt-3 text-sm text-destructive">{props.previewError}</p> : null}
       <TokenOutputDiagnosticsPanel diagnostics={props.diagnostics} />
@@ -99,7 +108,7 @@ function actionButtons(props: SubscriptionOutputCenterProps, previewReady: boole
         <Copy data-icon="inline-start" />
         复制当前格式
       </Button>
-      <Button onClick={() => props.onCopyAllFormats(props.token)} size="sm" type="button" variant="outline">
+      <Button onClick={() => props.onCopyAllFormats(props.token)} size="sm" type="button" variant="secondary">
         <Copy data-icon="inline-start" />
         复制全部格式
       </Button>
