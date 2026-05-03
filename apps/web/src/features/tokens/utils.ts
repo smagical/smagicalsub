@@ -32,6 +32,22 @@ export function subscriptionUrl(token: string, format: TokenSubscriptionFormat) 
   return typeof window === "undefined" ? path : new URL(path, window.location.origin).toString();
 }
 
+export async function loadSubscriptionPreview(token: string, format: TokenSubscriptionFormat) {
+  const response = await fetch(subscriptionUrl(token, format));
+  const content = await response.text();
+
+  if (!response.ok) {
+    throw new Error(content.trim() || `订阅预览失败，HTTP ${response.status}`);
+  }
+
+  return content.slice(0, 5000);
+}
+
+export function subscriptionPreviewStats(content: string) {
+  const lineCount = content ? content.split(/\r?\n/).length : 0;
+  return `${lineCount} 行 / ${content.length} 字符`;
+}
+
 export function toDatetimeLocalValue(value: string | null) {
   return value ? value.replace(" ", "T").slice(0, 16) : "";
 }

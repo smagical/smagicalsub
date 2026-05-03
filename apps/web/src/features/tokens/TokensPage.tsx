@@ -6,7 +6,7 @@ import { PageFeedback } from "../../shared/PageFeedback";
 import { TokenFilters } from "./TokenFilters";
 import { TokenForm } from "./TokenForm";
 import { TokensTable } from "./TokensTable";
-import { exportTokensCsv, subscriptionFormatPath } from "./utils";
+import { exportTokensCsv, subscriptionFormatPath, subscriptionPreviewStats } from "./utils";
 import { tokenFormatHints } from "./types";
 import { useTokensPage } from "./useTokensPage";
 
@@ -42,7 +42,21 @@ export function TokensPage() {
           </div>
           {page.previewError ? <p className="mt-3 text-sm text-destructive">{page.previewError}</p> : null}
           {page.previewContent ? (
-            <pre className="mt-3 max-h-56 overflow-auto rounded-md bg-muted/50 p-3 font-mono text-xs">{page.previewContent}</pre>
+            <div className="mt-3 rounded-md bg-muted/50">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                <span className="font-mono text-xs text-muted-foreground">{subscriptionPreviewStats(page.previewContent)}</span>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => void page.copyPreviewContent()} size="xs" type="button" variant="outline">
+                    复制内容
+                  </Button>
+                  <Button onClick={page.clearPreviewContent} size="xs" type="button" variant="ghost">
+                    清空
+                  </Button>
+                </div>
+              </div>
+              <div className="border-t px-3 py-2 text-xs text-muted-foreground">预览内容已截断为前 5000 字符，适合快速确认格式与节点分组。</div>
+              <pre className="max-h-56 overflow-auto border-t p-3 font-mono text-xs">{page.previewContent}</pre>
+            </div>
           ) : null}
         </section>
       ) : null}

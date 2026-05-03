@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listProfiles } from "../profiles/api";
 import { createToken, deleteToken, listTokens, resetToken as resetTokenRequest, updateToken } from "./api";
 import { initialTokenEditFormState, initialTokenFormState, type TokenSubscriptionFormat } from "./types";
-import { filterTokens, subscriptionUrl, toDatetimeLocalValue } from "./utils";
+import { filterTokens, loadSubscriptionPreview, subscriptionUrl, toDatetimeLocalValue } from "./utils";
 
 export function useTokensPage() {
   const queryClient = useQueryClient();
@@ -78,20 +78,22 @@ export function useTokensPage() {
     setPreviewError(null);
 
     try {
-      const response = await fetch(subscriptionUrl(token.token, copyFormat));
-      const content = await response.text();
-
-      if (!response.ok) {
-        throw new Error(content.trim() || `订阅预览失败，HTTP ${response.status}`);
-      }
-
-      setPreviewContent(content.slice(0, 5000));
+      setPreviewContent(await loadSubscriptionPreview(token.token, copyFormat));
     } catch (error) {
       setPreviewContent("");
       setPreviewError(error instanceof Error ? error.message : "订阅预览失败");
     } finally {
       setPreviewPending(false);
     }
+  }
+
+  async function copyPreviewContent() {
+    if (!navigator.clipboard || !previewContent) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(previewContent);
+    setNotice("预览内容已复制");
   }
 
   function changeCopyFormat(format: TokenSubscriptionFormat) {
@@ -133,6 +135,11 @@ export function useTokensPage() {
     previewPending,
     profiles,
     searchQuery,
+    clearPreviewContent: () => {
+      setPreviewContent("");
+      setPreviewError(null);
+    },
+    copyPreviewContent,
     createToken: createMutation.mutate,
     deleteToken: (token: SubscribeTokenDto) => deleteMutation.mutate(token.id),
     handleCopy,

@@ -69,6 +69,14 @@ test("builds profile rules from structured fields", async ({ page }) => {
 });
 
 test("shows subscription output center for tokens", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async () => undefined
+      }
+    });
+  });
   await mockApi(page);
 
   await page.goto("/");
@@ -84,4 +92,8 @@ test("shows subscription output center for tokens", async ({ page }) => {
   await outputCenter.getByRole("button", { name: "加载预览" }).click();
 
   await expect(outputCenter.getByText('"type": "selector"')).toBeVisible();
+  await outputCenter.getByRole("button", { name: "复制内容" }).click();
+  await expect(page.getByText("预览内容已复制")).toBeVisible();
+  await outputCenter.getByRole("button", { name: "清空" }).click();
+  await expect(outputCenter.getByText('"type": "selector"')).toBeHidden();
 });
