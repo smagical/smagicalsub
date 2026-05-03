@@ -7,7 +7,23 @@ export const profileRuleKinds = [
   { label: "完整域名", placeholder: "example.com", value: "DOMAIN" },
   { label: "关键词", placeholder: "google", value: "DOMAIN-KEYWORD" },
   { label: "IP 段", placeholder: "8.8.8.8/32", value: "IP-CIDR" },
+  { label: "IPv6 段", placeholder: "2001:db8::/32", value: "IP-CIDR6" },
+  { label: "地理 IP", placeholder: "CN", value: "GEOIP" },
+  { label: "地理站点", placeholder: "google", value: "GEOSITE" },
+  { label: "源 IP 段", placeholder: "192.168.1.0/24", value: "SRC-IP-CIDR" },
+  { label: "源端口", placeholder: "443", value: "SRC-PORT" },
+  { label: "目标端口", placeholder: "443", value: "DST-PORT" },
+  { label: "进程名", placeholder: "Telegram.exe", value: "PROCESS-NAME" },
+  { label: "规则集", placeholder: "private", value: "RULE-SET" },
   { label: "兜底", placeholder: "", value: "MATCH" }
+] as const;
+
+export const profileRuleTemplates = [
+  { label: "域名后缀", sample: "example.com", value: "DOMAIN-SUFFIX,example.com,Proxy" },
+  { label: "关键词", sample: "google", value: "DOMAIN-KEYWORD,google,Proxy" },
+  { label: "地理 IP", sample: "CN", value: "GEOIP,CN,DIRECT" },
+  { label: "进程名", sample: "Telegram.exe", value: "PROCESS-NAME,Telegram.exe,Proxy" },
+  { label: "兜底", sample: "MATCH", value: "MATCH,Proxy" }
 ] as const;
 
 export type ProfileRuleKind = (typeof profileRuleKinds)[number]["value"];

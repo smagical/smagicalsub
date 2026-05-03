@@ -10,6 +10,7 @@ import {
   buildProfileRule,
   parseProfileRule,
   profileRuleKinds,
+  profileRuleTemplates,
   type ProfileRuleKind,
   type StructuredProfileRule,
   toCreateProfileRuleInput
@@ -21,14 +22,6 @@ type ProfileRuleFormProps = {
   setForm: Dispatch<SetStateAction<ProfileRuleFormState>>;
   onSubmit: (value: ReturnType<typeof toCreateProfileRuleInput>) => void;
 };
-
-const ruleTemplates = [
-  { label: "域名后缀", sample: "example.com", value: "DOMAIN-SUFFIX,example.com,Proxy" },
-  { label: "完整域名", sample: "example.com", value: "DOMAIN,example.com,Proxy" },
-  { label: "关键词", sample: "google", value: "DOMAIN-KEYWORD,google,Proxy" },
-  { label: "IP 段", sample: "8.8.8.8/32", value: "IP-CIDR,8.8.8.8/32,Proxy" },
-  { label: "兜底", sample: "MATCH", value: "MATCH,Proxy" }
-];
 
 export function ProfileRuleForm({ form, pending, setForm, onSubmit }: ProfileRuleFormProps) {
   const structuredRule = parseProfileRule(form.rule);
@@ -45,10 +38,13 @@ export function ProfileRuleForm({ form, pending, setForm, onSubmit }: ProfileRul
 
   return (
     <div className="rounded-lg border bg-card/70 p-3 shadow-sm ring-1 ring-primary/10">
-      <div className="mb-3 flex flex-col gap-2">
-        <span className="text-xs font-semibold text-muted-foreground">常用模板</span>
+      <div className="mb-3">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <span className="text-xs font-semibold text-muted-foreground">常用模板</span>
+          <span className="font-mono text-[11px] text-muted-foreground">Clash rule</span>
+        </div>
         <div className="flex flex-wrap gap-2">
-          {ruleTemplates.map((template) => (
+          {profileRuleTemplates.map((template) => (
             <Button
               className="h-auto justify-start gap-1.5 px-2 py-1"
               disabled={pending}
@@ -65,7 +61,7 @@ export function ProfileRuleForm({ form, pending, setForm, onSubmit }: ProfileRul
           ))}
         </div>
       </div>
-      <div className="mb-3 grid gap-3 lg:grid-cols-[minmax(140px,0.7fr)_minmax(220px,1.3fr)_minmax(160px,0.8fr)]">
+      <div className="mb-3 grid gap-3 border-t pt-3 lg:grid-cols-[minmax(140px,0.7fr)_minmax(220px,1.3fr)_minmax(160px,0.8fr)]">
         <FilterField label="规则类型">
           <NativeSelect
             disabled={pending}
@@ -99,6 +95,10 @@ export function ProfileRuleForm({ form, pending, setForm, onSubmit }: ProfileRul
             value={structuredRule.policy}
           />
         </FilterField>
+      </div>
+      <div className="mb-3 flex items-center gap-2 rounded-md bg-muted/45 px-3 py-2">
+        <span className="shrink-0 text-xs font-semibold text-muted-foreground">生成预览</span>
+        <p className="truncate font-mono text-xs">{form.rule || "DOMAIN-SUFFIX,example.com,Proxy"}</p>
       </div>
       <FormGrid className="mb-0" variant="rule" onSubmit={handleSubmit}>
         <FilterField label="规则">

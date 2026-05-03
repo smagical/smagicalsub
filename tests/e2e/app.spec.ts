@@ -59,4 +59,11 @@ test("builds profile rules from structured fields", async ({ page }) => {
   await page.getByRole("textbox", { exact: true, name: "策略" }).fill("Media");
 
   await expect(page.getByRole("textbox", { exact: true, name: "规则" })).toHaveValue("DOMAIN-KEYWORD,youtube,Media");
+  await expect(page.getByText("DOMAIN-KEYWORD,youtube,Media")).toBeVisible();
+
+  await page.getByLabel("规则类型").selectOption("GEOIP");
+  await page.getByLabel("匹配值").fill("CN");
+  await page.getByRole("textbox", { exact: true, name: "策略" }).fill("DIRECT");
+
+  await expect(page.getByRole("textbox", { exact: true, name: "规则" })).toHaveValue("GEOIP,CN,DIRECT");
 });
