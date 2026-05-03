@@ -45,3 +45,18 @@ test("logs in and sends the session token with API requests", async ({ page }) =
   await expect(page.getByText("当前会话")).toBeVisible();
   expect(dashboardAuthorization).toBe("Bearer sess_e2e");
 });
+
+test("builds profile rules from structured fields", async ({ page }) => {
+  await mockApi(page);
+
+  await page.goto("/");
+  await page.getByRole("button", { exact: true, name: "配置档" }).click();
+  await page.getByRole("button", { exact: true, name: "规则" }).click();
+
+  await expect(page.getByText("常用模板")).toBeVisible();
+  await page.getByLabel("规则类型").selectOption("DOMAIN-KEYWORD");
+  await page.getByLabel("匹配值").fill("youtube");
+  await page.getByRole("textbox", { exact: true, name: "策略" }).fill("Media");
+
+  await expect(page.getByRole("textbox", { exact: true, name: "规则" })).toHaveValue("DOMAIN-KEYWORD,youtube,Media");
+});

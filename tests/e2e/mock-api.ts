@@ -96,6 +96,27 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
     });
   }
 
+  if (url.endsWith("/api/profiles")) {
+    return ok({
+      items: [
+        {
+          created_at: "2026-05-01 00:00:00",
+          default_strategy: "Proxy",
+          description: "用于 E2E 的默认配置档",
+          enabled: 1,
+          id: "profile_default",
+          name: "默认配置",
+          owner_id: null,
+          updated_at: "2026-05-01 00:00:00"
+        }
+      ]
+    });
+  }
+
+  if (url.endsWith("/api/profiles/profile_default/rules")) {
+    return ok({ items: [] });
+  }
+
   return ok({ items: [] });
 }
 

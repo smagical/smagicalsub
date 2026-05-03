@@ -2,6 +2,22 @@ import type { CreateProfileInput, ProfileDto } from "@smagicalsub/shared";
 import { downloadCsv } from "../../lib/download-csv";
 import type { ProfileFormState, ProfileRuleFormState } from "./types";
 
+export const profileRuleKinds = [
+  { label: "域名后缀", placeholder: "example.com", value: "DOMAIN-SUFFIX" },
+  { label: "完整域名", placeholder: "example.com", value: "DOMAIN" },
+  { label: "关键词", placeholder: "google", value: "DOMAIN-KEYWORD" },
+  { label: "IP 段", placeholder: "8.8.8.8/32", value: "IP-CIDR" },
+  { label: "兜底", placeholder: "", value: "MATCH" }
+] as const;
+
+export type ProfileRuleKind = (typeof profileRuleKinds)[number]["value"];
+
+export type StructuredProfileRule = {
+  kind: ProfileRuleKind;
+  policy: string;
+  target: string;
+};
+
 export function toCreateProfileInput(form: ProfileFormState): CreateProfileInput {
   return {
     name: form.name.trim(),
@@ -19,6 +35,27 @@ export function toCreateProfileRuleInput(form: ProfileRuleFormState) {
     position: position ? Number(position) : undefined,
     enabled: form.enabled
   };
+}
+
+export function parseProfileRule(rule: string): StructuredProfileRule {
+  const [rawKind = "DOMAIN-SUFFIX", rawTarget = "", rawPolicy = "Proxy"] = rule.split(",");
+  const kind = profileRuleKinds.some((item) => item.value === rawKind) ? (rawKind as ProfileRuleKind) : "DOMAIN-SUFFIX";
+
+  return {
+    kind,
+    policy: kind === "MATCH" ? rawTarget || "Proxy" : rawPolicy || "Proxy",
+    target: kind === "MATCH" ? "" : rawTarget
+  };
+}
+
+export function buildProfileRule({ kind, policy, target }: StructuredProfileRule) {
+  const normalizedPolicy = policy.trim() || "Proxy";
+
+  if (kind === "MATCH") {
+    return `MATCH,${normalizedPolicy}`;
+  }
+
+  return `${kind},${target.trim()},${normalizedPolicy}`;
 }
 
 export function filterProfiles(profiles: ProfileDto[], searchQuery: string, statusFilter: string) {

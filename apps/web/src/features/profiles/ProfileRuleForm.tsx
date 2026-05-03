@@ -1,11 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { CheckboxField } from "../../shared/CheckboxField";
 import { FilterField } from "../../shared/FilterField";
 import { FormGrid } from "../../shared/FormGrid";
 import type { ProfileRuleFormState } from "./types";
-import { toCreateProfileRuleInput } from "./utils";
+import {
+  buildProfileRule,
+  parseProfileRule,
+  profileRuleKinds,
+  type ProfileRuleKind,
+  type StructuredProfileRule,
+  toCreateProfileRuleInput
+} from "./utils";
 
 type ProfileRuleFormProps = {
   form: ProfileRuleFormState;
@@ -23,9 +31,16 @@ const ruleTemplates = [
 ];
 
 export function ProfileRuleForm({ form, pending, setForm, onSubmit }: ProfileRuleFormProps) {
+  const structuredRule = parseProfileRule(form.rule);
+  const ruleKind = profileRuleKinds.find((item) => item.value === structuredRule.kind) ?? profileRuleKinds[0];
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onSubmit(toCreateProfileRuleInput(form));
+  }
+
+  function updateRule(patch: Partial<StructuredProfileRule>) {
+    setForm((current) => ({ ...current, rule: buildProfileRule({ ...structuredRule, ...patch }) }));
   }
 
   return (
@@ -49,6 +64,41 @@ export function ProfileRuleForm({ form, pending, setForm, onSubmit }: ProfileRul
             </Button>
           ))}
         </div>
+      </div>
+      <div className="mb-3 grid gap-3 lg:grid-cols-[minmax(140px,0.7fr)_minmax(220px,1.3fr)_minmax(160px,0.8fr)]">
+        <FilterField label="规则类型">
+          <NativeSelect
+            disabled={pending}
+            onChange={(event) => updateRule({ kind: event.target.value as ProfileRuleKind })}
+            value={structuredRule.kind}
+          >
+            {profileRuleKinds.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </NativeSelect>
+        </FilterField>
+        {structuredRule.kind !== "MATCH" ? (
+          <FilterField label="匹配值">
+            <Input
+              disabled={pending}
+              onChange={(event) => updateRule({ target: event.target.value })}
+              placeholder={ruleKind.placeholder}
+              type="text"
+              value={structuredRule.target}
+            />
+          </FilterField>
+        ) : null}
+        <FilterField label="策略">
+          <Input
+            disabled={pending}
+            onChange={(event) => updateRule({ policy: event.target.value })}
+            placeholder="Proxy"
+            type="text"
+            value={structuredRule.policy}
+          />
+        </FilterField>
       </div>
       <FormGrid className="mb-0" variant="rule" onSubmit={handleSubmit}>
         <FilterField label="规则">
