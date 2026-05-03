@@ -37,8 +37,8 @@ export function Layout({ activeSection, health, settings, user, children, theme,
 
   return (
     <main className="app-shell grid min-h-screen grid-cols-[260px_minmax(0,1fr)] max-[920px]:grid-cols-1">
-      <aside className="sidebar-shell flex flex-col gap-7 border-r px-[18px] py-6 max-[920px]:border-r-0 max-[920px]:border-b">
-        <div className="rounded-xl border border-sidebar-border/70 bg-card/55 p-3 shadow-sm">
+      <aside className="sidebar-shell flex flex-col gap-7 border-r px-[18px] py-6 shadow-xl shadow-primary/5 max-[920px]:border-r-0 max-[920px]:border-b">
+        <div className="rounded-xl border border-sidebar-border/80 bg-card/70 p-3 shadow-md ring-1 ring-sidebar-ring/15">
           <BrandHeader settings={settings} />
         </div>
 
@@ -46,9 +46,9 @@ export function Layout({ activeSection, health, settings, user, children, theme,
           {visibleNavigation.map((item) => (
             <Button
               className={cn(
-                "min-h-10 w-full justify-start gap-2.5 border-l-[3px] border-l-transparent px-3 text-sidebar-foreground/80 hover:bg-sidebar-accent/70",
+                "min-h-10 w-full justify-start gap-2.5 border-l-[3px] border-l-transparent bg-card/25 px-3 text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
                 item.id === activeSection &&
-                  "border-l-primary bg-sidebar-accent/80 text-sidebar-accent-foreground shadow-sm ring-1 ring-sidebar-ring/25"
+                  "border-l-primary bg-sidebar-accent/90 text-sidebar-accent-foreground shadow-md ring-1 ring-sidebar-ring/30"
               )}
               key={item.id}
               onClick={() => onSectionChange(item.id)}
@@ -64,12 +64,12 @@ export function Layout({ activeSection, health, settings, user, children, theme,
 
       <section className="flex flex-col gap-6 p-[26px] max-[560px]:p-[18px]">
         <div className="accent-strip h-1 rounded-full" aria-hidden="true" />
-        <header className="flex items-center justify-between gap-4 rounded-xl border bg-card/70 px-4 py-3 shadow-sm backdrop-blur max-[560px]:flex-col max-[560px]:items-start">
+        <header className="flex items-center justify-between gap-4 rounded-xl border bg-card/80 px-4 py-3 shadow-md shadow-primary/5 ring-1 ring-primary/10 backdrop-blur max-[560px]:flex-col max-[560px]:items-start">
           <div>
             <Eyebrow className="text-primary">Cloudflare Workers</Eyebrow>
             <h1 className="text-3xl font-semibold leading-tight">订阅管理控制台</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2 max-[560px]:justify-start">
             <Badge className="h-9 gap-2 border-primary/20 bg-primary/10 px-3 text-primary" variant="outline">
               <Signal data-icon="inline-start" />
               <span>{health?.status ?? "waiting"}</span>

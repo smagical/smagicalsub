@@ -41,7 +41,7 @@ export function MetricCard({ label, value, icon: Icon, tone }: MetricCardProps) 
   const toneClass = metricToneClasses[tone];
 
   return (
-    <Card className={cn("transition hover:-translate-y-0.5 hover:shadow-md", toneClass.card)} size="sm">
+    <Card className={cn("shadow-md shadow-primary/5 transition hover:-translate-y-0.5 hover:shadow-lg", toneClass.card)} size="sm">
       <CardContent className="flex min-h-[88px] items-center gap-3.5">
         <div className={cn("grid size-10 place-items-center rounded-md", toneClass.icon)}>
           <Icon />

@@ -23,7 +23,7 @@ export function AuthMarketing({ settings }: { settings: SiteSettingsDto }) {
       <div className="flex flex-col gap-8">
         <BrandHeader settings={settings} />
         <div className="flex max-w-3xl flex-col gap-5">
-          <Badge className="w-fit" variant="secondary">
+          <Badge className="w-fit shadow-sm ring-1 ring-primary/15" variant="secondary">
             Cloudflare Workers 一体部署
           </Badge>
           <h1 className="max-w-2xl text-4xl font-semibold leading-tight tracking-normal text-foreground">
@@ -46,38 +46,41 @@ export function AuthMarketing({ settings }: { settings: SiteSettingsDto }) {
 
 function DashboardPreview() {
   return (
-    <div className="rounded-lg border bg-card/80 p-4 shadow-2xl ring-1 ring-primary/10">
-      <div className="flex items-center justify-between gap-3 border-b pb-4">
-        <div className="flex items-center gap-3">
-          <div className="brand-mark grid size-10 place-items-center rounded-md text-primary-foreground">
-            <RadioTower className="size-5" />
+    <div className="overflow-hidden rounded-xl border bg-card/90 shadow-2xl ring-1 ring-primary/15">
+      <div className="accent-strip h-1" />
+      <div className="p-4">
+        <div className="flex items-center justify-between gap-3 border-b pb-4">
+          <div className="flex items-center gap-3">
+            <div className="brand-mark grid size-10 place-items-center rounded-md text-primary-foreground">
+              <RadioTower className="size-5" />
+            </div>
+            <div>
+              <strong className="text-sm">订阅生成链路</strong>
+              <span className="block text-xs text-muted-foreground">源同步、节点分组、规则渲染和缓存刷新</span>
+            </div>
           </div>
-          <div>
-            <strong className="text-sm">订阅生成链路</strong>
-            <span className="block text-xs text-muted-foreground">源同步、节点分组、规则渲染和缓存刷新</span>
-          </div>
+          <Badge className="shadow-sm">在线</Badge>
         </div>
-        <Badge>在线</Badge>
-      </div>
-      <div className="grid gap-3 py-4 sm:grid-cols-3">
-        {metrics.map((metric) => (
-          <div className="rounded-md border bg-background/70 p-3" key={metric.label}>
-            <span className="text-xs text-muted-foreground">{metric.label}</span>
-            <strong className="mt-2 block text-lg">{metric.value}</strong>
-          </div>
-        ))}
-      </div>
-      <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr]">
-        <PreviewBlock icon={Cloud} title="订阅源" value="Clash / URI / Base64" />
-        <div className="hidden items-center text-muted-foreground md:flex">→</div>
-        <PreviewBlock icon={DatabaseZap} title="D1 + KV" value="节点、令牌、缓存" />
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {formats.map((format) => (
-          <Badge key={format} variant="outline">
-            {format}
-          </Badge>
-        ))}
+        <div className="grid gap-3 py-4 sm:grid-cols-3">
+          {metrics.map((metric) => (
+            <div className="rounded-md border bg-background/70 p-3" key={metric.label}>
+              <span className="text-xs text-muted-foreground">{metric.label}</span>
+              <strong className="mt-2 block text-lg">{metric.value}</strong>
+            </div>
+          ))}
+        </div>
+        <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr]">
+          <PreviewBlock icon={Cloud} title="订阅源" value="Clash / URI / Base64" />
+          <div className="hidden items-center text-muted-foreground md:flex">→</div>
+          <PreviewBlock icon={DatabaseZap} title="D1 + KV" value="节点、令牌、缓存" />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {formats.map((format) => (
+            <Badge key={format} variant="outline">
+              {format}
+            </Badge>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -101,7 +104,7 @@ function FeatureItem({ item }: { item: { icon: LucideIcon; label: string; text: 
   const Icon = item.icon;
 
   return (
-    <div className="rounded-md border bg-card/70 p-4 shadow-sm">
+    <div className="rounded-lg border bg-card/75 p-4 shadow-md shadow-primary/5 ring-1 ring-primary/10">
       <div className="mb-3 flex items-center gap-2">
         <div className="grid size-8 place-items-center rounded-md bg-accent/30 text-accent-foreground">
           <Icon className="size-4" />

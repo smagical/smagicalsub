@@ -41,7 +41,7 @@ test("logs in and sends the session token with API requests", async ({ page }) =
   await expect(page.getByText("创建后台用户、调整角色，并为用户重置登录密码。")).toBeVisible();
   await page.getByRole("button", { exact: true, name: "设置" }).click();
   await expect(page.getByText("账号安全")).toBeVisible();
-  await expect(page.getByText("登录会话")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "登录会话" })).toBeVisible();
   await expect(page.getByText("当前会话")).toBeVisible();
   expect(dashboardAuthorization).toBe("Bearer sess_e2e");
 });

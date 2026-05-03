@@ -10,9 +10,9 @@ export function BrandHeader({ className, settings }: BrandHeaderProps) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <BrandImage settings={settings} />
-      <div>
-        <strong className="block">{settings.siteName}</strong>
-        <span className="block text-sm text-muted-foreground">{settings.siteSubtitle}</span>
+      <div className="min-w-0">
+        <strong className="block truncate">{settings.siteName}</strong>
+        <span className="block truncate text-sm text-muted-foreground">{settings.siteSubtitle}</span>
       </div>
     </div>
   );
