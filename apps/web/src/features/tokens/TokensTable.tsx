@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -45,68 +46,75 @@ export function TokensTable({
   onToggleEnabled
 }: TokensTableProps) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>名称</TableHead>
-          <TableHead>令牌</TableHead>
-          <TableHead>配置档</TableHead>
-          <TableHead>订阅路径</TableHead>
-          <TableHead>过期时间</TableHead>
-          <TableHead>最近使用</TableHead>
-          <TableHead>状态</TableHead>
-          <TableHead>操作</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {tokens.map((token) => {
-          const editing = editingTokenId === token.id;
+    <div className="overflow-hidden rounded-lg border bg-card/70 shadow-sm ring-1 ring-primary/10">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/60">
+            <TableHead>名称</TableHead>
+            <TableHead>令牌</TableHead>
+            <TableHead>配置档</TableHead>
+            <TableHead>订阅路径</TableHead>
+            <TableHead>过期时间</TableHead>
+            <TableHead>最近使用</TableHead>
+            <TableHead>状态</TableHead>
+            <TableHead>操作</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {tokens.map((token) => {
+            const editing = editingTokenId === token.id;
 
-          return (
-            <TableRow key={token.id}>
-              <TableCell>
-                {editing ? (
-                  <Input
-                    aria-label="令牌名称"
-                    disabled={pending}
-                    onChange={(event) => onEditFormChange({ ...editForm, name: event.target.value })}
-                    type="text"
-                    value={editForm.name}
+            return (
+              <TableRow className="hover:bg-muted/35" key={token.id}>
+                <TableCell className="font-medium">
+                  {editing ? (
+                    <Input
+                      aria-label="令牌名称"
+                      disabled={pending}
+                      onChange={(event) => onEditFormChange({ ...editForm, name: event.target.value })}
+                      type="text"
+                      value={editForm.name}
+                    />
+                  ) : (
+                    token.name
+                  )}
+                </TableCell>
+                <TableCell className="font-mono text-xs">{maskToken(token.token)}</TableCell>
+                <TableCell>{profileSelect(token, profiles, pending, onProfileChange)}</TableCell>
+                <TableCell className="max-w-md truncate font-mono text-xs">{subscriptionFormatPath(token.token, copyFormat)}</TableCell>
+                <TableCell>{editing ? editExpiresAt(editForm, pending, onEditFormChange) : expiresBadge(token.expires_at)}</TableCell>
+                <TableCell className="font-mono text-xs">{token.last_used_at ?? "未使用"}</TableCell>
+                <TableCell>
+                  <StatusBadge enabled={token.enabled} />
+                </TableCell>
+                <TableCell>
+                  <TokenActions
+                    editing={editing}
+                    pending={pending}
+                    token={token}
+                    onCancelEdit={onCancelEdit}
+                    onCopy={onCopy}
+                    onDelete={onDelete}
+                    onOpen={onOpen}
+                    onReset={onReset}
+                    onSaveEdit={onSaveEdit}
+                    onStartEdit={onStartEdit}
+                    onToggleEnabled={onToggleEnabled}
                   />
-                ) : (
-                  token.name
-                )}
-              </TableCell>
-              <TableCell className="font-mono">{maskToken(token.token)}</TableCell>
-              <TableCell>{profileSelect(token, profiles, pending, onProfileChange)}</TableCell>
-              <TableCell className="max-w-md truncate font-mono">{subscriptionFormatPath(token.token, copyFormat)}</TableCell>
-              <TableCell>{editing ? editExpiresAt(editForm, pending, onEditFormChange) : token.expires_at ?? "永不过期"}</TableCell>
-              <TableCell>{token.last_used_at ?? "未使用"}</TableCell>
-              <TableCell>
-                <StatusBadge enabled={token.enabled} />
-              </TableCell>
-              <TableCell>
-                <TokenActions
-                  editing={editing}
-                  pending={pending}
-                  token={token}
-                  onCancelEdit={onCancelEdit}
-                  onCopy={onCopy}
-                  onDelete={onDelete}
-                  onOpen={onOpen}
-                  onReset={onReset}
-                  onSaveEdit={onSaveEdit}
-                  onStartEdit={onStartEdit}
-                  onToggleEnabled={onToggleEnabled}
-                />
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
+
+function expiresBadge(expiresAt: string | null) {
+  return expiresAt ? <span className="font-mono text-xs">{expiresAt}</span> : <Badge variant="secondary">永不过期</Badge>;
+}
+
 function editExpiresAt(editForm: TokenEditFormState, pending: boolean, onEditFormChange: (form: TokenEditFormState) => void) {
   return (
     <Input
@@ -118,6 +126,7 @@ function editExpiresAt(editForm: TokenEditFormState, pending: boolean, onEditFor
     />
   );
 }
+
 function profileSelect(
   token: SubscribeTokenDto,
   profiles: ProfileDto[],
