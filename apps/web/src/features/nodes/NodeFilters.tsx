@@ -76,8 +76,8 @@ export function NodeBatchBar({
   const disabled = pending || selectedCount === 0;
 
   return (
-    <FilterBar align="start">
-      <Badge variant="secondary">已选择 {selectedCount} 个节点</Badge>
+    <FilterBar align="start" className="rounded-lg border bg-card/70 p-3 shadow-sm ring-1 ring-primary/10">
+      <Badge className="h-8" variant="secondary">已选择 {selectedCount} 个节点</Badge>
       <FilterField label="批量分组">
         <Input
           disabled={disabled}

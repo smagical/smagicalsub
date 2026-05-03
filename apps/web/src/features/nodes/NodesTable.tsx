@@ -41,63 +41,67 @@ export function NodesTable({
   onToggleVisible
 }: NodesTableProps) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{selectionInput("选择当前列表节点", allVisibleSelected, pending || nodes.length === 0, onToggleVisible)}</TableHead>
-          <TableHead>名称</TableHead>
-          <TableHead>协议</TableHead>
-          <TableHead>服务端</TableHead>
-          <TableHead>端口</TableHead>
-          <TableHead>分组</TableHead>
-          <TableHead>状态</TableHead>
-          <TableHead>操作</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {nodes.map((node) => {
-          const editing = editingNodeId === node.id;
+    <div className="overflow-hidden rounded-lg border bg-card/70 shadow-sm ring-1 ring-primary/10">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/60">
+            <TableHead>{selectionInput("选择当前列表节点", allVisibleSelected, pending || nodes.length === 0, onToggleVisible)}</TableHead>
+            <TableHead>名称</TableHead>
+            <TableHead>协议</TableHead>
+            <TableHead>服务端</TableHead>
+            <TableHead>端口</TableHead>
+            <TableHead>分组</TableHead>
+            <TableHead>状态</TableHead>
+            <TableHead>操作</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {nodes.map((node) => {
+            const editing = editingNodeId === node.id;
 
-          return (
-            <TableRow key={node.id}>
-              <TableCell>
-                {selectionInput(`选择节点 ${node.name}`, selectedNodeIds.includes(node.id), pending, (checked) =>
-                  onToggleSelected(node.id, checked)
-                )}
-              </TableCell>
-              <TableCell>
-                {editing ? textInput("节点名称", editForm.name, pending, (name) => onEditFormChange({ ...editForm, name })) : node.name}
-              </TableCell>
-              <TableCell>{node.protocol}</TableCell>
-              <TableCell>{node.server ?? "-"}</TableCell>
-              <TableCell>{node.port ?? "-"}</TableCell>
-              <TableCell>
-                {editing ? (
-                  textInput("节点分组", editForm.groups, pending, (groups) => onEditFormChange({ ...editForm, groups }), "香港,日本,备用")
-                ) : (
-                  <GroupChips groups={node.groups} />
-                )}
-              </TableCell>
-              <TableCell>
-                <StatusBadge enabled={node.enabled} />
-              </TableCell>
-              <TableCell>
-                <NodeActions
-                  editing={editing}
-                  node={node}
-                  pending={pending}
-                  onCancelEdit={onCancelEdit}
-                  onDelete={onDelete}
-                  onSaveEdit={onSaveEdit}
-                  onStartEdit={onStartEdit}
-                  onToggleEnabled={onToggleEnabled}
-                />
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+            return (
+              <TableRow className="hover:bg-muted/35" key={node.id}>
+                <TableCell>
+                  {selectionInput(`选择节点 ${node.name}`, selectedNodeIds.includes(node.id), pending, (checked) =>
+                    onToggleSelected(node.id, checked)
+                  )}
+                </TableCell>
+                <TableCell className="font-medium">
+                  {editing ? textInput("节点名称", editForm.name, pending, (name) => onEditFormChange({ ...editForm, name })) : node.name}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline">{node.protocol}</Badge>
+                </TableCell>
+                <TableCell className="font-mono text-xs">{node.server ?? "-"}</TableCell>
+                <TableCell className="font-mono text-xs">{node.port ?? "-"}</TableCell>
+                <TableCell>
+                  {editing ? (
+                    textInput("节点分组", editForm.groups, pending, (groups) => onEditFormChange({ ...editForm, groups }), "香港,日本,备用")
+                  ) : (
+                    <GroupChips groups={node.groups} />
+                  )}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge enabled={node.enabled} />
+                </TableCell>
+                <TableCell>
+                  <NodeActions
+                    editing={editing}
+                    node={node}
+                    pending={pending}
+                    onCancelEdit={onCancelEdit}
+                    onDelete={onDelete}
+                    onSaveEdit={onSaveEdit}
+                    onStartEdit={onStartEdit}
+                    onToggleEnabled={onToggleEnabled}
+                  />
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
 

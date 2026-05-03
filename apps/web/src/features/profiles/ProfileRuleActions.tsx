@@ -1,0 +1,61 @@
+import { Button } from "@/components/ui/button";
+import type { ProfileRuleDto } from "@smagicalsub/shared";
+import { ActionGroup } from "../../shared/ActionGroup";
+import { ConfirmButton } from "../../shared/ConfirmButton";
+import type { ProfileRuleEditFormState } from "./types";
+
+type ProfileRuleActionsProps = {
+  canMoveDown: boolean;
+  canMoveUp: boolean;
+  editing: boolean;
+  pending: boolean;
+  rule: ProfileRuleDto;
+  onCancelEdit: () => void;
+  onDelete: (rule: ProfileRuleDto) => void;
+  onMove: (rule: ProfileRuleDto, direction: "down" | "up") => void;
+  onSaveEdit: (rule: ProfileRuleDto) => void;
+  onStartEdit: (rule: ProfileRuleDto) => void;
+  onToggleEnabled: (rule: ProfileRuleDto) => void;
+};
+
+export function ProfileRuleActions(props: ProfileRuleActionsProps) {
+  if (props.editing) {
+    return (
+      <ActionGroup>
+        <Button disabled={props.pending} onClick={() => props.onSaveEdit(props.rule)} size="sm" type="button">
+          保存
+        </Button>
+        <Button disabled={props.pending} onClick={props.onCancelEdit} size="sm" type="button" variant="outline">
+          取消
+        </Button>
+      </ActionGroup>
+    );
+  }
+
+  return (
+    <ActionGroup>
+      <Button disabled={props.pending || !props.canMoveUp} onClick={() => props.onMove(props.rule, "up")} size="sm" type="button" variant="ghost">
+        上移
+      </Button>
+      <Button disabled={props.pending || !props.canMoveDown} onClick={() => props.onMove(props.rule, "down")} size="sm" type="button" variant="ghost">
+        下移
+      </Button>
+      <Button disabled={props.pending} onClick={() => props.onToggleEnabled(props.rule)} size="sm" type="button" variant="outline">
+        {props.rule.enabled ? "停用" : "启用"}
+      </Button>
+      <Button disabled={props.pending} onClick={() => props.onStartEdit(props.rule)} size="sm" type="button" variant="outline">
+        编辑
+      </Button>
+      <ConfirmButton
+        disabled={props.pending}
+        description="删除后该规则会从配置档输出中移除。"
+        onConfirm={() => props.onDelete(props.rule)}
+        size="sm"
+        title={`删除规则「${props.rule.rule}」？`}
+        type="button"
+      >
+        删除
+      </ConfirmButton>
+    </ActionGroup>
+  );
+}

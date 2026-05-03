@@ -1,10 +1,8 @@
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ProfileRuleDto } from "@smagicalsub/shared";
-import { ActionGroup } from "../../shared/ActionGroup";
-import { ConfirmButton } from "../../shared/ConfirmButton";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { ProfileRuleActions } from "./ProfileRuleActions";
 import type { ProfileRuleEditFormState } from "./types";
 
 type ProfileRulesTableProps = {
@@ -35,54 +33,58 @@ export function ProfileRulesTable({
   onToggleEnabled
 }: ProfileRulesTableProps) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>排序</TableHead>
-          <TableHead>规则</TableHead>
-          <TableHead>状态</TableHead>
-          <TableHead>操作</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rules.map((rule, index) => {
-          const editing = editingRuleId === rule.id;
+    <div className="overflow-hidden rounded-lg border bg-card/70 shadow-sm ring-1 ring-primary/10">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/60">
+            <TableHead>排序</TableHead>
+            <TableHead>规则</TableHead>
+            <TableHead>状态</TableHead>
+            <TableHead>操作</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rules.map((rule, index) => {
+            const editing = editingRuleId === rule.id;
 
-          return (
-            <TableRow key={rule.id}>
-              <TableCell>
-                {editing
-                  ? editInput("规则排序", editForm.position, pending, (position) => onEditFormChange({ ...editForm, position }), "number")
-                  : rule.position}
-              </TableCell>
-              <TableCell className="max-w-md truncate font-mono">
-                {editing
-                  ? editInput("规则内容", editForm.rule, pending, (value) => onEditFormChange({ ...editForm, rule: value }), "text")
-                  : rule.rule}
-              </TableCell>
-              <TableCell>
-                <StatusBadge enabled={rule.enabled} />
-              </TableCell>
-              <TableCell>
-                <RuleActions
-                  editing={editing}
-                  pending={pending}
-                  rule={rule}
-                  onCancelEdit={onCancelEdit}
-                  onDelete={onDelete}
-                  onMove={onMove}
-                  onSaveEdit={onSaveEdit}
-                  onStartEdit={onStartEdit}
-                  onToggleEnabled={onToggleEnabled}
-                  canMoveDown={index < rules.length - 1}
-                  canMoveUp={index > 0}
-                />
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+            return (
+              <TableRow className="hover:bg-muted/35" key={rule.id}>
+                <TableCell>
+                  {editing
+                    ? editInput("规则排序", editForm.position, pending, (position) => onEditFormChange({ ...editForm, position }), "number")
+                    : (
+                      <span className="font-mono text-xs text-muted-foreground">#{rule.position}</span>
+                    )}
+                </TableCell>
+                <TableCell className="max-w-md truncate font-mono">
+                  {editing
+                    ? editInput("规则内容", editForm.rule, pending, (value) => onEditFormChange({ ...editForm, rule: value }), "text")
+                    : rule.rule}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge enabled={rule.enabled} />
+                </TableCell>
+                <TableCell>
+                  <ProfileRuleActions
+                    editing={editing}
+                    pending={pending}
+                    rule={rule}
+                    onCancelEdit={onCancelEdit}
+                    onDelete={onDelete}
+                    onMove={onMove}
+                    onSaveEdit={onSaveEdit}
+                    onStartEdit={onStartEdit}
+                    onToggleEnabled={onToggleEnabled}
+                    canMoveDown={index < rules.length - 1}
+                    canMoveUp={index > 0}
+                  />
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
 
@@ -96,64 +98,5 @@ function editInput(label: string, value: string, pending: boolean, onChange: (va
       type={type}
       value={value}
     />
-  );
-}
-
-function RuleActions({
-  canMoveDown,
-  canMoveUp,
-  editing,
-  pending,
-  rule,
-  onCancelEdit,
-  onDelete,
-  onMove,
-  onSaveEdit,
-  onStartEdit,
-  onToggleEnabled
-}: Pick<ProfileRulesTableProps, "onCancelEdit" | "onDelete" | "onMove" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"> & {
-  canMoveDown: boolean;
-  canMoveUp: boolean;
-  editing: boolean;
-  rule: ProfileRuleDto;
-}) {
-  if (editing) {
-    return (
-      <ActionGroup>
-        <Button disabled={pending} onClick={() => onSaveEdit(rule)} size="sm" type="button">
-          保存
-        </Button>
-        <Button disabled={pending} onClick={onCancelEdit} size="sm" type="button" variant="outline">
-          取消
-        </Button>
-      </ActionGroup>
-    );
-  }
-
-  return (
-    <ActionGroup>
-      <Button disabled={pending || !canMoveUp} onClick={() => onMove(rule, "up")} size="sm" type="button" variant="ghost">
-        上移
-      </Button>
-      <Button disabled={pending || !canMoveDown} onClick={() => onMove(rule, "down")} size="sm" type="button" variant="ghost">
-        下移
-      </Button>
-      <Button disabled={pending} onClick={() => onToggleEnabled(rule)} size="sm" type="button" variant="outline">
-        {rule.enabled ? "停用" : "启用"}
-      </Button>
-      <Button disabled={pending} onClick={() => onStartEdit(rule)} size="sm" type="button" variant="outline">
-        编辑
-      </Button>
-      <ConfirmButton
-        disabled={pending}
-        description="删除后该规则会从配置档输出中移除。"
-        onConfirm={() => onDelete(rule)}
-        size="sm"
-        title={`删除规则「${rule.rule}」？`}
-        type="button"
-      >
-        删除
-      </ConfirmButton>
-    </ActionGroup>
   );
 }
