@@ -4,8 +4,10 @@ import { NativeSelect } from "@/components/ui/native-select";
 import type { SubscribeTokenDto } from "@smagicalsub/shared";
 import { Copy, Download, ExternalLink, FileText } from "lucide-react";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { TokenOutputDiagnosticsPanel } from "./TokenOutputDiagnosticsPanel";
 import type { TokenSubscriptionFormat } from "./types";
 import { tokenFormatHints, tokenSubscriptionFormats } from "./types";
+import type { TokenOutputDiagnostics } from "./useTokenOutputDiagnostics";
 import { subscriptionFormatLinks, subscriptionFormatPath, subscriptionPreviewExtension, subscriptionPreviewStats } from "./utils";
 
 type SubscriptionOutputCenterProps = {
@@ -15,6 +17,7 @@ type SubscriptionOutputCenterProps = {
   previewError: string | null;
   previewSource: { token: string; format: TokenSubscriptionFormat } | null;
   token: SubscribeTokenDto;
+  diagnostics: TokenOutputDiagnostics;
   tokens: SubscribeTokenDto[];
   onClearPreview: () => void;
   onCopy: (token: SubscribeTokenDto) => void;
@@ -65,6 +68,7 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
         <div className="flex flex-wrap items-center gap-2">{actionButtons(props, previewReady)}</div>
       </div>
       {props.previewError ? <p className="mt-3 text-sm text-destructive">{props.previewError}</p> : null}
+      <TokenOutputDiagnosticsPanel diagnostics={props.diagnostics} />
       {previewReady ? previewBlock(props) : null}
     </section>
   );

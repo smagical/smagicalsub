@@ -121,7 +121,64 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
   }
 
   if (url.endsWith("/api/profiles/profile_default/rules")) {
-    return ok({ items: [] });
+    return ok({
+      items: [
+        {
+          enabled: 1,
+          id: "rule_media",
+          position: 10,
+          profile_id: "profile_default",
+          rule: "DOMAIN-SUFFIX,example.com,Proxy"
+        },
+        {
+          enabled: 0,
+          id: "rule_disabled",
+          position: 20,
+          profile_id: "profile_default",
+          rule: "DOMAIN-SUFFIX,disabled.example,DIRECT"
+        }
+      ]
+    });
+  }
+
+  if (url.endsWith("/api/nodes")) {
+    return ok({
+      items: [
+        {
+          enabled: 1,
+          groups: ["Proxy", "Media"],
+          id: "node_manual",
+          name: "手动节点",
+          port: 443,
+          protocol: "vless",
+          server: "manual.example.com",
+          source_id: null,
+          updated_at: "2026-05-01 00:00:00"
+        },
+        {
+          enabled: 1,
+          groups: ["Proxy"],
+          id: "node_source",
+          name: "订阅源节点",
+          port: 443,
+          protocol: "vmess",
+          server: "source.example.com",
+          source_id: "source_default",
+          updated_at: "2026-05-01 01:00:00"
+        },
+        {
+          enabled: 0,
+          groups: ["Backup"],
+          id: "node_disabled",
+          name: "停用节点",
+          port: 443,
+          protocol: "trojan",
+          server: "disabled.example.com",
+          source_id: null,
+          updated_at: "2026-05-01 02:00:00"
+        }
+      ]
+    });
   }
 
   if (url.endsWith("/api/tokens")) {

@@ -22,6 +22,7 @@ export function TokensPage() {
           previewPending={page.previewPending}
           previewSource={page.previewSource}
           token={page.outputToken}
+          diagnostics={page.outputDiagnostics}
           tokens={page.filteredTokens}
           onClearPreview={page.clearPreviewContent}
           onCopyAllFormats={(token) => void page.copyAllFormats(token)}

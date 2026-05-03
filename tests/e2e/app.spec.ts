@@ -87,8 +87,14 @@ test("shows subscription output center for tokens", async ({ page }) => {
 
   await expect(outputCenter).toBeVisible();
   await expect(outputCenter.getByText("/sub/tok_e2e_default?format=clash")).toBeVisible();
+  await expect(outputCenter.getByText("启用节点")).toBeVisible();
+  await expect(outputCenter.getByText("节点分组")).toBeVisible();
+  await expect(outputCenter.getByText("启用规则")).toBeVisible();
+  await expect(outputCenter.getByText("手动节点 1 个，订阅源节点 1 个。")).toBeVisible();
+  await expect(outputCenter.getByText("输出状态正常")).toBeVisible();
   await page.getByLabel("输出令牌").selectOption("token_backup");
   await expect(outputCenter.getByText("/sub/tok_e2e_backup?format=clash")).toBeVisible();
+  await expect(outputCenter.getByText("令牌已停用，订阅请求会被拒绝")).toBeVisible();
   await outputCenter.getByLabel("输出格式").selectOption("sing-box");
 
   await expect(outputCenter.getByText("/sub/tok_e2e_backup?format=sing-box")).toBeVisible();

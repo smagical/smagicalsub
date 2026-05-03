@@ -5,6 +5,7 @@ import { listProfiles } from "../profiles/api";
 import { createToken, deleteToken, listTokens, resetToken as resetTokenRequest, updateToken } from "./api";
 import { initialTokenEditFormState, initialTokenFormState, type TokenSubscriptionFormat } from "./types";
 import { useSubscriptionPreview } from "./useSubscriptionPreview";
+import { useTokenOutputDiagnostics } from "./useTokenOutputDiagnostics";
 import { copyAllSubscriptionUrls, filterTokens, subscriptionUrl, toDatetimeLocalValue } from "./utils";
 
 export function useTokensPage() {
@@ -23,6 +24,7 @@ export function useTokensPage() {
   const profiles = profilesQuery.data?.items ?? [];
   const filteredTokens = filterTokens(tokens, searchQuery);
   const outputToken = filteredTokens.find((token) => token.id === outputTokenId) ?? filteredTokens[0] ?? null;
+  const { diagnostics, diagnosticsError } = useTokenOutputDiagnostics(outputToken, profiles);
 
   const invalidateTokenData = async () => {
     await Promise.all([queryClient.invalidateQueries({ queryKey: ["tokens"] }), queryClient.invalidateQueries({ queryKey: ["dashboard"] })]);
@@ -57,7 +59,8 @@ export function useTokensPage() {
   const resetMutation = useMutation({ mutationFn: resetTokenRequest, onSuccess: () => finishTokenAction("令牌已重置，旧订阅地址已失效") });
   const deleteMutation = useMutation({ mutationFn: deleteToken, onSuccess: () => finishTokenAction("订阅令牌已删除") });
   const pending = createMutation.isPending || updateMutation.isPending || resetMutation.isPending || deleteMutation.isPending;
-  const error = createMutation.error ?? updateMutation.error ?? resetMutation.error ?? deleteMutation.error ?? query.error ?? profilesQuery.error;
+  const error =
+    createMutation.error ?? updateMutation.error ?? resetMutation.error ?? deleteMutation.error ?? query.error ?? profilesQuery.error ?? diagnosticsError;
   const emptyLabel = tokens.length === 0 ? "还没有订阅令牌" : "没有匹配的订阅令牌";
 
   async function handleCopy(token: SubscribeTokenDto) {
@@ -136,6 +139,7 @@ export function useTokensPage() {
     error,
     filteredTokens,
     form,
+    outputDiagnostics: diagnostics,
     notice,
     outputToken,
     outputTokenId: outputToken?.id ?? "",
