@@ -101,6 +101,10 @@ test("shows subscription output center for tokens", async ({ page }) => {
   await expect(outputCenter.getByText("Clash YAML .yaml")).toBeVisible();
   await expect(outputCenter.getByText("sing-box JSON .json")).toBeVisible();
   await expect(outputCenter.getByText("输出 sing-box JSON 配置，适合服务端或新版客户端。")).toBeVisible();
+  await outputCenter.getByRole("button", { name: "健康检查" }).click();
+  await expect(outputCenter.getByText("HTTP 200")).toBeVisible();
+  await expect(outputCenter.getByText("sing-box JSON 格式正常")).toBeVisible();
+  await expect(page.getByText("订阅健康检查通过")).toBeVisible();
   await outputCenter.getByRole("button", { name: "复制全部格式" }).click();
 
   const clipboardText = await page.evaluate(() => window.__clipboardText);

@@ -21,6 +21,8 @@ export function TokensPage() {
           previewError={page.previewError}
           previewPending={page.previewPending}
           previewSource={page.previewSource}
+          healthCheckPending={page.healthCheckPending}
+          healthCheckResult={page.healthCheckResult}
           token={page.outputToken}
           diagnostics={page.outputDiagnostics}
           tokens={page.filteredTokens}
@@ -30,6 +32,7 @@ export function TokensPage() {
           onCopyPreview={() => void page.copyPreviewContent()}
           onDownloadPreview={page.downloadPreviewContent}
           onFormatChange={page.setCopyFormat}
+          onHealthCheck={(token) => void page.checkSubscriptionHealth(token)}
           onOpen={page.openSubscription}
           onPreview={(token) => void page.previewSubscription(token)}
           onTokenChange={page.setOutputTokenId}

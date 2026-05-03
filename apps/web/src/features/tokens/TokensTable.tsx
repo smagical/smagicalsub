@@ -6,7 +6,8 @@ import type { ProfileDto, SubscribeTokenDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
 import { TokenActions } from "./TokenActions";
 import type { TokenEditFormState, TokenSubscriptionFormat } from "./types";
-import { maskToken, subscriptionFormatPath } from "./utils";
+import { subscriptionFormatPath } from "./subscriptionOutput";
+import { maskToken } from "./utils";
 
 type TokensTableProps = {
   copyFormat: TokenSubscriptionFormat;

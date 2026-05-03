@@ -3,13 +3,16 @@ import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Separator } from "@/components/ui/separator";
 import type { SubscribeTokenDto } from "@smagicalsub/shared";
-import { Copy, Download, ExternalLink, FileText } from "lucide-react";
+import { Activity, Copy, Download, ExternalLink, FileText } from "lucide-react";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { SubscriptionHealthStatus } from "./SubscriptionHealthStatus";
+import { SubscriptionPreviewBlock } from "./SubscriptionPreviewBlock";
 import { TokenOutputDiagnosticsPanel } from "./TokenOutputDiagnosticsPanel";
+import type { SubscriptionHealthResult } from "./subscriptionHealth";
 import type { TokenSubscriptionFormat } from "./types";
 import { tokenFormatHints, tokenSubscriptionFormats } from "./types";
 import type { TokenOutputDiagnostics } from "./useTokenOutputDiagnostics";
-import { subscriptionFormatLinks, subscriptionFormatPath, subscriptionPreviewExtension, subscriptionPreviewStats } from "./utils";
+import { subscriptionFormatLinks, subscriptionFormatPath } from "./subscriptionOutput";
 
 type SubscriptionOutputCenterProps = {
   copyFormat: TokenSubscriptionFormat;
@@ -17,6 +20,8 @@ type SubscriptionOutputCenterProps = {
   previewPending: boolean;
   previewError: string | null;
   previewSource: { token: string; format: TokenSubscriptionFormat } | null;
+  healthCheckPending: boolean;
+  healthCheckResult: SubscriptionHealthResult;
   token: SubscribeTokenDto;
   diagnostics: TokenOutputDiagnostics;
   tokens: SubscribeTokenDto[];
@@ -26,6 +31,7 @@ type SubscriptionOutputCenterProps = {
   onCopyPreview: () => void;
   onDownloadPreview: (token: SubscribeTokenDto) => void;
   onFormatChange: (format: TokenSubscriptionFormat) => void;
+  onHealthCheck: (token: SubscribeTokenDto) => void;
   onOpen: (token: SubscribeTokenDto) => void;
   onPreview: (token: SubscribeTokenDto) => void;
   onTokenChange: (id: string) => void;
@@ -70,7 +76,10 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
       <div className="grid gap-3 xl:grid-cols-[1fr_auto]">
         <div className="grid gap-2">
           <div className="rounded-md border bg-muted/40 px-3 py-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">当前订阅路径</p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">当前订阅路径</p>
+              <SubscriptionHealthStatus pending={props.healthCheckPending} result={props.healthCheckResult} />
+            </div>
             <p className="break-all font-mono text-xs text-foreground">{subscriptionFormatPath(props.token.token, props.copyFormat)}</p>
           </div>
           <p className="text-sm text-muted-foreground">{tokenFormatHints[props.copyFormat]}</p>
@@ -78,7 +87,14 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
       </div>
       {props.previewError ? <p className="mt-3 text-sm text-destructive">{props.previewError}</p> : null}
       <TokenOutputDiagnosticsPanel diagnostics={props.diagnostics} />
-      {previewReady ? previewBlock(props) : null}
+      {previewReady ? (
+        <SubscriptionPreviewBlock
+          content={props.previewContent}
+          format={props.copyFormat}
+          onClear={props.onClearPreview}
+          onCopy={props.onCopyPreview}
+        />
+      ) : null}
     </section>
   );
 }
@@ -116,6 +132,10 @@ function actionButtons(props: SubscriptionOutputCenterProps, previewReady: boole
         <FileText data-icon="inline-start" />
         {props.previewPending ? "加载中" : "加载预览"}
       </Button>
+      <Button disabled={props.healthCheckPending} onClick={() => props.onHealthCheck(props.token)} size="sm" type="button" variant="outline">
+        <Activity data-icon="inline-start" />
+        {props.healthCheckPending ? "检查中" : "健康检查"}
+      </Button>
       <Button disabled={!previewReady} onClick={() => props.onDownloadPreview(props.token)} size="sm" type="button" variant="outline">
         <Download data-icon="inline-start" />
         下载预览
@@ -125,26 +145,5 @@ function actionButtons(props: SubscriptionOutputCenterProps, previewReady: boole
         打开预览
       </Button>
     </>
-  );
-}
-
-function previewBlock(props: SubscriptionOutputCenterProps) {
-  return (
-    <div className="mt-3 rounded-md bg-muted/50">
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
-        <span className="font-mono text-xs text-muted-foreground">{subscriptionPreviewStats(props.previewContent)}</span>
-        <span className="text-xs text-muted-foreground">.{subscriptionPreviewExtension(props.copyFormat)}</span>
-        <div className="flex items-center gap-2">
-          <Button onClick={props.onCopyPreview} size="xs" type="button" variant="outline">
-            复制内容
-          </Button>
-          <Button onClick={props.onClearPreview} size="xs" type="button" variant="ghost">
-            清空
-          </Button>
-        </div>
-      </div>
-      <div className="border-t px-3 py-2 text-xs text-muted-foreground">预览内容已截断为前 5000 字符，适合快速确认格式与节点分组。</div>
-      <pre className="max-h-56 overflow-auto border-t p-3 font-mono text-xs">{props.previewContent}</pre>
-    </div>
   );
 }

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { TokenSubscriptionFormat } from "./types";
+import { loadSubscriptionHealth, type SubscriptionHealthResult } from "./subscriptionHealth";
 import {
   copySubscriptionPreview,
   downloadSubscriptionPreview,
   loadSubscriptionPreview
-} from "./utils";
+} from "./subscriptionOutput";
 
 type PreviewSource = {
   token: string;
@@ -16,6 +17,9 @@ export function useSubscriptionPreview() {
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewPending, setPreviewPending] = useState(false);
   const [previewSource, setPreviewSource] = useState<PreviewSource>(null);
+  const [healthCheckPending, setHealthCheckPending] = useState(false);
+  const [healthCheckResult, setHealthCheckResult] = useState<SubscriptionHealthResult>(null);
+  const healthCheckRequestId = useRef(0);
 
   async function previewSubscription(token: string, format: TokenSubscriptionFormat) {
     setPreviewPending(true);
@@ -33,6 +37,24 @@ export function useSubscriptionPreview() {
       return false;
     } finally {
       setPreviewPending(false);
+    }
+  }
+
+  async function checkSubscriptionHealth(token: string, format: TokenSubscriptionFormat) {
+    const requestId = ++healthCheckRequestId.current;
+    setHealthCheckPending(true);
+    setHealthCheckResult(null);
+
+    try {
+      const result = await loadSubscriptionHealth(token, format);
+      if (healthCheckRequestId.current === requestId) {
+        setHealthCheckResult(result);
+      }
+      return result;
+    } finally {
+      if (healthCheckRequestId.current === requestId) {
+        setHealthCheckPending(false);
+      }
     }
   }
 
@@ -55,10 +77,20 @@ export function useSubscriptionPreview() {
     setPreviewSource(null);
   }
 
+  function clearHealthCheckResult() {
+    healthCheckRequestId.current += 1;
+    setHealthCheckPending(false);
+    setHealthCheckResult(null);
+  }
+
   return {
+    checkSubscriptionHealth,
     clearPreviewContent,
+    clearHealthCheckResult,
     copyPreviewContent,
     downloadPreviewContent,
+    healthCheckPending,
+    healthCheckResult,
     previewContent,
     previewError,
     previewPending,
