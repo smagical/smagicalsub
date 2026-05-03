@@ -47,7 +47,7 @@ export function ProfileRulesPanel({
       <div className="grid gap-1">
         <p className="text-xs font-semibold text-muted-foreground">Rules</p>
         <h3 className="text-base font-medium">{profile.name} 的规则</h3>
-        <span className="text-sm text-muted-foreground">规则按排序升序写入 Clash；没有 MATCH 规则时会自动追加默认策略兜底。</span>
+        <span className="text-sm text-muted-foreground">规则按排序升序写入 Clash；模板会填入常见规则格式，提交前仍可手动调整。</span>
       </div>
       <ProfileRuleForm form={form} pending={pending} setForm={setForm} onSubmit={onCreateRule} />
       {rules.length === 0 ? (
