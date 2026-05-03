@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Download } from "@playwright/test";
 import { mockApi } from "./mock-api";
 
 test("renders the dashboard and navigates between modules", async ({ page }) => {
@@ -85,15 +85,40 @@ test("shows subscription output center for tokens", async ({ page }) => {
 
   await expect(outputCenter).toBeVisible();
   await expect(outputCenter.getByText("/sub/tok_e2e_default?format=clash")).toBeVisible();
+  await page.getByLabel("输出令牌").selectOption("token_backup");
+  await expect(outputCenter.getByText("/sub/tok_e2e_backup?format=clash")).toBeVisible();
   await page.getByLabel("复制格式").selectOption("sing-box");
 
-  await expect(outputCenter.getByText("/sub/tok_e2e_default?format=sing-box")).toBeVisible();
+  await expect(outputCenter.getByText("/sub/tok_e2e_backup?format=sing-box")).toBeVisible();
   await expect(outputCenter.getByText("输出 sing-box JSON 配置，适合服务端或新版客户端。")).toBeVisible();
   await outputCenter.getByRole("button", { name: "加载预览" }).click();
 
   await expect(outputCenter.getByText('"type": "selector"')).toBeVisible();
+  await expect(outputCenter.getByText(".json")).toBeVisible();
+
+  const download = page.waitForEvent("download");
+  await outputCenter.getByRole("button", { name: "下载预览" }).click();
+  const previewDownload = await download;
+  expect(previewDownload.suggestedFilename()).toMatch(/^subscription-tok_e2e_backup-sing-box-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(await previewDownloadText(previewDownload)).toContain('"type": "selector"');
+
   await outputCenter.getByRole("button", { name: "复制内容" }).click();
   await expect(page.getByText("预览内容已复制")).toBeVisible();
   await outputCenter.getByRole("button", { name: "清空" }).click();
   await expect(outputCenter.getByText('"type": "selector"')).toBeHidden();
 });
+
+async function previewDownloadText(download: Download) {
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+
+  if (!stream) {
+    return "";
+  }
+
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks).toString("utf8");
+}

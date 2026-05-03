@@ -138,6 +138,18 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           profile_id: "profile_default",
           profile_name: "默认配置",
           token: "tok_e2e_default"
+        },
+        {
+          created_at: "2026-05-01 02:00:00",
+          enabled: 0,
+          expires_at: "2026-06-01 00:00:00",
+          id: "token_backup",
+          last_used_at: "2026-05-02 00:00:00",
+          name: "备用订阅",
+          owner_id: null,
+          profile_id: "profile_default",
+          profile_name: "默认配置",
+          token: "tok_e2e_backup"
         }
       ]
     });
@@ -148,7 +160,17 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
 
 function subscriptionPreview(url: string) {
   if (url.includes("format=sing-box")) {
-    return `{ "outbounds": [{ "type": "selector", "tag": "Proxy" }] }`;
+    return `{
+  "outbounds": [{ "type": "selector", "tag": "Proxy" }]
+}`;
+  }
+
+  if (url.includes("format=v2rayn")) {
+    return "dmxlc3M6Ly9leGFtcGxlLmNvbQ==";
+  }
+
+  if (url.includes("format=plain")) {
+    return "vless://e2e-node@example.com:443?security=tls#e2e-node";
   }
 
   return "proxies:\n  - name: e2e-node\nproxy-groups:\n  - name: Proxy";

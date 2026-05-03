@@ -1,5 +1,6 @@
 import type { CreateSubscribeTokenInput, SubscribeTokenDto } from "@smagicalsub/shared";
 import { downloadCsv } from "../../lib/download-csv";
+import { downloadText } from "../../lib/download-text";
 import type { TokenFormState, TokenSubscriptionFormat } from "./types";
 
 export function toCreateTokenInput(form: TokenFormState): CreateSubscribeTokenInput {
@@ -43,9 +44,26 @@ export async function loadSubscriptionPreview(token: string, format: TokenSubscr
   return content.slice(0, 5000);
 }
 
+export function subscriptionPreviewExtension(format: TokenSubscriptionFormat) {
+  return format === "sing-box" ? "json" : format === "clash" ? "yaml" : "txt";
+}
+
 export function subscriptionPreviewStats(content: string) {
   const lineCount = content ? content.split(/\r?\n/).length : 0;
   return `${lineCount} 行 / ${content.length} 字符`;
+}
+
+export function downloadSubscriptionPreview(token: string, format: TokenSubscriptionFormat, content: string) {
+  downloadText(`subscription-${token}-${format}`, content, subscriptionPreviewExtension(format));
+}
+
+export async function copySubscriptionPreview(content: string) {
+  if (!navigator.clipboard || !content) {
+    return false;
+  }
+
+  await navigator.clipboard.writeText(content);
+  return true;
 }
 
 export function toDatetimeLocalValue(value: string | null) {

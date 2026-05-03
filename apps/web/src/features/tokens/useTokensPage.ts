@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listProfiles } from "../profiles/api";
 import { createToken, deleteToken, listTokens, resetToken as resetTokenRequest, updateToken } from "./api";
 import { initialTokenEditFormState, initialTokenFormState, type TokenSubscriptionFormat } from "./types";
-import { filterTokens, loadSubscriptionPreview, subscriptionUrl, toDatetimeLocalValue } from "./utils";
+import { useSubscriptionPreview } from "./useSubscriptionPreview";
+import { filterTokens, subscriptionUrl, toDatetimeLocalValue } from "./utils";
 
 export function useTokensPage() {
   const queryClient = useQueryClient();
@@ -12,16 +13,16 @@ export function useTokensPage() {
   const [editForm, setEditForm] = useState(initialTokenEditFormState);
   const [editingTokenId, setEditingTokenId] = useState<string | null>(null);
   const [copyFormat, setCopyFormat] = useState<TokenSubscriptionFormat>("clash");
+  const [outputTokenId, setOutputTokenId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
-  const [previewContent, setPreviewContent] = useState("");
-  const [previewError, setPreviewError] = useState<string | null>(null);
-  const [previewPending, setPreviewPending] = useState(false);
+  const preview = useSubscriptionPreview();
   const query = useQuery({ queryKey: ["tokens"], queryFn: listTokens, retry: false });
   const profilesQuery = useQuery({ queryKey: ["profiles"], queryFn: listProfiles, retry: false });
   const tokens = query.data?.items ?? [];
   const profiles = profilesQuery.data?.items ?? [];
   const filteredTokens = filterTokens(tokens, searchQuery);
+  const outputToken = filteredTokens.find((token) => token.id === outputTokenId) ?? filteredTokens[0] ?? null;
 
   const invalidateTokenData = async () => {
     await Promise.all([queryClient.invalidateQueries({ queryKey: ["tokens"] }), queryClient.invalidateQueries({ queryKey: ["dashboard"] })]);
@@ -74,32 +75,31 @@ export function useTokensPage() {
   }
 
   async function previewSubscription(token: SubscribeTokenDto) {
-    setPreviewPending(true);
-    setPreviewError(null);
-
-    try {
-      setPreviewContent(await loadSubscriptionPreview(token.token, copyFormat));
-    } catch (error) {
-      setPreviewContent("");
-      setPreviewError(error instanceof Error ? error.message : "订阅预览失败");
-    } finally {
-      setPreviewPending(false);
+    if (await preview.previewSubscription(token.token, copyFormat)) {
+      setNotice("订阅预览已加载");
     }
   }
 
   async function copyPreviewContent() {
-    if (!navigator.clipboard || !previewContent) {
-      return;
+    if (await preview.copyPreviewContent()) {
+      setNotice("预览内容已复制");
     }
+  }
 
-    await navigator.clipboard.writeText(previewContent);
-    setNotice("预览内容已复制");
+  function downloadPreviewContent(token: SubscribeTokenDto) {
+    if (preview.downloadPreviewContent(token.token, copyFormat)) {
+      setNotice("预览内容已下载");
+    }
   }
 
   function changeCopyFormat(format: TokenSubscriptionFormat) {
     setCopyFormat(format);
-    setPreviewContent("");
-    setPreviewError(null);
+    preview.clearPreviewContent();
+  }
+
+  function changeOutputToken(id: string) {
+    setOutputTokenId(id);
+    preview.clearPreviewContent();
   }
 
   function startEdit(token: SubscribeTokenDto) {
@@ -129,30 +129,32 @@ export function useTokensPage() {
     filteredTokens,
     form,
     notice,
+    outputToken,
+    outputTokenId: outputToken?.id ?? "",
     pending,
-    previewContent,
-    previewError,
-    previewPending,
+    previewContent: preview.previewContent,
+    previewError: preview.previewError,
+    previewPending: preview.previewPending,
+    previewSource: preview.previewSource,
     profiles,
     searchQuery,
-    clearPreviewContent: () => {
-      setPreviewContent("");
-      setPreviewError(null);
-    },
+    clearPreviewContent: preview.clearPreviewContent,
     copyPreviewContent,
     createToken: createMutation.mutate,
     deleteToken: (token: SubscribeTokenDto) => deleteMutation.mutate(token.id),
     handleCopy,
     openSubscription,
-    previewSubscription,
     resetEdit,
     resetToken: (token: SubscribeTokenDto) => resetMutation.mutate(token.id),
     saveEdit,
     setCopyFormat: changeCopyFormat,
     setEditForm,
     setForm,
+    setOutputTokenId: changeOutputToken,
     setSearchQuery,
     startEdit,
+    downloadPreviewContent,
+    previewSubscription,
     updateProfileBinding: (token: SubscribeTokenDto, profileId: string | null) => updateMutation.mutate({ id: token.id, input: { profile_id: profileId } }),
     toggleEnabled: (token: SubscribeTokenDto) => updateMutation.mutate({ id: token.id, input: { enabled: !token.enabled } })
   };
