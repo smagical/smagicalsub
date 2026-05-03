@@ -6,6 +6,13 @@ type MockOptions = {
 };
 
 export async function mockApi(page: Page, options: MockOptions = {}) {
+  await page.route("**/sub/**", (route) =>
+    route.fulfill({
+      contentType: "text/plain; charset=utf-8",
+      body: subscriptionPreview(route.request().url())
+    })
+  );
+
   await page.route("**/api/**", (route) =>
     route.fulfill({
       contentType: "application/json",
@@ -137,6 +144,14 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
   }
 
   return ok({ items: [] });
+}
+
+function subscriptionPreview(url: string) {
+  if (url.includes("format=sing-box")) {
+    return `{ "outbounds": [{ "type": "selector", "tag": "Proxy" }] }`;
+  }
+
+  return "proxies:\n  - name: e2e-node\nproxy-groups:\n  - name: Proxy";
 }
 
 function ok(data: unknown) {

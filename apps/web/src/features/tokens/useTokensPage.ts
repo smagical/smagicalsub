@@ -14,6 +14,9 @@ export function useTokensPage() {
   const [copyFormat, setCopyFormat] = useState<TokenSubscriptionFormat>("clash");
   const [searchQuery, setSearchQuery] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
+  const [previewContent, setPreviewContent] = useState("");
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewPending, setPreviewPending] = useState(false);
   const query = useQuery({ queryKey: ["tokens"], queryFn: listTokens, retry: false });
   const profilesQuery = useQuery({ queryKey: ["profiles"], queryFn: listProfiles, retry: false });
   const tokens = query.data?.items ?? [];
@@ -70,6 +73,33 @@ export function useTokensPage() {
     window.open(subscriptionUrl(token.token, copyFormat), "_blank", "noopener,noreferrer");
   }
 
+  async function previewSubscription(token: SubscribeTokenDto) {
+    setPreviewPending(true);
+    setPreviewError(null);
+
+    try {
+      const response = await fetch(subscriptionUrl(token.token, copyFormat));
+      const content = await response.text();
+
+      if (!response.ok) {
+        throw new Error(content.trim() || `订阅预览失败，HTTP ${response.status}`);
+      }
+
+      setPreviewContent(content.slice(0, 5000));
+    } catch (error) {
+      setPreviewContent("");
+      setPreviewError(error instanceof Error ? error.message : "订阅预览失败");
+    } finally {
+      setPreviewPending(false);
+    }
+  }
+
+  function changeCopyFormat(format: TokenSubscriptionFormat) {
+    setCopyFormat(format);
+    setPreviewContent("");
+    setPreviewError(null);
+  }
+
   function startEdit(token: SubscribeTokenDto) {
     setNotice(null);
     setEditingTokenId(token.id);
@@ -98,16 +128,20 @@ export function useTokensPage() {
     form,
     notice,
     pending,
+    previewContent,
+    previewError,
+    previewPending,
     profiles,
     searchQuery,
     createToken: createMutation.mutate,
     deleteToken: (token: SubscribeTokenDto) => deleteMutation.mutate(token.id),
     handleCopy,
     openSubscription,
+    previewSubscription,
     resetEdit,
     resetToken: (token: SubscribeTokenDto) => resetMutation.mutate(token.id),
     saveEdit,
-    setCopyFormat,
+    setCopyFormat: changeCopyFormat,
     setEditForm,
     setForm,
     setSearchQuery,

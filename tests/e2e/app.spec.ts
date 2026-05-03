@@ -81,4 +81,7 @@ test("shows subscription output center for tokens", async ({ page }) => {
 
   await expect(outputCenter.getByText("/sub/tok_e2e_default?format=sing-box")).toBeVisible();
   await expect(outputCenter.getByText("输出 sing-box JSON 配置，适合服务端或新版客户端。")).toBeVisible();
+  await outputCenter.getByRole("button", { name: "加载预览" }).click();
+
+  await expect(outputCenter.getByText('"type": "selector"')).toBeVisible();
 });

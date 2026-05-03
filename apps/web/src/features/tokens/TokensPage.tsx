@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy, ExternalLink, FileText } from "lucide-react";
 import { EmptyState } from "../../shared/EmptyState";
 import { ModulePanel } from "../../shared/ModulePanel";
 import { PageFeedback } from "../../shared/PageFeedback";
@@ -18,25 +18,32 @@ export function TokensPage() {
     <ModulePanel eyebrow="Tokens" title="订阅令牌" description="创建订阅访问令牌，控制启停、过期、重置和删除。">
       <TokenForm form={page.form} pending={page.pending} profiles={page.profiles} setForm={page.setForm} onSubmit={page.createToken} />
       {previewToken ? (
-        <section
-          aria-label="订阅输出中心"
-          className="grid gap-3 rounded-lg border bg-card/70 p-3 shadow-sm ring-1 ring-primary/10 md:grid-cols-[1fr_auto]"
-        >
-          <div className="grid gap-1">
-            <span className="text-xs font-semibold text-muted-foreground">订阅输出中心</span>
-            <p className="font-mono text-xs">{subscriptionFormatPath(previewToken.token, page.copyFormat)}</p>
-            <p className="text-sm text-muted-foreground">{tokenFormatHints[page.copyFormat]}</p>
+        <section aria-label="订阅输出中心" className="rounded-lg border bg-card/70 p-3 shadow-sm ring-1 ring-primary/10">
+          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+            <div className="grid gap-1">
+              <span className="text-xs font-semibold text-muted-foreground">订阅输出中心</span>
+              <p className="font-mono text-xs">{subscriptionFormatPath(previewToken.token, page.copyFormat)}</p>
+              <p className="text-sm text-muted-foreground">{tokenFormatHints[page.copyFormat]}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button onClick={() => void page.handleCopy(previewToken)} size="sm" type="button" variant="outline">
+                <Copy data-icon="inline-start" />
+                复制当前格式
+              </Button>
+              <Button disabled={page.previewPending} onClick={() => void page.previewSubscription(previewToken)} size="sm" type="button" variant="outline">
+                <FileText data-icon="inline-start" />
+                加载预览
+              </Button>
+              <Button onClick={() => page.openSubscription(previewToken)} size="sm" type="button" variant="ghost">
+                <ExternalLink data-icon="inline-start" />
+                打开预览
+              </Button>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={() => void page.handleCopy(previewToken)} size="sm" type="button" variant="outline">
-              <Copy data-icon="inline-start" />
-              复制当前格式
-            </Button>
-            <Button onClick={() => page.openSubscription(previewToken)} size="sm" type="button" variant="ghost">
-              <ExternalLink data-icon="inline-start" />
-              打开预览
-            </Button>
-          </div>
+          {page.previewError ? <p className="mt-3 text-sm text-destructive">{page.previewError}</p> : null}
+          {page.previewContent ? (
+            <pre className="mt-3 max-h-56 overflow-auto rounded-md bg-muted/50 p-3 font-mono text-xs">{page.previewContent}</pre>
+          ) : null}
         </section>
       ) : null}
       <TokenFilters
