@@ -1,15 +1,24 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { bootstrapAdminSchema, changePasswordSchema, failure, loginSchema, success } from "@smagicalsub/shared";
+import { z } from "zod";
 import type { AppContext } from "../../env";
+import { listResponse } from "../../lib/list-response";
 import { bearerTokenFromRequest } from "../../middleware/admin-auth";
 import { clearLoginFailures, loginRateLimitStatus, recordLoginFailure } from "./login-rate-limit";
 import { verifyPassword } from "./password";
-import { createSession, deleteOtherSessionsByToken, deleteSessionByToken } from "./session.repository";
+import {
+  createSession,
+  deleteOtherSessionsByToken,
+  deleteSessionByToken,
+  deleteUserSession,
+  listUserSessions
+} from "./session.repository";
 import { countUsers, createUser, findUserByEmail, updateUserPassword } from "./user.repository";
 
 export const publicAuthRoutes = new Hono<AppContext>();
 export const authRoutes = new Hono<AppContext>();
+const idParamSchema = z.object({ id: z.string().trim().min(1) });
 
 publicAuthRoutes.get("/status", async (c) => {
   const userCount = await countUsers(c.env.DB);
@@ -77,6 +86,31 @@ publicAuthRoutes.post("/logout", async (c) => {
 });
 
 authRoutes.get("/me", (c) => c.json(success(c.var.authUser)));
+
+authRoutes.get("/sessions", async (c) => {
+  const token = bearerTokenFromRequest(c.req.header("Authorization")) ?? "";
+  const sessions = await listUserSessions(c.env.DB, c.var.authUser.id, token);
+  return c.json(success(listResponse(sessions)));
+});
+
+authRoutes.delete("/sessions/:id", zValidator("param", idParamSchema), async (c) => {
+  const result = await deleteUserSession(
+    c.env.DB,
+    c.var.authUser.id,
+    c.req.valid("param").id,
+    bearerTokenFromRequest(c.req.header("Authorization")) ?? ""
+  );
+
+  if (result === "current") {
+    return c.json(failure({ code: "CURRENT_SESSION", message: "不能撤销当前会话" }), 409);
+  }
+
+  if (result === "not-found") {
+    return c.json(failure({ code: "SESSION_NOT_FOUND", message: "会话不存在或已过期" }), 404);
+  }
+
+  return c.json(success({ id: c.req.valid("param").id }));
+});
 
 authRoutes.post("/password", zValidator("json", changePasswordSchema), async (c) => {
   const user = await findUserByEmail(c.env.DB, c.var.authUser.email);

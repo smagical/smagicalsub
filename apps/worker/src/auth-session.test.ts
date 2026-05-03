@@ -32,7 +32,7 @@ describe("auth session", () => {
     await createUser(email);
     const token = await loginToken(email);
     const tokenHash = await sessionTokenHash(token);
-    const staleExpiry = "2026-05-02 00:00:00";
+    const staleExpiry = sqlTimestamp(new Date(Date.now() + 60 * 60 * 1000));
 
     await setSessionExpiry(tokenHash, staleExpiry);
     const response = await SELF.fetch("https://example.com/api/auth/me", {
@@ -43,7 +43,33 @@ describe("auth session", () => {
     expect(response.status).toBe(200);
     expect(await sessionExpiry(tokenHash)).not.toBe(staleExpiry);
   });
+
+  it("lists active sessions and revokes another session", async () => {
+    const email = `sessions-${crypto.randomUUID()}@example.com`;
+    await createUser(email);
+    const currentToken = await loginToken(email);
+    const otherToken = await loginToken(email);
+
+    const sessions = await listSessions(currentToken);
+    expect(sessions).toHaveLength(2);
+
+    const currentSession = sessions.find((session) => session.current);
+    const otherSession = sessions.find((session) => !session.current);
+    expect(currentSession).toBeTruthy();
+    expect(otherSession).toBeTruthy();
+
+    expect(await deleteSessionStatus(currentToken, currentSession?.id ?? "")).toBe(409);
+    expect(await deleteSessionStatus(currentToken, otherSession?.id ?? "")).toBe(200);
+    expect(await meStatus(otherToken)).toBe(401);
+    expect(await meStatus(currentToken)).toBe(200);
+  });
 });
+
+type SessionListPayload = {
+  data: {
+    items: Array<{ current: boolean; id: string }>;
+  };
+};
 
 async function createUser(email: string) {
   const response = await SELF.fetch("https://example.com/api/users", {
@@ -73,4 +99,35 @@ async function setSessionExpiry(tokenHash: string, expiresAt: string) {
 async function sessionExpiry(tokenHash: string) {
   const row = await testEnv.DB.prepare(`SELECT expires_at FROM sessions WHERE token_hash = ?1`).bind(tokenHash).first<{ expires_at: string }>();
   return row?.expires_at;
+}
+
+async function listSessions(token: string) {
+  const response = await SELF.fetch("https://example.com/api/auth/sessions", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const payload = (await response.json()) as SessionListPayload;
+
+  expect(response.status).toBe(200);
+  return payload.data.items;
+}
+
+async function deleteSessionStatus(token: string, sessionId: string) {
+  const response = await SELF.fetch(`https://example.com/api/auth/sessions/${sessionId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  return response.status;
+}
+
+async function meStatus(token: string) {
+  const response = await SELF.fetch("https://example.com/api/auth/me", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  return response.status;
+}
+
+function sqlTimestamp(date: Date) {
+  return date.toISOString().slice(0, 19).replace("T", " ");
 }

@@ -57,6 +57,13 @@ export type LoginDto = {
   user: AuthUserDto;
 };
 
+export type SessionDto = {
+  id: string;
+  created_at: string;
+  expires_at: string;
+  current: boolean;
+};
+
 export const defaultSiteSettings: SiteSettingsDto = {
   siteName: "Smagical Sub",
   siteSubtitle: "多格式订阅管理",
