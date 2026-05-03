@@ -73,7 +73,9 @@ test("shows subscription output center for tokens", async ({ page }) => {
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: {
-        writeText: async () => undefined
+        writeText: async (text: string) => {
+          window.__clipboardText = text;
+        }
       }
     });
   });
@@ -87,14 +89,24 @@ test("shows subscription output center for tokens", async ({ page }) => {
   await expect(outputCenter.getByText("/sub/tok_e2e_default?format=clash")).toBeVisible();
   await page.getByLabel("输出令牌").selectOption("token_backup");
   await expect(outputCenter.getByText("/sub/tok_e2e_backup?format=clash")).toBeVisible();
-  await page.getByLabel("复制格式").selectOption("sing-box");
+  await outputCenter.getByLabel("输出格式").selectOption("sing-box");
 
   await expect(outputCenter.getByText("/sub/tok_e2e_backup?format=sing-box")).toBeVisible();
+  await expect(outputCenter.getByText("Clash YAML .yaml")).toBeVisible();
+  await expect(outputCenter.getByText("sing-box JSON .json")).toBeVisible();
   await expect(outputCenter.getByText("输出 sing-box JSON 配置，适合服务端或新版客户端。")).toBeVisible();
+  await outputCenter.getByRole("button", { name: "复制全部格式" }).click();
+
+  const clipboardText = await page.evaluate(() => window.__clipboardText);
+  expect(clipboardText).toContain("Clash YAML: http://127.0.0.1:4173/sub/tok_e2e_backup?format=clash");
+  expect(clipboardText).toContain("v2rayN Base64: http://127.0.0.1:4173/sub/tok_e2e_backup?format=v2rayn");
+  expect(clipboardText).toContain("sing-box JSON: http://127.0.0.1:4173/sub/tok_e2e_backup?format=sing-box");
+  await expect(page.getByText("全部格式订阅地址已复制")).toBeVisible();
+
   await outputCenter.getByRole("button", { name: "加载预览" }).click();
 
   await expect(outputCenter.getByText('"type": "selector"')).toBeVisible();
-  await expect(outputCenter.getByText(".json")).toBeVisible();
+  await expect(outputCenter.getByText(".json", { exact: true })).toBeVisible();
 
   const download = page.waitForEvent("download");
   await outputCenter.getByRole("button", { name: "下载预览" }).click();
@@ -121,4 +133,10 @@ async function previewDownloadText(download: Download) {
   }
 
   return Buffer.concat(chunks).toString("utf8");
+}
+
+declare global {
+  interface Window {
+    __clipboardText: string;
+  }
 }

@@ -24,9 +24,11 @@ export function TokensPage() {
           token={page.outputToken}
           tokens={page.filteredTokens}
           onClearPreview={page.clearPreviewContent}
+          onCopyAllFormats={(token) => void page.copyAllFormats(token)}
           onCopy={(token) => void page.handleCopy(token)}
           onCopyPreview={() => void page.copyPreviewContent()}
           onDownloadPreview={page.downloadPreviewContent}
+          onFormatChange={page.setCopyFormat}
           onOpen={page.openSubscription}
           onPreview={(token) => void page.previewSubscription(token)}
           onTokenChange={page.setOutputTokenId}

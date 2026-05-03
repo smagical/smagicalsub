@@ -5,8 +5,8 @@ import type { SubscribeTokenDto } from "@smagicalsub/shared";
 import { Copy, Download, ExternalLink, FileText } from "lucide-react";
 import { StatusBadge } from "../../shared/StatusBadge";
 import type { TokenSubscriptionFormat } from "./types";
-import { tokenFormatHints } from "./types";
-import { subscriptionFormatPath, subscriptionPreviewExtension, subscriptionPreviewStats } from "./utils";
+import { tokenFormatHints, tokenSubscriptionFormats } from "./types";
+import { subscriptionFormatLinks, subscriptionFormatPath, subscriptionPreviewExtension, subscriptionPreviewStats } from "./utils";
 
 type SubscriptionOutputCenterProps = {
   copyFormat: TokenSubscriptionFormat;
@@ -18,8 +18,10 @@ type SubscriptionOutputCenterProps = {
   tokens: SubscribeTokenDto[];
   onClearPreview: () => void;
   onCopy: (token: SubscribeTokenDto) => void;
+  onCopyAllFormats: (token: SubscribeTokenDto) => void;
   onCopyPreview: () => void;
   onDownloadPreview: (token: SubscribeTokenDto) => void;
+  onFormatChange: (format: TokenSubscriptionFormat) => void;
   onOpen: (token: SubscribeTokenDto) => void;
   onPreview: (token: SubscribeTokenDto) => void;
   onTokenChange: (id: string) => void;
@@ -34,7 +36,7 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
   return (
     <section aria-label="订阅输出中心" className="rounded-lg border bg-card/80 p-4 shadow-sm ring-1 ring-primary/15">
       <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-        <div className="grid gap-1">
+        <div className="grid gap-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-primary">订阅输出中心</span>
           <div className="flex flex-wrap items-center gap-2">
             <NativeSelect aria-label="输出令牌" className="max-w-xs" onChange={(event) => props.onTokenChange(event.target.value)} value={props.token.id}>
@@ -46,6 +48,16 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
             </NativeSelect>
             <StatusBadge enabled={props.token.enabled} />
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <NativeSelect aria-label="输出格式" className="max-w-xs" onChange={(event) => props.onFormatChange(event.target.value as TokenSubscriptionFormat)} value={props.copyFormat}>
+              {tokenSubscriptionFormats.map((format) => (
+                <option key={format.value} value={format.value}>
+                  {format.label}
+                </option>
+              ))}
+            </NativeSelect>
+            {formatBadges(props.token.token)}
+          </div>
           <div className="flex flex-wrap items-center gap-2">{metaBadges(props.token)}</div>
           <p className="font-mono text-xs text-foreground">{subscriptionFormatPath(props.token.token, props.copyFormat)}</p>
           <p className="text-sm text-muted-foreground">{tokenFormatHints[props.copyFormat]}</p>
@@ -56,6 +68,14 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
       {previewReady ? previewBlock(props) : null}
     </section>
   );
+}
+
+function formatBadges(token: string) {
+  return subscriptionFormatLinks(token).map((link) => (
+    <Badge key={link.value} variant="secondary">
+      {link.label} .{link.extension}
+    </Badge>
+  ));
 }
 
 function metaBadges(token: SubscribeTokenDto) {
@@ -74,6 +94,10 @@ function actionButtons(props: SubscriptionOutputCenterProps, previewReady: boole
       <Button onClick={() => props.onCopy(props.token)} size="sm" type="button" variant="outline">
         <Copy data-icon="inline-start" />
         复制当前格式
+      </Button>
+      <Button onClick={() => props.onCopyAllFormats(props.token)} size="sm" type="button" variant="outline">
+        <Copy data-icon="inline-start" />
+        复制全部格式
       </Button>
       <Button disabled={props.previewPending} onClick={() => props.onPreview(props.token)} size="sm" type="button" variant="outline">
         <FileText data-icon="inline-start" />

@@ -1,7 +1,7 @@
 import type { CreateSubscribeTokenInput, SubscribeTokenDto } from "@smagicalsub/shared";
 import { downloadCsv } from "../../lib/download-csv";
 import { downloadText } from "../../lib/download-text";
-import type { TokenFormState, TokenSubscriptionFormat } from "./types";
+import { tokenSubscriptionFormats, type TokenFormState, type TokenSubscriptionFormat } from "./types";
 
 export function toCreateTokenInput(form: TokenFormState): CreateSubscribeTokenInput {
   return {
@@ -33,6 +33,15 @@ export function subscriptionUrl(token: string, format: TokenSubscriptionFormat) 
   return typeof window === "undefined" ? path : new URL(path, window.location.origin).toString();
 }
 
+export function subscriptionFormatLinks(token: string) {
+  return tokenSubscriptionFormats.map((format) => ({
+    ...format,
+    extension: subscriptionPreviewExtension(format.value),
+    path: subscriptionFormatPath(token, format.value),
+    url: subscriptionUrl(token, format.value)
+  }));
+}
+
 export async function loadSubscriptionPreview(token: string, format: TokenSubscriptionFormat) {
   const response = await fetch(subscriptionUrl(token, format));
   const content = await response.text();
@@ -62,6 +71,17 @@ export async function copySubscriptionPreview(content: string) {
     return false;
   }
 
+  await navigator.clipboard.writeText(content);
+  return true;
+}
+
+export async function copyAllSubscriptionUrls(token: string) {
+  if (!navigator.clipboard) {
+    return false;
+  }
+
+  // 多客户端导入时，一次复制所有格式入口，减少反复切换格式的操作。
+  const content = subscriptionFormatLinks(token).map((link) => `${link.label}: ${link.url}`).join("\n");
   await navigator.clipboard.writeText(content);
   return true;
 }

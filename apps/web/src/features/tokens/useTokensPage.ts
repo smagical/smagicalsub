@@ -5,7 +5,7 @@ import { listProfiles } from "../profiles/api";
 import { createToken, deleteToken, listTokens, resetToken as resetTokenRequest, updateToken } from "./api";
 import { initialTokenEditFormState, initialTokenFormState, type TokenSubscriptionFormat } from "./types";
 import { useSubscriptionPreview } from "./useSubscriptionPreview";
-import { filterTokens, subscriptionUrl, toDatetimeLocalValue } from "./utils";
+import { copyAllSubscriptionUrls, filterTokens, subscriptionUrl, toDatetimeLocalValue } from "./utils";
 
 export function useTokensPage() {
   const queryClient = useQueryClient();
@@ -74,6 +74,14 @@ export function useTokensPage() {
     window.open(subscriptionUrl(token.token, copyFormat), "_blank", "noopener,noreferrer");
   }
 
+  async function copyAllFormats(token: SubscribeTokenDto) {
+    if (await copyAllSubscriptionUrls(token.token)) {
+      setNotice("全部格式订阅地址已复制");
+    } else {
+      setNotice("当前浏览器不支持自动复制，请手动复制订阅路径");
+    }
+  }
+
   async function previewSubscription(token: SubscribeTokenDto) {
     if (await preview.previewSubscription(token.token, copyFormat)) {
       setNotice("订阅预览已加载");
@@ -139,6 +147,7 @@ export function useTokensPage() {
     profiles,
     searchQuery,
     clearPreviewContent: preview.clearPreviewContent,
+    copyAllFormats,
     copyPreviewContent,
     createToken: createMutation.mutate,
     deleteToken: (token: SubscribeTokenDto) => deleteMutation.mutate(token.id),
