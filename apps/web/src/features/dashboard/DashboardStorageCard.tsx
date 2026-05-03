@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { HealthDto } from "@smagicalsub/shared";
@@ -10,7 +11,7 @@ type DashboardStorageCardProps = {
 
 export function DashboardStorageCard({ health }: DashboardStorageCardProps) {
   return (
-    <Card className="bg-gradient-to-br from-card via-card to-chart-2/5">
+    <Card className="bg-gradient-to-br from-card via-card to-chart-2/10 shadow-md shadow-primary/5">
       <CardHeader>
         <div>
           <Eyebrow>Storage</Eyebrow>
@@ -25,6 +26,10 @@ export function DashboardStorageCard({ health }: DashboardStorageCardProps) {
           <StorageItem label="D1" value="业务主库、订阅源、节点、令牌" tone="db" />
           <StorageItem label="KV" value="订阅配置缓存、上游原文缓存、限流计数" tone="cache" />
           <StorageItem label="Worker" value={health?.env ?? "local"} tone="runtime" />
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Badge variant="outline">{health?.status ?? "waiting"}</Badge>
+          <Badge variant="secondary">Assets + API</Badge>
         </div>
       </CardContent>
     </Card>
@@ -41,12 +46,12 @@ function StorageItem({ label, tone, value }: { label: string; tone: keyof typeof
   const toneClass = storageToneClasses[tone];
 
   return (
-    <div className={cn("flex min-h-11 items-center justify-between gap-3 rounded-md border-l-[3px] px-3 py-2 max-[560px]:items-start max-[560px]:flex-col", toneClass.row)}>
+    <div className={cn("flex min-h-12 items-center justify-between gap-3 rounded-lg border px-3 py-2 shadow-sm max-[560px]:items-start max-[560px]:flex-col", toneClass.row)}>
       <strong className={cn("inline-flex items-center gap-2", toneClass.title)}>
         <span className={cn("size-2 rounded-full", toneClass.dot)} />
         {label}
       </strong>
-      <span className="text-sm text-muted-foreground">{value}</span>
+      <span className="text-right text-sm text-muted-foreground max-[560px]:text-left">{value}</span>
     </div>
   );
 }
