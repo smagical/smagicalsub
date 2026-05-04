@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSource, deleteSource, listSources, refreshAllSources, refreshSource, updateSource } from "./api";
 import { initialSourceEditFormState, initialSourceFormState } from "./types";
 import { filterSources } from "./utils";
+import { formatSourceGroups, parseSourceGroups } from "./SourceForm";
 
 export function useSourcesPage() {
   const queryClient = useQueryClient();
@@ -58,7 +59,12 @@ export function useSourcesPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateSubscriptionSourceInput }) => updateSource(id, input),
     onSuccess: async (_source, variables) => {
-      if (variables.input.name !== undefined || variables.input.url !== undefined) {
+      if (
+        variables.input.name !== undefined ||
+        variables.input.url !== undefined ||
+        variables.input.groups !== undefined ||
+        variables.input.refresh_interval_minutes !== undefined
+      ) {
         resetEdit();
         setNotice("订阅源已更新");
       }
@@ -83,13 +89,23 @@ export function useSourcesPage() {
   const startEdit = (source: SourceDto) => {
     setNotice(null);
     setEditingSourceId(source.id);
-    setEditForm({ name: source.name, url: source.url });
+    setEditForm({
+      groups: formatSourceGroups(source.groups),
+      name: source.name,
+      refresh_interval_minutes: String(source.refresh_interval_minutes ?? 0),
+      url: source.url
+    });
   };
 
   const saveEdit = (source: SourceDto) => {
     updateMutation.mutate({
       id: source.id,
-      input: { name: editForm.name.trim() || source.name, url: editForm.url.trim() || source.url }
+      input: {
+        groups: parseSourceGroups(editForm.groups),
+        name: editForm.name.trim() || source.name,
+        refresh_interval_minutes: Number(editForm.refresh_interval_minutes) || 0,
+        url: editForm.url.trim() || source.url
+      }
     });
   };
 

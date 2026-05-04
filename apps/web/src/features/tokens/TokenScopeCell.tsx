@@ -19,6 +19,7 @@ export function TokenNodeScopeCell({ editForm, editing, nodes, pending, token, o
   if (editing) {
     return (
       <TokenNodeSelector
+        compact
         disabled={pending}
         nodes={nodes}
         selectedIds={editForm.node_ids}

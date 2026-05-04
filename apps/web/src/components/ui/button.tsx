@@ -10,6 +10,12 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        success:
+          "border-chart-3/30 bg-chart-3/10 text-chart-3 hover:bg-chart-3/15 aria-expanded:bg-chart-3/15 dark:border-chart-3/40 dark:bg-chart-3/15",
+        info:
+          "border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 aria-expanded:bg-primary/15 dark:border-primary/40 dark:bg-primary/15",
+        warning:
+          "border-chart-4/30 bg-chart-4/10 text-chart-4 hover:bg-chart-4/15 aria-expanded:bg-chart-4/15 dark:border-chart-4/40 dark:bg-chart-4/15",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:

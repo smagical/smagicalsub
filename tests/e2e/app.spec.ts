@@ -6,20 +6,35 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
 
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "订阅管理控制台" })).toBeVisible();
-  await expect(page.getByText("Cloudflare Workers")).toBeVisible();
+  await expect(page.locator("header").getByText("控制面板", { exact: true })).toBeVisible();
+  await expect(page.locator("header").getByText("Cloudflare Workers / D1 / KV", { exact: true })).toBeVisible();
+  await expect(page.getByText("工作流和请求统计")).toBeVisible();
+  await expect(page.getByLabel("请求趋势图表")).toBeVisible();
+  await expect(page.getByText("总请求")).toBeVisible();
 
   await page.getByRole("button", { name: "切换主题" }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
   await page.getByRole("button", { name: "切换主题" }).click();
   await expect(page.locator("html")).not.toHaveClass(/dark/);
 
+  await page.getByRole("button", { exact: true, name: "订阅源" }).click();
+  await expect(page.locator('[aria-label="订阅源列表"]')).toBeVisible();
+  await expect(page.getByText("主力订阅源")).toBeVisible();
+  await expect(page.getByText("备用订阅源")).toBeVisible();
+
   await page.getByRole("button", { exact: true, name: "节点" }).click();
   await expect(page.getByText("添加单个节点，按分组查看订阅源解析和手动维护的节点。")).toBeVisible();
+  await expect(page.locator("header").getByText("控制面板", { exact: true })).toBeHidden();
   await expect(page.getByRole("button", { name: "添加节点" })).toBeVisible();
   await page.getByLabel("协议筛选").selectOption("vless");
-  await expect(page.getByText("手动节点")).toBeVisible();
-  await expect(page.getByRole("row", { name: /订阅源节点/ })).toBeHidden();
+  await expect(page.locator('[aria-label="节点 手动节点"]')).toBeVisible();
+  await expect(page.locator('[aria-label="节点 订阅源节点"]')).toBeHidden();
+  await page.getByRole("button", { exact: true, name: "编辑" }).click();
+  const editDialog = page.getByRole("dialog", { name: "编辑节点" });
+  await expect(editDialog).toBeVisible();
+  await expect(editDialog.getByLabel("节点链接")).toContainText("vless://");
+  await expect(editDialog.getByLabel("高级参数 JSON")).toContainText('"server": "manual.example.com"');
+  await page.getByRole("button", { exact: true, name: "取消" }).click();
 });
 
 test("logs in and sends the session token with API requests", async ({ page }) => {
@@ -39,9 +54,10 @@ test("logs in and sends the session token with API requests", async ({ page }) =
   await page.getByLabel("密码").fill("password123");
   await page.getByRole("button", { name: "进入控制台" }).click();
 
-  await expect(page.getByRole("heading", { name: "订阅管理控制台" })).toBeVisible();
+  await expect(page.locator("header").getByText("控制面板", { exact: true })).toBeVisible();
   await page.getByRole("button", { exact: true, name: "用户" }).click();
   await expect(page.getByText("创建后台用户、调整角色，并为用户重置登录密码。")).toBeVisible();
+  await expect(page.getByText("受保护")).toBeVisible();
   await page.getByRole("button", { exact: true, name: "设置" }).click();
   await expect(page.getByText("账号安全")).toBeVisible();
   await expect(page.getByRole("heading", { name: "登录会话" })).toBeVisible();
@@ -90,10 +106,10 @@ test("shows subscription output center for tokens", async ({ page }) => {
 
   await expect(outputCenter).toBeVisible();
   await expect(outputCenter.getByText("/sub/primary-sub?format=clash")).toBeVisible();
-  await expect(outputCenter.getByText("启用节点")).toBeVisible();
-  await expect(outputCenter.getByText("节点分组")).toBeVisible();
-  await expect(outputCenter.getByText("启用规则")).toBeVisible();
-  await expect(outputCenter.getByText("手动节点 1 个，订阅源节点 0 个。")).toBeVisible();
+  await expect(outputCenter.getByText("启用节点数", { exact: true })).toBeVisible();
+  await expect(outputCenter.getByText("节点分组数", { exact: true })).toBeVisible();
+  await expect(outputCenter.getByText("启用规则数", { exact: true })).toBeVisible();
+  await expect(outputCenter.getByText("当前范围包含手动节点 1 个，订阅源节点 0 个。")).toBeVisible();
   await expect(outputCenter.getByText("输出状态正常")).toBeVisible();
   await page.getByLabel("输出令牌").selectOption("token_backup");
   await expect(outputCenter.getByText("/sub/tok_e2e_backup?format=clash")).toBeVisible();

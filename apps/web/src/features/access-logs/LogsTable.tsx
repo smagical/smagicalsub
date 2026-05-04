@@ -12,7 +12,7 @@ type LogsTableProps = {
 
 export function LogsTable({ logs, onCopyPath, onOpenPath }: LogsTableProps) {
   return (
-    <div className="overflow-hidden rounded-lg border bg-card/70 shadow-sm ring-1 ring-primary/10">
+    <div className="overflow-hidden rounded-lg border bg-card/70">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/60">

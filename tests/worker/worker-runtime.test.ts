@@ -10,6 +10,7 @@ beforeAll(async () => {
       email TEXT NOT NULL UNIQUE,
       name TEXT,
       role TEXT NOT NULL DEFAULT 'user',
+      protected INTEGER NOT NULL DEFAULT 0,
       password_hash TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -74,10 +75,11 @@ describe("worker runtime", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bootstrapToken: "secret", email: "admin@example.com", name: "Admin", password: "password123" })
     });
-    const bootstrapPayload = (await bootstrapResponse.json()) as { data: { token: string; user: { role: string } } };
+    const bootstrapPayload = (await bootstrapResponse.json()) as { data: { token: string; user: { protected: number; role: string } } };
 
     expect(bootstrapResponse.status).toBe(201);
     expect(bootstrapPayload.data.user.role).toBe("admin");
+    expect(bootstrapPayload.data.user.protected).toBe(1);
 
     const loginResponse = await SELF.fetch("https://example.com/api/auth/login", {
       method: "POST",
@@ -92,6 +94,29 @@ describe("worker runtime", () => {
 
     expect(loginResponse.status).toBe(200);
     expect(mePayload.data.email).toBe("admin@example.com");
+  });
+
+  it("keeps the bootstrap admin protected from edits and deletion", async () => {
+    const adminToken = await loginToken("admin@example.com", "password123");
+    const headers = { Authorization: `Bearer ${adminToken}`, "Content-Type": "application/json" };
+    const usersResponse = await SELF.fetch("https://example.com/api/users", { headers });
+    const usersPayload = (await usersResponse.json()) as { data: { items: Array<{ id: string; protected: number }> } };
+    const protectedAdmin = usersPayload.data.items.find((user) => user.protected === 1);
+
+    expect(protectedAdmin).toBeDefined();
+
+    const patchResponse = await SELF.fetch(`https://example.com/api/users/${protectedAdmin?.id}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ name: "Changed" })
+    });
+    const deleteResponse = await SELF.fetch(`https://example.com/api/users/${protectedAdmin?.id}`, {
+      method: "DELETE",
+      headers
+    });
+
+    expect(patchResponse.status).toBe(409);
+    expect(deleteResponse.status).toBe(409);
   });
 
   it("lets an admin create users and blocks non-admin user management", async () => {

@@ -6,6 +6,7 @@ export const users = sqliteTable("users", {
   email: text("email").notNull().unique(),
   name: text("name"),
   role: text("role").notNull().default("user"),
+  protected: integer("protected").notNull().default(0),
   passwordHash: text("password_hash"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`)
@@ -24,7 +25,10 @@ export const subscriptionSources = sqliteTable("subscription_sources", {
   ownerId: text("owner_id").references(() => users.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   url: text("url").notNull(),
+  groups: text("groups").notNull().default("[]"),
   enabled: integer("enabled").notNull().default(1),
+  refreshIntervalMinutes: integer("refresh_interval_minutes").notNull().default(0),
+  nextRefreshAt: text("next_refresh_at"),
   lastStatus: text("last_status"),
   lastError: text("last_error"),
   lastFetchedAt: text("last_fetched_at"),

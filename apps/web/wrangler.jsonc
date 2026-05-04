@@ -11,6 +11,9 @@
     "APP_ENV": "local",
     "SUBSCRIPTION_CACHE_TTL_SECONDS": "300"
   },
+  "triggers": {
+    "crons": ["*/30 * * * *"]
+  },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

@@ -48,7 +48,7 @@ export function LogsPage() {
   }
 
   return (
-    <ModulePanel eyebrow="Logs" title="访问日志" description="查看最近 100 条订阅访问记录，用于排查令牌和客户端请求。">
+    <ModulePanel eyebrow="Logs" title="访问日志" description="查看最近 100 条订阅访问记录，用于排查令牌和客户端请求。" tone="amber">
       <FilterBar>
         <FilterField label="搜索日志">
           <Input

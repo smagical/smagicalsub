@@ -37,7 +37,7 @@ export function ProfileRuleForm({ form, pending, setForm, onSubmit }: ProfileRul
   }
 
   return (
-    <div className="rounded-lg border bg-card/70 p-3 shadow-sm ring-1 ring-primary/10">
+    <div className="rounded-lg border bg-card/70 p-3">
       <div className="mb-3">
         <div className="mb-2 flex items-center justify-between gap-3">
           <span className="text-xs font-semibold text-muted-foreground">常用模板</span>

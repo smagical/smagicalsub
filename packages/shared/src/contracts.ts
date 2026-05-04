@@ -16,6 +16,16 @@ export type DashboardDto = {
     profiles: number;
     tokens: number;
   };
+  requestStats?: {
+    total: number;
+    success: number;
+    blocked: number;
+    cached: number;
+    trend: Array<{
+      label: string;
+      value: number;
+    }>;
+  };
   recentEvents: Array<{
     id: string;
     title: string;
@@ -39,6 +49,7 @@ export type UserDto = {
   email: string;
   name: string | null;
   role: UserRole;
+  protected: number;
   created_at: string;
   updated_at: string;
 };
@@ -76,7 +87,10 @@ export type SourceDto = {
   id: string;
   name: string;
   url: string;
+  groups: string[];
   enabled: number;
+  refresh_interval_minutes: number;
+  next_refresh_at: string | null;
   last_status: string | null;
   last_error: string | null;
   last_fetched_at: string | null;
@@ -107,6 +121,8 @@ export type NodeDto = {
   port: number | null;
   groups: string[];
   enabled: number;
+  uri: string | null;
+  config: Record<string, unknown>;
   updated_at: string;
 };
 

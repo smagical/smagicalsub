@@ -35,7 +35,7 @@ export function TokenActions({
   if (editing) {
     return (
       <ActionGroup className="gap-1">
-        {actionButton("保存", "default", pending, () => onSaveEdit(token), <Check />)}
+        {actionButton("保存", "info", pending, () => onSaveEdit(token), <Check />)}
         {actionButton("取消", "outline", pending, onCancelEdit, <X />)}
       </ActionGroup>
     );
@@ -43,10 +43,10 @@ export function TokenActions({
 
   return (
     <ActionGroup className="gap-1">
-      {actionButton("复制订阅", "outline", pending, () => onCopy(token), <Copy />)}
+      {actionButton("复制订阅", "info", pending, () => onCopy(token), <Copy />)}
       {actionButton("打开订阅", "ghost", pending, () => onOpen(token), <ExternalLink />)}
       {actionButton("编辑令牌", "outline", pending, () => onStartEdit(token), <Pencil />)}
-      {actionButton(token.enabled ? "停用令牌" : "启用令牌", "outline", pending, () => onToggleEnabled(token), <Power />)}
+      {actionButton(token.enabled ? "停用令牌" : "启用令牌", token.enabled ? "warning" : "success", pending, () => onToggleEnabled(token), <Power />)}
       <ConfirmButton
         aria-label="重置令牌"
         disabled={pending}

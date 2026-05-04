@@ -2,13 +2,15 @@ import { parseSubscription } from "@smagicalsub/subscription";
 import type { SourceRefreshAllDto, SourceRefreshDto } from "@smagicalsub/shared";
 import type { Env } from "../../env";
 import type { OwnerScope } from "../../lib/auth-scope";
+import { deleteGeneratedSubscriptionCaches } from "../subscribe/subscribe-cache";
+import { listSubscribeTokenValues } from "../tokens/token.repository";
 import { replaceSourceNodes } from "./source-node.repository";
 import {
   createRefreshJob,
   markRefreshJobFinished,
   markSourceRefreshStatus
 } from "./source-refresh.repository";
-import { findSourceById, listEnabledSourceIds } from "./source.repository";
+import { findSourceById, listDueSourceIds, listEnabledSourceIds } from "./source.repository";
 
 const sourceRawKeyPrefix = "source_raw";
 
@@ -41,7 +43,7 @@ export async function refreshSource(env: Env, sourceId: string, scope?: OwnerSco
 
     const nodes = parseSubscription(content);
     // 源节点按快照替换，确保上游删除节点后本地不会残留旧节点。
-    const nodeCount = await replaceSourceNodes(env.DB, sourceId, nodes, source.owner_id);
+    const nodeCount = await replaceSourceNodes(env.DB, sourceId, nodes, source.owner_id, source.groups);
     await markSourceRefreshStatus(env.DB, sourceId, "success");
     await markRefreshJobFinished(env.DB, jobId, "success", `Parsed ${nodeCount} nodes`);
 
@@ -65,6 +67,22 @@ export async function refreshSource(env: Env, sourceId: string, scope?: OwnerSco
 
 export async function refreshEnabledSources(env: Env, scope?: OwnerScope): Promise<SourceRefreshAllDto> {
   const sourceIds = await listEnabledSourceIds(env.DB, scope);
+  return refreshSourceIds(env, sourceIds, scope);
+}
+
+export async function refreshDueSources(env: Env): Promise<SourceRefreshAllDto> {
+  const sourceIds = await listDueSourceIds(env.DB);
+  const result = await refreshSourceIds(env, sourceIds);
+
+  if (result.success > 0) {
+    const tokenValues = await listSubscribeTokenValues(env.DB);
+    await deleteGeneratedSubscriptionCaches(env.KV, tokenValues);
+  }
+
+  return result;
+}
+
+async function refreshSourceIds(env: Env, sourceIds: string[], scope?: OwnerScope): Promise<SourceRefreshAllDto> {
   const results: SourceRefreshDto[] = [];
 
   // Worker 刷新外部订阅源时串行执行，降低上游限速和 Worker 子请求峰值风险。

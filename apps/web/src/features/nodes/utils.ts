@@ -44,7 +44,7 @@ export function filterNodes(nodes: NodeDto[], groupFilter: string, protocolFilte
   const grouped =
     groupFilter === "all"
       ? nodes
-      : nodes.filter((node) => (groupFilter === "ungrouped" ? node.groups.length === 0 : node.groups.includes(groupFilter)));
+      : nodes.filter((node) => (groupFilter === "default" ? node.groups.length === 0 : node.groups.includes(groupFilter)));
   const protocolNodes = protocolFilter === "all" ? grouped : grouped.filter((node) => node.protocol === protocolFilter);
 
   if (!normalizedSearch) {

@@ -22,7 +22,7 @@ export function ProfileRuleActions(props: ProfileRuleActionsProps) {
   if (props.editing) {
     return (
       <ActionGroup>
-        <Button disabled={props.pending} onClick={() => props.onSaveEdit(props.rule)} size="sm" type="button">
+        <Button disabled={props.pending} onClick={() => props.onSaveEdit(props.rule)} size="sm" type="button" variant="info">
           保存
         </Button>
         <Button disabled={props.pending} onClick={props.onCancelEdit} size="sm" type="button" variant="outline">
@@ -34,13 +34,13 @@ export function ProfileRuleActions(props: ProfileRuleActionsProps) {
 
   return (
     <ActionGroup>
-      <Button disabled={props.pending || !props.canMoveUp} onClick={() => props.onMove(props.rule, "up")} size="sm" type="button" variant="ghost">
+      <Button disabled={props.pending || !props.canMoveUp} onClick={() => props.onMove(props.rule, "up")} size="sm" type="button" variant="outline">
         上移
       </Button>
-      <Button disabled={props.pending || !props.canMoveDown} onClick={() => props.onMove(props.rule, "down")} size="sm" type="button" variant="ghost">
+      <Button disabled={props.pending || !props.canMoveDown} onClick={() => props.onMove(props.rule, "down")} size="sm" type="button" variant="outline">
         下移
       </Button>
-      <Button disabled={props.pending} onClick={() => props.onToggleEnabled(props.rule)} size="sm" type="button" variant="outline">
+      <Button disabled={props.pending} onClick={() => props.onToggleEnabled(props.rule)} size="sm" type="button" variant={props.rule.enabled ? "warning" : "success"}>
         {props.rule.enabled ? "停用" : "启用"}
       </Button>
       <Button disabled={props.pending} onClick={() => props.onStartEdit(props.rule)} size="sm" type="button" variant="outline">

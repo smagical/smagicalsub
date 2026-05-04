@@ -44,7 +44,7 @@ publicAuthRoutes.post("/bootstrap", zValidator("json", bootstrapAdminSchema), as
     return c.json(failure({ code: "UNAUTHORIZED", message: "初始化令牌不正确" }), 401);
   }
 
-  const user = await createUser(c.env.DB, { ...input, role: "admin" });
+  const user = await createUser(c.env.DB, { ...input, role: "admin" }, true);
   if (!user) {
     return c.json(failure({ code: "BOOTSTRAP_FAILED", message: "管理员创建失败" }), 500);
   }

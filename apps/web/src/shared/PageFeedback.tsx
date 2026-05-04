@@ -1,23 +1,27 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
+type FeedbackNotice = string | { id: string | number; message: string } | null | undefined;
+
 type PageFeedbackProps = {
   error?: unknown;
-  notice?: string | null;
+  notice?: FeedbackNotice;
 };
 
 export function PageFeedback({ error, notice }: PageFeedbackProps) {
   const lastError = useRef<string | null>(null);
-  const lastNotice = useRef<string | null>(null);
+  const lastNotice = useRef<string | number | null>(null);
   const errorMessage = error instanceof Error ? error.message : null;
+  const noticeMessage = typeof notice === "string" ? notice : notice?.message ?? null;
+  const noticeKey = typeof notice === "string" ? notice : notice?.id ?? noticeMessage;
 
   useEffect(() => {
-    if (notice && notice !== lastNotice.current) {
-      toast.success(notice);
+    if (noticeMessage && noticeKey !== lastNotice.current) {
+      toast.success(noticeMessage);
     }
 
-    lastNotice.current = notice ?? null;
-  }, [notice]);
+    lastNotice.current = noticeKey ?? null;
+  }, [noticeKey, noticeMessage]);
 
   useEffect(() => {
     if (errorMessage && errorMessage !== lastError.current) {

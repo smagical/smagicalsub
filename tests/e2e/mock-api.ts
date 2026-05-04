@@ -43,12 +43,12 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
     return ok({
       expiresAt: "2026-06-01 00:00:00",
       token: "sess_e2e",
-      user: { email: "admin@example.com", id: "user_admin", name: "Admin", role: "admin" }
+      user: { email: "admin@example.com", id: "user_admin", name: "Admin", protected: 1, role: "admin" }
     });
   }
 
   if (url.endsWith("/api/auth/me")) {
-    return ok({ email: "admin@example.com", id: "user_admin", name: "Admin", role: "admin" });
+    return ok({ email: "admin@example.com", id: "user_admin", name: "Admin", protected: 1, role: "admin" });
   }
 
   if (url.endsWith("/api/auth/sessions")) {
@@ -73,6 +73,21 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
   if (url.endsWith("/api/dashboard")) {
     options.onDashboardRequest?.(authorization);
     return ok({
+      requestStats: {
+        blocked: 4,
+        cached: 31,
+        success: 118,
+        total: 122,
+        trend: [
+          { label: "00", value: 12 },
+          { label: "04", value: 9 },
+          { label: "08", value: 18 },
+          { label: "12", value: 27 },
+          { label: "16", value: 22 },
+          { label: "20", value: 19 },
+          { label: "24", value: 15 }
+        ]
+      },
       totals: { nodes: 0, profiles: 0, sources: 0, tokens: 0 },
       recentEvents: []
     });
@@ -96,6 +111,7 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           email: "admin@example.com",
           id: "user_admin",
           name: "Admin",
+          protected: 1,
           role: "admin",
           updated_at: "2026-05-01 00:00:00"
         }
@@ -141,6 +157,41 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
     });
   }
 
+  if (url.endsWith("/api/sources")) {
+    return ok({
+      items: [
+        {
+          created_at: "2026-05-01 00:00:00",
+          enabled: 1,
+          groups: ["Proxy"],
+          id: "source_default",
+          last_error: null,
+          last_fetched_at: "2026-05-01 08:00:00",
+          last_status: "success",
+          name: "主力订阅源",
+          next_refresh_at: "2026-05-01 10:00:00",
+          refresh_interval_minutes: 120,
+          updated_at: "2026-05-01 08:00:00",
+          url: "https://example.com/subscription"
+        },
+        {
+          created_at: "2026-05-01 00:00:00",
+          enabled: 0,
+          groups: ["Backup"],
+          id: "source_backup",
+          last_error: "上游暂时不可用",
+          last_fetched_at: null,
+          last_status: "failed",
+          name: "备用订阅源",
+          next_refresh_at: null,
+          refresh_interval_minutes: 0,
+          updated_at: "2026-05-01 00:00:00",
+          url: "https://backup.example.com/subscription"
+        }
+      ]
+    });
+  }
+
   if (url.endsWith("/api/nodes")) {
     return ok({
       items: [
@@ -153,6 +204,8 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           protocol: "vless",
           server: "manual.example.com",
           source_id: null,
+          uri: "vless://00000000-0000-0000-0000-000000000000@manual.example.com:443?security=tls#手动节点",
+          config: { type: "vless", server: "manual.example.com", port: 443, uuid: "00000000-0000-0000-0000-000000000000", tls: true },
           updated_at: "2026-05-01 00:00:00"
         },
         {
@@ -164,6 +217,8 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           protocol: "vmess",
           server: "source.example.com",
           source_id: "source_default",
+          uri: "vmess://e30=",
+          config: { type: "vmess", server: "source.example.com", port: 443 },
           updated_at: "2026-05-01 01:00:00"
         },
         {
@@ -175,6 +230,8 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           protocol: "trojan",
           server: "disabled.example.com",
           source_id: null,
+          uri: "trojan://password@disabled.example.com:443#停用节点",
+          config: { type: "trojan", server: "disabled.example.com", port: 443, password: "password" },
           updated_at: "2026-05-01 02:00:00"
         }
       ]

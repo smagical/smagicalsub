@@ -11,6 +11,7 @@ import { nodeRoutes } from "./modules/nodes/node.routes";
 import { profileRoutes } from "./modules/profiles/profile.routes";
 import { publicSettingsRoutes, settingsRoutes } from "./modules/settings/settings.routes";
 import { sourceRoutes } from "./modules/sources/source.routes";
+import { refreshDueSources } from "./modules/sources/source.service";
 import { subscribeRoutes } from "./modules/subscribe/subscribe.routes";
 import { tokenRoutes } from "./modules/tokens/token.routes";
 import { userRoutes } from "./modules/users/user.routes";
@@ -36,4 +37,11 @@ app.route("/sub", subscribeRoutes);
 app.onError(onError);
 app.notFound(notFound);
 
-export default app;
+export default {
+  fetch(request, env, ctx) {
+    return app.fetch(request, env, ctx);
+  },
+  scheduled(_controller, env, ctx) {
+    ctx.waitUntil(refreshDueSources(env));
+  }
+} satisfies ExportedHandler<AppContext["Bindings"]>;

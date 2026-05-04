@@ -26,7 +26,7 @@ export function UsersPage() {
   const error = usersQuery.error ?? meQuery.error ?? createMutation.error ?? updateMutation.error ?? deleteMutation.error;
 
   return (
-    <ModulePanel eyebrow="Users" title="用户管理" description="创建后台用户、调整角色，并为用户重置登录密码。">
+    <ModulePanel eyebrow="Users" title="用户管理" description="创建后台用户、调整角色，并为用户重置登录密码。" tone="rose">
       <UserForm form={form} pending={pending} setForm={setForm} onSubmit={(value) => createMutation.mutate(value)} />
       <PageFeedback error={error} notice={notice} />
       {users.length === 0 ? (

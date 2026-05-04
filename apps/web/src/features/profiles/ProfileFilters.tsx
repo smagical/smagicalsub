@@ -38,7 +38,7 @@ export function ProfileFilters({
           <option value="disabled">已停用</option>
         </NativeSelect>
       </FilterField>
-      <Button disabled={exportDisabled} onClick={onExport} type="button" variant="outline">
+      <Button disabled={exportDisabled} onClick={onExport} type="button" variant="info">
         导出 CSV
       </Button>
     </FilterBar>

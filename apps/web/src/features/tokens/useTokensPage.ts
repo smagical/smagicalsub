@@ -118,6 +118,7 @@ export function useTokensPage() {
     error,
     filteredTokens,
     form,
+    tokens,
     outputDiagnostics: diagnostics,
     nodes,
     notice,

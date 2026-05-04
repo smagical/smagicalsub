@@ -100,11 +100,11 @@ function AuthCard({ children, description, settings, title }: { children: ReactN
         <div className="order-2 lg:order-1">
           <AuthMarketing settings={settings} />
         </div>
-        <Card className="order-1 w-full border bg-card/95 shadow-2xl shadow-primary/10 ring-1 ring-primary/15 lg:order-2">
+        <Card className="order-1 w-full border bg-card/95 lg:order-2">
           <div className="accent-strip h-1" />
           <CardHeader className="gap-3 px-6 pt-6">
             <BrandHeader className="mb-2 lg:hidden" settings={settings} />
-            <div className="flex items-center gap-2 rounded-lg border bg-muted/60 p-3 shadow-sm">
+            <div className="flex items-center gap-2 rounded-lg border bg-muted/60 p-3">
               <div className="grid size-9 place-items-center rounded-md bg-primary/15 text-primary ring-1 ring-primary/20">
                 <KeyRound className="size-4" />
               </div>

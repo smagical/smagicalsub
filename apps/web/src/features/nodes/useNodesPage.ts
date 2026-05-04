@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { NodeBatchActionInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
 import { batchNodes, createNode, deleteNode, listNodeGroups, listNodes, updateNode } from "./api";
@@ -15,7 +15,8 @@ export function useNodesPage() {
   const [groupFilter, setGroupFilter] = useState("all");
   const [protocolFilter, setProtocolFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ id: number; message: string } | null>(null);
+  const noticeIdRef = useRef(0);
   const query = useQuery({ queryKey: ["nodes"], queryFn: listNodes, retry: false });
   const groupsQuery = useQuery({ queryKey: ["node-groups"], queryFn: listNodeGroups, retry: false });
   const nodes = query.data?.items ?? [];
@@ -40,7 +41,7 @@ export function useNodesPage() {
     mutationFn: createNode,
     onSuccess: async () => {
       setForm(initialNodeFormState);
-      setNotice("节点已添加");
+      pushNotice("节点已添加");
       await invalidateNodeData();
     }
   });
@@ -48,9 +49,9 @@ export function useNodesPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateNodeInput }) => updateNode(id, input),
     onSuccess: async (_node, variables) => {
-      if (variables.input.name !== undefined || variables.input.groups !== undefined) {
+      if (isFormEditInput(variables.input)) {
         resetEdit();
-        setNotice("节点已更新");
+        pushNotice("节点已更新");
       }
 
       await invalidateNodeData();
@@ -60,7 +61,7 @@ export function useNodesPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteNode,
     onSuccess: async () => {
-      setNotice("节点已删除");
+      pushNotice("节点已删除");
       await invalidateNodeData();
     }
   });
@@ -70,7 +71,7 @@ export function useNodesPage() {
     onSuccess: async (result) => {
       setBatchForm(initialNodeBatchFormState);
       setSelectedNodeIds([]);
-      setNotice(`批量操作完成，影响 ${result.affected} 个节点`);
+      pushNotice(`批量操作完成，影响 ${result.affected} 个节点`);
       await invalidateNodeData();
     }
   });
@@ -80,15 +81,34 @@ export function useNodesPage() {
   const emptyLabel = nodes.length === 0 ? "还没有节点" : "没有匹配的节点";
 
   const startEdit = (node: NodeDto) => {
-    setNotice(null);
+    clearNotice();
     setEditingNodeId(node.id);
-    setEditForm({ name: node.name, groups: formatGroups(node.groups) });
+    setEditForm({
+      name: node.name,
+      groups: formatGroups(node.groups),
+      uri: node.uri ?? "",
+      enabled: Boolean(node.enabled),
+      configJson: JSON.stringify(node.config ?? {}, null, 2)
+    });
   };
 
   const saveEdit = (node: NodeDto) => {
+    const config = parseConfigJson(editForm.configJson);
+
+    if (!config.ok) {
+      pushNotice(config.message);
+      return;
+    }
+
     updateMutation.mutate({
       id: node.id,
-      input: { name: editForm.name.trim() || node.name, groups: parseGroups(editForm.groups) }
+      input: {
+        name: editForm.name.trim() || node.name,
+        groups: parseGroups(editForm.groups),
+        uri: editForm.uri.trim() && editForm.uri.trim() !== (node.uri ?? "") ? editForm.uri.trim() : undefined,
+        enabled: editForm.enabled,
+        config: config.value
+      }
     });
   };
 
@@ -99,14 +119,25 @@ export function useNodesPage() {
 
     const groups = parseGroups(batchForm.groups);
     if (action === "append-groups" && groups.length === 0) {
-      setNotice("请输入要追加的分组");
+      pushNotice("请输入要追加的分组");
       return;
     }
 
     batchMutation.mutate({ ids: selectedNodeIds, action, groups: action.endsWith("-groups") ? groups : undefined });
   };
 
-  // 表格选择状态依赖当前筛选结果，因此统一从 hook 暴露，避免页面重复拼装。
+  const copyNode = async (node: NodeDto, value?: string) => {
+    if (!navigator.clipboard) {
+      pushNotice("当前浏览器不支持自动复制，请手动复制节点内容");
+      return;
+    }
+
+    // 优先复制原始节点链接；手动 JSON 节点没有链接时退回复制结构化配置。
+    await navigator.clipboard.writeText(value ?? node.uri ?? JSON.stringify(node.config ?? {}, null, 2));
+    pushNotice("节点内容已复制");
+  };
+
+  // 列表选择状态依赖当前筛选结果，因此统一从 hook 暴露，避免页面重复拼装。
   const toggleSelected = (nodeId: string, checked: boolean) => {
     setSelectedNodeIds((current) => toggleSelectedId(current, nodeId, checked));
   };
@@ -125,6 +156,7 @@ export function useNodesPage() {
     form,
     groupFilter,
     groups,
+    nodes,
     notice,
     pending,
     protocolFilter,
@@ -132,6 +164,7 @@ export function useNodesPage() {
     searchQuery,
     selectedNodeIds,
     createNode: createMutation.mutate,
+    copyNode,
     deleteNode: (node: NodeDto) => deleteMutation.mutate(node.id),
     resetEdit,
     runBatchAction,
@@ -148,4 +181,31 @@ export function useNodesPage() {
     toggleVisible,
     clearSelection: () => setSelectedNodeIds([])
   };
+
+  function pushNotice(message: string) {
+    noticeIdRef.current += 1;
+    setNotice({ id: noticeIdRef.current, message });
+  }
+
+  function clearNotice() {
+    setNotice(null);
+  }
+}
+
+function isFormEditInput(input: UpdateNodeInput) {
+  return input.name !== undefined || input.groups !== undefined || input.uri !== undefined || input.config !== undefined;
+}
+
+function parseConfigJson(value: string): { ok: true; value: Record<string, unknown> } | { ok: false; message: string } {
+  try {
+    const parsed = JSON.parse(value || "{}") as unknown;
+
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return { ok: true, value: parsed as Record<string, unknown> };
+    }
+  } catch {
+    return { ok: false, message: "高级参数不是合法 JSON" };
+  }
+
+  return { ok: false, message: "高级参数必须是 JSON 对象" };
 }

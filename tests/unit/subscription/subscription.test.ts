@@ -1,7 +1,7 @@
 import YAML from "yaml";
 import { describe, expect, it } from "vitest";
-import { normalizeSubscriptionFormat, parseNodeUri, parseSubscription, renderSubscription } from "./index";
-import type { RenderableNode } from "./index";
+import { normalizeSubscriptionFormat, parseNodeUri, parseSubscription, renderSubscription } from "@smagicalsub/subscription";
+import type { RenderableNode } from "@smagicalsub/subscription";
 
 const ssUri = `ss://${btoa("aes-256-gcm:pass@example.com:8388")}#HK`;
 
@@ -74,6 +74,52 @@ describe("subscription renderer", () => {
     expect(atob(renderSubscription({ ...input, format: "v2rayn" }))).toBe(`${ssUri}\n`);
   });
 
+  it("deduplicates nodes with the same endpoint and credentials", () => {
+    const duplicated = {
+      ...renderableNode(),
+      id: "node-2",
+      name: "HK Duplicate",
+      groups: ["backup"],
+      config_json: JSON.stringify({
+        type: "ss",
+        server: "example.com",
+        port: 8388,
+        cipher: "aes-256-gcm",
+        password: "pass",
+        __rawUri: `${ssUri}-duplicate-name`
+      })
+    };
+    const output = renderSubscription({
+      format: "clash",
+      profileName: "Default",
+      nodes: [renderableNode(), duplicated]
+    });
+    const parsed = YAML.parse(output.replace(/^#.*\n/, "")) as { proxies: Array<{ name: string }>; "proxy-groups": Array<{ name: string; proxies: string[] }> };
+
+    expect(parsed.proxies).toHaveLength(1);
+    expect(parsed.proxies[0].name).toBe("HK");
+    expect(parsed["proxy-groups"]).toEqual([
+      expect.objectContaining({ name: "Proxy", proxies: ["Group: backup", "Group: hk"] }),
+      expect.objectContaining({ name: "Group: backup", proxies: ["HK"] }),
+      expect.objectContaining({ name: "Group: hk", proxies: ["HK"] })
+    ]);
+  });
+
+  it("deduplicates raw subscriptions before rendering text formats", () => {
+    const duplicated = {
+      ...renderableNode(),
+      id: "node-2",
+      name: "HK Duplicate"
+    };
+    const output = renderSubscription({
+      format: "plain",
+      profileName: "Default",
+      nodes: [renderableNode(), duplicated]
+    });
+
+    expect(output.split("\n")).toEqual([ssUri]);
+  });
+
   it("renders Clash YAML with grouped proxies and fallback rule", () => {
     const output = renderSubscription({
       format: "clash",
@@ -90,6 +136,21 @@ describe("subscription renderer", () => {
       expect.objectContaining({ name: "Group: hk", proxies: ["HK"] })
     ]);
     expect(parsed.rules).toEqual(["DOMAIN-SUFFIX,example.com,Proxy", "MATCH,Proxy"]);
+  });
+
+  it("renders ungrouped nodes under the default group", () => {
+    const output = renderSubscription({
+      format: "clash",
+      profileName: "Default",
+      defaultStrategy: "Proxy",
+      nodes: [{ ...renderableNode(), groups: [] }]
+    });
+    const parsed = YAML.parse(output.replace(/^#.*\n/, "")) as { "proxy-groups": Array<{ name: string; proxies: string[] }> };
+
+    expect(parsed["proxy-groups"]).toEqual([
+      expect.objectContaining({ name: "Proxy", proxies: ["Group: 默认"] }),
+      expect.objectContaining({ name: "Group: 默认", proxies: ["HK"] })
+    ]);
   });
 
   it("renders sing-box JSON with selector and outbound", () => {

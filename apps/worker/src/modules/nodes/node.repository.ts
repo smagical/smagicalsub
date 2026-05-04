@@ -8,7 +8,7 @@ export async function listNodes(db: D1Database, scope?: OwnerScope) {
   const filter = scope ? ownerWhere(scope) : { params: [] as string[], sql: "" };
   const result = await db
     .prepare(
-      `SELECT id, owner_id, source_id, name, protocol, server, port, tags, enabled, updated_at
+      `SELECT id, owner_id, source_id, name, protocol, server, port, tags, config_json, enabled, updated_at
        FROM nodes
        WHERE 1 = 1${filter.sql}
        ORDER BY updated_at DESC, name ASC`
@@ -37,7 +37,7 @@ export async function findNodeById(db: D1Database, id: string, scope?: OwnerScop
   const filter = scope ? ownerWhere(scope) : { params: [] as string[], sql: "" };
   const row = await db
     .prepare(
-      `SELECT id, owner_id, source_id, name, protocol, server, port, tags, enabled, updated_at
+      `SELECT id, owner_id, source_id, name, protocol, server, port, tags, config_json, enabled, updated_at
        FROM nodes
        WHERE id = ?${filter.sql}`
     )
@@ -101,18 +101,35 @@ export async function updateNode(db: D1Database, id: string, input: UpdateNodeIn
     return null;
   }
 
+  const parsed = input.uri ? parseNodeUri(input.uri) : null;
+
+  if (input.uri && !parsed) {
+    return undefined;
+  }
+
+  const nextConfig = parsed?.config ?? input.config ?? current.config;
+  const nextRawUri = input.uri ?? current.uri;
+
   await db
     .prepare(
       `UPDATE nodes
        SET name = ?1,
-           tags = ?2,
-           enabled = ?3,
+           protocol = ?2,
+           server = ?3,
+           port = ?4,
+           tags = ?5,
+           config_json = ?6,
+           enabled = ?7,
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?4`
+       WHERE id = ?8`
     )
     .bind(
-      input.name ?? current.name,
+      input.name ?? parsed?.name ?? current.name,
+      parsed?.protocol ?? current.protocol,
+      parsed?.server ?? current.server,
+      parsed?.port ?? current.port,
       JSON.stringify(input.groups ?? current.groups),
+      JSON.stringify({ ...nextConfig, ...(nextRawUri ? { __rawUri: nextRawUri } : {}) }),
       input.enabled === undefined ? current.enabled : input.enabled ? 1 : 0,
       id
     )

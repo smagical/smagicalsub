@@ -64,6 +64,10 @@ nodeRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json", 
   const scope = ownerScope(c.var.authUser);
   const node = await updateNode(c.env.DB, c.req.valid("param").id, c.req.valid("json"), scope);
 
+  if (node === undefined) {
+    return c.json(failure({ code: "NODE_PARSE_FAILED", message: "节点链接解析失败" }), 400);
+  }
+
   if (!node) {
     return c.json(failure({ code: "NODE_NOT_FOUND", message: "节点不存在" }), 404);
   }

@@ -1,6 +1,6 @@
 import type { RenderSubscriptionBaseInput, RenderableNode } from "./types";
 import { toSingBoxOutbound } from "./sing-box-outbound";
-import { renderGroupName, uniqueStrings } from "./utils";
+import { defaultGroupName, renderGroupName, uniqueStrings } from "./utils";
 
 export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string {
   // 输出保持最小可运行：mixed inbound、主 selector、分组 selector、节点 outbound 和 direct。
@@ -40,10 +40,9 @@ export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string 
   return `${JSON.stringify(config, null, 2)}\n`;
 }
 
-// sing-box selector 复用 Clash 的分组模型：主选择器先放分组，再放未分组节点。
+// sing-box selector 复用 Clash 的分组模型：空分组节点统一归入“默认”。
 function buildSingBoxSelectors(nodes: RenderableNode[], outboundTags: string[]) {
   const groups = new Map<string, string[]>();
-  const ungrouped: string[] = [];
   const tagSet = new Set(outboundTags);
 
   for (const node of nodes) {
@@ -52,13 +51,9 @@ function buildSingBoxSelectors(nodes: RenderableNode[], outboundTags: string[]) 
     }
 
     const nodeGroups = uniqueStrings(node.groups ?? []);
+    const effectiveGroups = nodeGroups.length > 0 ? nodeGroups : [defaultGroupName];
 
-    if (nodeGroups.length === 0) {
-      ungrouped.push(node.name);
-      continue;
-    }
-
-    for (const group of nodeGroups) {
+    for (const group of effectiveGroups) {
       groups.set(group, [...(groups.get(group) ?? []), node.name]);
     }
   }
@@ -67,7 +62,7 @@ function buildSingBoxSelectors(nodes: RenderableNode[], outboundTags: string[]) 
   const renderedGroupNames = groupNames.map(renderGroupName);
 
   return {
-    main: renderedGroupNames.length > 0 ? [...renderedGroupNames, ...uniqueStrings(ungrouped)] : uniqueStrings(ungrouped),
+    main: renderedGroupNames,
     groups: groupNames.map((groupName) =>
       createSingBoxSelector(renderGroupName(groupName), uniqueStrings(groups.get(groupName) ?? []))
     )

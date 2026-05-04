@@ -55,7 +55,7 @@ export function SiteSettingsForm() {
       <div className="rounded-xl border bg-background/70 p-4">
         <BrandHeader settings={previewSettings} />
       </div>
-      <Button className="w-fit" disabled={mutation.isPending} type="submit">
+      <Button className="w-fit" disabled={mutation.isPending} type="submit" variant="info">
         保存设置
       </Button>
       <PageFeedback error={mutation.error ?? settingsQuery.error} notice={notice} />

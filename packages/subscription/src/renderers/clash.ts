@@ -1,6 +1,6 @@
 import YAML from "yaml";
 import type { RenderSubscriptionBaseInput, RenderableNode } from "./types";
-import { getNodeConfig, renderGroupName, stripInternalFields, uniqueStrings } from "./utils";
+import { defaultGroupName, getNodeConfig, renderGroupName, stripInternalFields, uniqueStrings } from "./utils";
 
 export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
   // Clash 可直接消费内部通用配置，但渲染前必须去掉 __rawUri 等内部字段。
@@ -29,33 +29,27 @@ export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
   return `# ${input.profileName}\n${YAML.stringify(config)}`;
 }
 
-// 主 Proxy 组先引用生成的分组选择器，再追加未分组节点，便于客户端快速切换策略。
+// 主 Proxy 组先引用生成的分组选择器，空分组节点统一归入“默认”。
 function buildProxyGroups(nodes: Array<{ proxy: Record<string, unknown>; groups: string[] }>, primaryProxyGroup: string) {
   const groups = new Map<string, string[]>();
-  const ungrouped: string[] = [];
 
   for (const node of nodes) {
     const proxyName = String(node.proxy.name);
     const nodeGroups = uniqueStrings(node.groups);
+    const effectiveGroups = nodeGroups.length > 0 ? nodeGroups : [defaultGroupName];
 
-    if (nodeGroups.length === 0) {
-      ungrouped.push(proxyName);
-      continue;
-    }
-
-    for (const group of nodeGroups) {
+    for (const group of effectiveGroups) {
       groups.set(group, [...(groups.get(group) ?? []), proxyName]);
     }
   }
 
-  if (groups.size === 0 && ungrouped.length === 0) {
+  if (groups.size === 0) {
     return [];
   }
 
   const groupNames = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b));
   const renderedGroupNames = groupNames.map(renderGroupName);
-  const mainProxies =
-    renderedGroupNames.length > 0 ? [...renderedGroupNames, ...uniqueStrings(ungrouped)] : uniqueStrings(ungrouped);
+  const mainProxies = renderedGroupNames;
   const proxyGroups = [createProxyGroup(primaryProxyGroup, mainProxies)];
 
   for (const groupName of groupNames) {

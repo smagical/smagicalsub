@@ -8,6 +8,9 @@ export type NodeFormState = {
 export type NodeEditFormState = {
   name: string;
   groups: string;
+  uri: string;
+  enabled: boolean;
+  configJson: string;
 };
 
 export type NodeBatchFormState = {
@@ -23,7 +26,10 @@ export const initialNodeFormState: NodeFormState = {
 
 export const initialNodeEditFormState: NodeEditFormState = {
   name: "",
-  groups: ""
+  groups: "",
+  uri: "",
+  enabled: true,
+  configJson: "{}"
 };
 
 export const initialNodeBatchFormState: NodeBatchFormState = {

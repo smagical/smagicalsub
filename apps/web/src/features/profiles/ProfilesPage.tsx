@@ -12,7 +12,7 @@ export function ProfilesPage() {
   const page = useProfilesPage();
 
   return (
-    <ModulePanel eyebrow="Profiles" title="配置档" description="维护订阅配置档，后续规则和令牌绑定会基于这里扩展。">
+    <ModulePanel eyebrow="Profiles" title="配置档" description="维护订阅配置档，后续规则和令牌绑定会基于这里扩展。" tone="green">
       <ProfileForm form={page.form} pending={page.pending} setForm={page.setForm} onSubmit={page.createProfile} />
       <ProfileFilters
         exportDisabled={page.filteredProfiles.length === 0}

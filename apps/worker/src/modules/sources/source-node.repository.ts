@@ -1,4 +1,5 @@
 import type { ParsedNode } from "@smagicalsub/subscription";
+import { nodeConfigKey } from "@smagicalsub/subscription";
 
 type ExistingSourceNode = {
   id: string;
@@ -11,7 +12,11 @@ type ExistingSourceNode = {
   enabled: number;
 };
 
-export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes: ParsedNode[], ownerId: string | null) {
+type ParsedSourceNode = ParsedNode & {
+  groups: string[];
+};
+
+export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes: ParsedNode[], ownerId: string | null, sourceGroups: string[] = []) {
   // 刷新源节点时保留用户维护的名称、分组和启停状态，避免上游更新覆盖本地整理结果。
   const previousNodes = await listExistingSourceNodes(db, sourceId);
   const previousByKey = new Map(previousNodes.map((node) => [sourceNodeKey(node), node]));
@@ -19,8 +24,9 @@ export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes
     db.prepare(`DELETE FROM nodes WHERE source_id = ?1`).bind(sourceId)
   ];
 
-  for (const node of dedupeNodes(nodes)) {
+  for (const node of dedupeNodes(nodes, sourceGroups)) {
     const previous = previousByKey.get(parsedNodeKey(node));
+    const groups = uniqueGroups([...node.groups, ...(previous ? parseTags(previous.tags) : [])]);
 
     // __rawUri 只给 v2rayN/plain 输出使用，Clash/sing-box 渲染时会过滤内部字段。
     statements.push(
@@ -37,7 +43,7 @@ export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes
           node.protocol,
           node.server ?? null,
           node.port ?? null,
-          previous?.tags ?? "[]",
+          JSON.stringify(groups),
           JSON.stringify({ ...node.config, __rawUri: node.rawUri }),
           previous?.enabled ?? 1
         )
@@ -62,36 +68,48 @@ async function listExistingSourceNodes(db: D1Database, sourceId: string) {
 }
 
 // 源刷新按完整快照替换，同一个源内的重复节点在入库前折叠掉。
-function dedupeNodes(nodes: ParsedNode[]) {
-  const seen = new Set<string>();
-  const unique: ParsedNode[] = [];
+function dedupeNodes(nodes: ParsedNode[], sourceGroups: string[]) {
+  const unique = new Map<string, ParsedSourceNode>();
+  const normalizedSourceGroups = uniqueGroups(sourceGroups);
 
   for (const node of nodes) {
     const key = parsedNodeKey(node);
+    const current = unique.get(key);
+    const groups = uniqueGroups([...(current?.groups ?? []), ...normalizedSourceGroups]);
 
-    if (!seen.has(key)) {
-      seen.add(key);
-      unique.push(node);
-    }
+    unique.set(key, { ...(current ?? node), groups });
   }
 
-  return unique;
+  return Array.from(unique.values());
 }
 
 function sourceNodeKey(node: ExistingSourceNode) {
   try {
-    const parsed = JSON.parse(node.config_json) as { __rawUri?: unknown };
-
-    if (typeof parsed.__rawUri === "string" && parsed.__rawUri.length > 0) {
-      return parsed.__rawUri;
-    }
+    const parsed = JSON.parse(node.config_json) as Record<string, unknown>;
+    return nodeConfigKey(parsed, node.protocol, node.name);
   } catch {
     return `${node.protocol}:${node.server ?? ""}:${node.port ?? ""}:${node.name}`;
   }
-
-  return `${node.protocol}:${node.server ?? ""}:${node.port ?? ""}:${node.name}`;
 }
 
 function parsedNodeKey(node: ParsedNode) {
-  return node.rawUri || `${node.protocol}:${node.server ?? ""}:${node.port ?? ""}:${node.name}`;
+  return nodeConfigKey(node.config, node.protocol, node.name);
+}
+
+function parseTags(value: string) {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+
+    if (Array.isArray(parsed)) {
+      return uniqueGroups(parsed.filter((group): group is string => typeof group === "string"));
+    }
+  } catch {
+    return [];
+  }
+
+  return [];
+}
+
+function uniqueGroups(groups: string[]) {
+  return Array.from(new Set(groups.map((group) => group.trim()).filter(Boolean)));
 }

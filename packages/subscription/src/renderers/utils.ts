@@ -1,5 +1,7 @@
 import type { RenderableNode } from "./types";
 
+export const defaultGroupName = "默认";
+
 export function uniqueStrings(values: string[]) {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
@@ -39,4 +41,3 @@ export function stringValue(value: unknown) {
 export function numberValue(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
-

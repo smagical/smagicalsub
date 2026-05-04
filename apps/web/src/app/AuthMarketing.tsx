@@ -23,7 +23,7 @@ export function AuthMarketing({ settings }: { settings: SiteSettingsDto }) {
       <div className="flex flex-col gap-8">
         <BrandHeader settings={settings} />
         <div className="flex max-w-3xl flex-col gap-5">
-          <Badge className="w-fit shadow-sm ring-1 ring-primary/15" variant="secondary">
+          <Badge className="w-fit border-chart-2/25 bg-chart-2/10 text-chart-2" variant="outline">
             Cloudflare Workers 一体部署
           </Badge>
           <h1 className="max-w-2xl text-4xl font-semibold leading-tight tracking-normal text-foreground">
@@ -46,7 +46,7 @@ export function AuthMarketing({ settings }: { settings: SiteSettingsDto }) {
 
 function DashboardPreview() {
   return (
-    <div className="overflow-hidden rounded-xl border bg-card/90 shadow-2xl ring-1 ring-primary/15">
+    <div className="overflow-hidden rounded-xl border bg-card/90">
       <div className="accent-strip h-1" />
       <div className="p-4">
         <div className="flex items-center justify-between gap-3 border-b pb-4">
@@ -59,7 +59,7 @@ function DashboardPreview() {
               <span className="block text-xs text-muted-foreground">源同步、节点分组、规则渲染和缓存刷新</span>
             </div>
           </div>
-          <Badge className="shadow-sm">在线</Badge>
+          <Badge className="border-chart-3/25 bg-chart-3/10 text-chart-3" variant="outline">在线</Badge>
         </div>
         <div className="grid gap-3 py-4 sm:grid-cols-3">
           {metrics.map((metric) => (
@@ -104,7 +104,7 @@ function FeatureItem({ item }: { item: { icon: LucideIcon; label: string; text: 
   const Icon = item.icon;
 
   return (
-    <div className="rounded-lg border bg-card/75 p-4 shadow-md shadow-primary/5 ring-1 ring-primary/10">
+    <div className="rounded-lg border bg-card/75 p-4">
       <div className="mb-3 flex items-center gap-2">
         <div className="grid size-8 place-items-center rounded-md bg-accent/30 text-accent-foreground">
           <Icon className="size-4" />

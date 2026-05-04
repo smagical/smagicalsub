@@ -1,6 +1,6 @@
 import { env, SELF } from "cloudflare:test";
 import { beforeAll, describe, expect, it } from "vitest";
-import { sessionTokenHash } from "./modules/auth/session.repository";
+import { sessionTokenHash } from "../../apps/worker/src/modules/auth/session.repository";
 
 const testEnv = env as typeof env & { DB: D1Database };
 

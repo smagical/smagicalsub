@@ -35,10 +35,14 @@ export async function markSourceRefreshStatus(
        SET last_status = ?1,
            last_error = ?2,
            last_fetched_at = CURRENT_TIMESTAMP,
+           next_refresh_at = CASE
+             WHEN enabled = 1 AND refresh_interval_minutes > 0
+             THEN datetime('now', '+' || refresh_interval_minutes || ' minutes')
+             ELSE NULL
+           END,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ?3`
     )
     .bind(status, error ?? null, id)
     .run();
 }
-

@@ -12,7 +12,9 @@
     "build": "pnpm --filter @smagicalsub/web build",
     "build:api": "pnpm --filter @smagicalsub/worker typecheck",
     "deploy": "pnpm --filter @smagicalsub/web deploy",
-    "test": "pnpm -r --if-present test",
+    "test": "pnpm test:unit && pnpm test:worker && pnpm test:e2e",
+    "test:unit": "vitest run --configLoader runner --config vitest.unit.config.mjs",
+    "test:worker": "pnpm --filter @smagicalsub/worker test",
     "test:e2e": "pnpm build && playwright test",
     "test:e2e:install": "playwright install chromium",
     "typecheck": "pnpm -r --if-present typecheck",
@@ -22,9 +24,11 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@smagicalsub/subscription": "workspace:^",
     "drizzle-kit": "^0.31.7",
     "typescript": "^5.9.0",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.5",
+    "yaml": "^2.7.0"
   },
   "engines": {
     "node": ">=22.0.0",

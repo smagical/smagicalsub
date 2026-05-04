@@ -1,8 +1,17 @@
 import { z } from "zod";
 
+export const nodeGroupSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(40)
+  .regex(/^[^,\r\n]+$/, "Group cannot contain comma or newline");
+
 export const createSubscriptionSourceSchema = z.object({
   name: z.string().trim().min(1).max(80),
   url: z.string().trim().url(),
+  groups: z.array(nodeGroupSchema).default([]),
+  refresh_interval_minutes: z.number().int().min(0).max(10080).default(0),
   enabled: z.boolean().default(true)
 });
 
@@ -14,13 +23,6 @@ export const updateSubscriptionSourceSchema = createSubscriptionSourceSchema.par
 );
 
 export type UpdateSubscriptionSourceInput = z.infer<typeof updateSubscriptionSourceSchema>;
-
-export const nodeGroupSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(40)
-  .regex(/^[^,\r\n]+$/, "Group cannot contain comma or newline");
 
 export const strategyNameSchema = z
   .string()
@@ -40,9 +42,11 @@ export type CreateNodeInput = z.infer<typeof createNodeSchema>;
 
 export const updateNodeSchema = z
   .object({
+    uri: z.string().trim().min(1).optional(),
     name: z.string().trim().min(1).max(120).optional(),
     groups: z.array(nodeGroupSchema).optional(),
-    enabled: z.boolean().optional()
+    enabled: z.boolean().optional(),
+    config: z.record(z.unknown()).optional()
   })
   .refine((value) => Object.keys(value).length > 0, "At least one field must be provided");
 

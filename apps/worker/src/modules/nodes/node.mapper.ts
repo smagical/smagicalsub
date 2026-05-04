@@ -3,6 +3,8 @@ import type { NodeDto } from "@smagicalsub/shared";
 import type { NodeRow, RenderableNodeRow } from "./node.types";
 
 export function toNodeDto(row: NodeRow): NodeDto {
+  const config = parseConfig(row.config_json);
+
   return {
     id: row.id,
     source_id: row.source_id,
@@ -12,6 +14,8 @@ export function toNodeDto(row: NodeRow): NodeDto {
     port: row.port,
     groups: parseGroups(row.tags),
     enabled: row.enabled,
+    uri: typeof config.__rawUri === "string" ? config.__rawUri : null,
+    config: stripInternalConfig(config),
     updated_at: row.updated_at
   };
 }
@@ -39,4 +43,17 @@ export function parseGroups(tags: string) {
   }
 
   return [];
+}
+
+function parseConfig(value: string) {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
+}
+
+function stripInternalConfig(value: Record<string, unknown>) {
+  return Object.fromEntries(Object.entries(value).filter(([key]) => !key.startsWith("__")));
 }

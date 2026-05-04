@@ -7,6 +7,7 @@ export type NodeRow = {
   server: string | null;
   port: number | null;
   tags: string;
+  config_json: string;
   enabled: number;
   updated_at: string;
 };

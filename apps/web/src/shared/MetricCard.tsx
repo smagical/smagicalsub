@@ -12,28 +12,28 @@ type MetricCardProps = {
 // 使用 chart token 定义指标色调，主题切换时会自动继承明暗色板。
 const metricToneClasses: Record<MetricCardProps["tone"], { card: string; icon: string; marker: string; value: string }> = {
   green: {
-    card: "border-t-[4px] border-t-chart-2 bg-gradient-to-br from-card via-card to-chart-2/10",
+    card: "border-t-[4px] border-t-chart-3 bg-card",
     icon: "bg-chart-2/15 text-chart-2 ring-1 ring-chart-2/20",
-    marker: "bg-chart-2",
-    value: "text-chart-2"
+    marker: "bg-chart-3",
+    value: "text-chart-3"
   },
   blue: {
-    card: "border-t-[4px] border-t-chart-1 bg-gradient-to-br from-card via-card to-chart-1/10",
+    card: "border-t-[4px] border-t-primary bg-card",
     icon: "bg-chart-1/15 text-chart-1 ring-1 ring-chart-1/20",
     marker: "bg-chart-1",
     value: "text-chart-1"
   },
   amber: {
-    card: "border-t-[4px] border-t-chart-3 bg-gradient-to-br from-card via-card to-chart-3/10",
-    icon: "bg-chart-3/15 text-chart-3 ring-1 ring-chart-3/20",
-    marker: "bg-chart-3",
-    value: "text-chart-3"
-  },
-  rose: {
-    card: "border-t-[4px] border-t-chart-4 bg-gradient-to-br from-card via-card to-chart-4/10",
+    card: "border-t-[4px] border-t-chart-4 bg-card",
     icon: "bg-chart-4/15 text-chart-4 ring-1 ring-chart-4/20",
     marker: "bg-chart-4",
     value: "text-chart-4"
+  },
+  rose: {
+    card: "border-t-[4px] border-t-destructive bg-card",
+    icon: "bg-destructive/15 text-destructive ring-1 ring-destructive/20",
+    marker: "bg-destructive",
+    value: "text-destructive"
   }
 };
 
@@ -41,7 +41,7 @@ export function MetricCard({ label, value, icon: Icon, tone }: MetricCardProps) 
   const toneClass = metricToneClasses[tone];
 
   return (
-    <Card className={cn("shadow-md shadow-primary/5 transition hover:-translate-y-0.5 hover:shadow-lg", toneClass.card)} size="sm">
+    <Card className={toneClass.card} size="sm">
       <CardContent className="flex min-h-[88px] items-center gap-3.5">
         <div className={cn("grid size-10 place-items-center rounded-md", toneClass.icon)}>
           <Icon />

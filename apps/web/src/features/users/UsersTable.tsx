@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -41,7 +42,12 @@ export function UsersTable({
       <TableBody>
         {users.map((user) => (
           <TableRow key={user.id}>
-            <TableCell>{user.name ?? "未命名"}</TableCell>
+            <TableCell>
+              <div className="flex flex-wrap items-center gap-2">
+                <span>{user.name ?? "未命名"}</span>
+                {user.protected ? <Badge variant="secondary">受保护</Badge> : null}
+              </div>
+            </TableCell>
             <TableCell className="font-mono">{user.email}</TableCell>
             <TableCell>{roleSelect(user, pending, onRoleChange)}</TableCell>
             <TableCell>{user.created_at}</TableCell>
@@ -49,7 +55,7 @@ export function UsersTable({
             <TableCell>
               <ConfirmButton
                 description="删除用户会清理该用户的登录会话，但不会删除已经创建的订阅数据。"
-                disabled={pending || user.id === currentUserId}
+                disabled={pending || user.id === currentUserId || Boolean(user.protected)}
                 onConfirm={() => onDelete(user)}
                 title={`删除用户「${user.name ?? user.email}」？`}
                 variant="destructive"
@@ -66,7 +72,7 @@ export function UsersTable({
 
 function roleSelect(user: UserDto, pending: boolean, onRoleChange: (user: UserDto, role: UserRole) => void) {
   return (
-    <NativeSelect disabled={pending} onChange={(event) => onRoleChange(user, event.target.value as UserRole)} value={user.role}>
+    <NativeSelect disabled={pending || Boolean(user.protected)} onChange={(event) => onRoleChange(user, event.target.value as UserRole)} value={user.role}>
       <option value="user">用户</option>
       <option value="admin">管理员</option>
     </NativeSelect>
@@ -82,8 +88,8 @@ function passwordReset(
 ) {
   return (
     <div className="flex min-w-[220px] gap-2">
-      <Input disabled={pending} onChange={(event) => onPasswordChange(user.id, event.target.value)} placeholder="新密码" type="password" value={password} />
-      <Button disabled={pending || password.length < 8} onClick={() => onSavePassword(user)} type="button" variant="outline">
+      <Input disabled={pending || Boolean(user.protected)} onChange={(event) => onPasswordChange(user.id, event.target.value)} placeholder={user.protected ? "受保护管理员" : "新密码"} type="password" value={password} />
+      <Button disabled={pending || Boolean(user.protected) || password.length < 8} onClick={() => onSavePassword(user)} type="button" variant="outline">
         保存
       </Button>
     </div>

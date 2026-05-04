@@ -35,6 +35,10 @@ userRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json", 
     return c.json(failure({ code: "USER_NOT_FOUND", message: "用户不存在" }), 404);
   }
 
+  if (current.protected) {
+    return c.json(failure({ code: "PROTECTED_ADMIN", message: "受保护管理员不能修改" }), 409);
+  }
+
   if (current.role === "admin" && input.role === "user" && (await countAdmins(c.env.DB)) <= 1) {
     return c.json(failure({ code: "LAST_ADMIN", message: "不能移除最后一个管理员" }), 409);
   }
@@ -49,6 +53,10 @@ userRoutes.delete("/:id", zValidator("param", idParamSchema), async (c) => {
 
   if (!current) {
     return c.json(failure({ code: "USER_NOT_FOUND", message: "用户不存在" }), 404);
+  }
+
+  if (current.protected) {
+    return c.json(failure({ code: "PROTECTED_ADMIN", message: "受保护管理员不能删除" }), 409);
   }
 
   if (current.role === "admin" && (await countAdmins(c.env.DB)) <= 1) {

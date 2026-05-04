@@ -12,7 +12,7 @@ type DashboardEventsCardProps = {
 
 export function DashboardEventsCard({ events }: DashboardEventsCardProps) {
   return (
-    <Card className="col-span-full bg-gradient-to-br from-card via-card to-chart-5/10 shadow-md shadow-primary/5">
+    <Card className="col-span-full">
       <CardHeader>
         <div>
           <Eyebrow>Events</Eyebrow>
@@ -30,7 +30,7 @@ export function DashboardEventsCard({ events }: DashboardEventsCardProps) {
             events.map((event, index) => (
               <div
                 className={cn(
-                  "flex min-h-12 items-center gap-3 rounded-lg border px-3 py-2 shadow-sm max-[560px]:items-start max-[560px]:flex-col",
+                  "flex min-h-12 items-center gap-3 rounded-lg border px-3 py-2 max-[560px]:items-start max-[560px]:flex-col",
                   eventToneClass(event.status)
                 )}
                 key={event.id}
@@ -52,12 +52,10 @@ export function DashboardEventsCard({ events }: DashboardEventsCardProps) {
 
 function eventToneClass(status: DashboardDto["recentEvents"][number]["status"]) {
   if (status === "error") {
-    return "border-chart-4/30 bg-gradient-to-r from-chart-4/15 via-chart-4/5 to-card";
+    return "border-destructive/30 bg-destructive/10";
   }
 
-  return status === "warning"
-    ? "border-chart-3/30 bg-gradient-to-r from-chart-3/15 via-chart-3/5 to-card"
-    : "border-chart-2/30 bg-gradient-to-r from-chart-2/15 via-chart-2/5 to-card";
+  return status === "warning" ? "border-chart-4/30 bg-chart-4/10" : "border-chart-3/30 bg-chart-3/10";
 }
 
 function EventStatusBadge({ status }: { status: DashboardDto["recentEvents"][number]["status"] }) {

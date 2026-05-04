@@ -53,7 +53,7 @@ export function ProfileForm({ form, pending, setForm, onSubmit }: ProfileFormPro
         label="启用"
         onCheckedChange={(enabled) => setForm((current) => ({ ...current, enabled }))}
       />
-      <Button disabled={pending} type="submit">
+      <Button disabled={pending} type="submit" variant="info">
         创建配置档
       </Button>
     </FormGrid>

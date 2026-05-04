@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adminTokenFromRequest, isAdminTokenAuthorized } from "./admin-auth";
+import { adminTokenFromRequest, isAdminTokenAuthorized } from "../../../apps/worker/src/middleware/admin-auth";
 
 describe("admin auth helpers", () => {
   it("uses X-Admin-Token before Authorization", () => {
