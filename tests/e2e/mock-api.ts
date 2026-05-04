@@ -194,6 +194,8 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           owner_id: null,
           profile_id: "profile_default",
           profile_name: "默认配置",
+          custom_path: "primary-sub",
+          node_ids: ["node_manual"],
           token: "tok_e2e_default"
         },
         {
@@ -206,6 +208,8 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           owner_id: null,
           profile_id: "profile_default",
           profile_name: "默认配置",
+          custom_path: null,
+          node_ids: [],
           token: "tok_e2e_backup"
         }
       ]

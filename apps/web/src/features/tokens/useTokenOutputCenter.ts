@@ -24,13 +24,13 @@ export function useTokenOutputCenter(onNotice: (notice: string) => void) {
   }
 
   async function previewSubscription(token: SubscribeTokenDto) {
-    if (await preview.previewSubscription(token.token, copyFormat)) {
+    if (await preview.previewSubscription(token.token, copyFormat, token.custom_path)) {
       onNotice("订阅预览已加载");
     }
   }
 
   async function checkSubscriptionHealth(token: SubscribeTokenDto) {
-    const result = await preview.checkSubscriptionHealth(token.token, copyFormat);
+    const result = await preview.checkSubscriptionHealth(token.token, copyFormat, token.custom_path);
     onNotice(result?.ok ? "订阅健康检查通过" : "订阅健康检查发现异常");
   }
 
@@ -41,7 +41,7 @@ export function useTokenOutputCenter(onNotice: (notice: string) => void) {
   }
 
   function downloadPreviewContent(token: SubscribeTokenDto) {
-    if (preview.downloadPreviewContent(token.token, copyFormat)) {
+    if (preview.downloadPreviewContent(token.custom_path || token.token, copyFormat)) {
       onNotice("预览内容已下载");
     }
   }

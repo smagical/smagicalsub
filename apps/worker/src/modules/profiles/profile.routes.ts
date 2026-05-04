@@ -12,7 +12,7 @@ import { z } from "zod";
 import type { AppContext } from "../../env";
 import { ownerScope } from "../../lib/auth-scope";
 import { listResponse } from "../../lib/list-response";
-import { deleteGeneratedSubscriptionCache } from "../subscribe/subscribe-cache";
+import { deleteGeneratedSubscriptionCaches } from "../subscribe/subscribe-cache";
 import { listSubscribeTokenValuesByProfileId } from "../tokens/token.repository";
 import { deleteProfileSubscriptionCaches } from "./profile-cache";
 import { createProfileRule, deleteProfileRule, listProfileRules, updateProfileRule } from "./profile-rule.repository";
@@ -127,6 +127,6 @@ profileRoutes.delete("/:id", zValidator("param", idParamSchema), async (c) => {
     return c.json(failure({ code: "PROFILE_NOT_FOUND", message: "配置档不存在" }), 404);
   }
 
-  await Promise.all(tokenValues.map((token) => deleteGeneratedSubscriptionCache(c.env.KV, token)));
+  await deleteGeneratedSubscriptionCaches(c.env.KV, tokenValues);
   return c.json(success({ id: profileId }));
 });

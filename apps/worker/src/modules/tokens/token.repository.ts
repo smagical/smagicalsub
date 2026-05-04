@@ -5,6 +5,7 @@ import { findSubscribeTokenById } from "./token-reader.repository";
 export {
   findActiveSubscribeToken,
   findSubscribeTokenById,
+  findSubscribeTokenPathConflict,
   listSubscribeTokens,
   listSubscribeTokenValues,
   listSubscribeTokenValuesByProfileId
@@ -15,14 +16,16 @@ export async function createSubscribeToken(db: D1Database, input: CreateSubscrib
 
   await db
     .prepare(
-      `INSERT INTO subscribe_tokens (id, owner_id, profile_id, token, name, enabled, expires_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
+      `INSERT INTO subscribe_tokens (id, owner_id, profile_id, token, custom_path, node_ids_json, name, enabled, expires_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
     )
     .bind(
       id,
       ownerId,
       normalizeProfileId(input.profile_id),
       generateSubscribeToken(),
+      normalizeCustomPath(input.custom_path),
+      normalizeNodeIds(input.node_ids),
       input.name,
       input.enabled ? 1 : 0,
       normalizeExpiresAt(input.expires_at)
@@ -44,13 +47,17 @@ export async function updateSubscribeToken(db: D1Database, id: string, input: Up
       `UPDATE subscribe_tokens
        SET name = ?1,
            profile_id = ?2,
-           enabled = ?3,
-           expires_at = ?4
-       WHERE id = ?5`
+           custom_path = ?3,
+           node_ids_json = ?4,
+           enabled = ?5,
+           expires_at = ?6
+       WHERE id = ?7`
     )
     .bind(
       input.name ?? current.name,
       input.profile_id === undefined ? current.profile_id : normalizeProfileId(input.profile_id),
+      input.custom_path === undefined ? current.custom_path : normalizeCustomPath(input.custom_path),
+      input.node_ids === undefined ? current.node_ids_json : normalizeNodeIds(input.node_ids),
       input.enabled === undefined ? current.enabled : input.enabled ? 1 : 0,
       input.expires_at === undefined ? current.expires_at : normalizeExpiresAt(input.expires_at),
       id
@@ -58,6 +65,18 @@ export async function updateSubscribeToken(db: D1Database, id: string, input: Up
     .run();
 
   return findSubscribeTokenById(db, id, scope);
+}
+
+function normalizeCustomPath(value: string | null | undefined) {
+  if (!value?.trim()) {
+    return null;
+  }
+
+  return value.trim();
+}
+
+function normalizeNodeIds(value: string[] | undefined) {
+  return JSON.stringify(Array.from(new Set(value ?? [])));
 }
 
 export async function resetSubscribeToken(db: D1Database, id: string, scope?: OwnerScope) {
@@ -79,6 +98,7 @@ export async function resetSubscribeToken(db: D1Database, id: string, scope?: Ow
 
   return {
     oldToken: current.token,
+    oldCustomPath: current.custom_path,
     token: await findSubscribeTokenById(db, id, scope)
   };
 }

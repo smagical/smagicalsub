@@ -4,6 +4,9 @@ export type SubscribeTokenRow = {
   profile_id: string | null;
   profile_name: string | null;
   token: string;
+  custom_path: string | null;
+  node_ids_json: string;
+  node_ids: string[];
   name: string;
   enabled: number;
   expires_at: string | null;
@@ -15,6 +18,9 @@ export type ActiveSubscribeTokenRow = {
   id: string;
   owner_id: string | null;
   token: string;
+  custom_path: string | null;
+  node_ids_json: string;
+  node_ids: string[];
   name: string;
   profile_id: string | null;
   profile_name: string | null;

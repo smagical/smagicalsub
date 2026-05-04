@@ -40,7 +40,7 @@ type SubscriptionOutputCenterProps = {
 export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
   const previewReady =
     !!props.previewContent &&
-    props.previewSource?.token === props.token.token &&
+    props.previewSource?.token === (props.token.custom_path || props.token.token) &&
     props.previewSource.format === props.copyFormat;
 
   return (
@@ -66,7 +66,7 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
                 </option>
               ))}
             </NativeSelect>
-            {formatBadges(props.token.token)}
+            {formatBadges(props.token)}
           </div>
           <div className="flex flex-wrap items-center gap-2">{metaBadges(props.token)}</div>
         </div>
@@ -80,7 +80,7 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">当前订阅路径</p>
               <SubscriptionHealthStatus pending={props.healthCheckPending} result={props.healthCheckResult} />
             </div>
-            <p className="break-all font-mono text-xs text-foreground">{subscriptionFormatPath(props.token.token, props.copyFormat)}</p>
+            <p className="break-all font-mono text-xs text-foreground">{subscriptionFormatPath(props.token.token, props.copyFormat, props.token.custom_path)}</p>
           </div>
           <p className="text-sm text-muted-foreground">{tokenFormatHints[props.copyFormat]}</p>
         </div>
@@ -99,8 +99,8 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
   );
 }
 
-function formatBadges(token: string) {
-  return subscriptionFormatLinks(token).map((link) => (
+function formatBadges(token: SubscribeTokenDto) {
+  return subscriptionFormatLinks(token.token, token.custom_path).map((link) => (
     <Badge key={link.value} variant="secondary">
       {link.label} .{link.extension}
     </Badge>

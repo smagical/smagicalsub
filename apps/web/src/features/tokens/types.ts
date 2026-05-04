@@ -1,12 +1,16 @@
 export type TokenFormState = {
   name: string;
   profile_id: string;
+  custom_path: string;
+  node_ids: string[];
   expires_at: string;
   enabled: boolean;
 };
 
 export type TokenEditFormState = {
   name: string;
+  custom_path: string;
+  node_ids: string[];
   expires_at: string;
 };
 
@@ -15,12 +19,16 @@ export type TokenSubscriptionFormat = "clash" | "v2rayn" | "plain" | "sing-box";
 export const initialTokenFormState: TokenFormState = {
   name: "",
   profile_id: "",
+  custom_path: "",
+  node_ids: [],
   expires_at: "",
   enabled: true
 };
 
 export const initialTokenEditFormState: TokenEditFormState = {
   name: "",
+  custom_path: "",
+  node_ids: [],
   expires_at: ""
 };
 

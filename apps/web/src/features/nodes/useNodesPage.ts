@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { NodeBatchActionInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
 import { batchNodes, createNode, deleteNode, listNodeGroups, listNodes, updateNode } from "./api";
 import { initialNodeBatchFormState, initialNodeEditFormState, initialNodeFormState } from "./types";
-import { filterNodes, formatGroups, parseGroups, toggleSelectedId, toggleVisibleSelection } from "./utils";
+import { filterNodes, formatGroups, nodeProtocols, parseGroups, toggleSelectedId, toggleVisibleSelection } from "./utils";
 
 export function useNodesPage() {
   const queryClient = useQueryClient();
@@ -13,13 +13,15 @@ export function useNodesPage() {
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [groupFilter, setGroupFilter] = useState("all");
+  const [protocolFilter, setProtocolFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const query = useQuery({ queryKey: ["nodes"], queryFn: listNodes, retry: false });
   const groupsQuery = useQuery({ queryKey: ["node-groups"], queryFn: listNodeGroups, retry: false });
   const nodes = query.data?.items ?? [];
   const groups = groupsQuery.data?.groups ?? [];
-  const filteredNodes = useMemo(() => filterNodes(nodes, groupFilter, searchQuery), [groupFilter, nodes, searchQuery]);
+  const protocols = useMemo(() => nodeProtocols(nodes), [nodes]);
+  const filteredNodes = useMemo(() => filterNodes(nodes, groupFilter, protocolFilter, searchQuery), [groupFilter, nodes, protocolFilter, searchQuery]);
   const visibleNodeIds = useMemo(() => filteredNodes.map((node) => node.id), [filteredNodes]);
   const allVisibleSelected = visibleNodeIds.length > 0 && visibleNodeIds.every((id) => selectedNodeIds.includes(id));
 
@@ -125,6 +127,8 @@ export function useNodesPage() {
     groups,
     notice,
     pending,
+    protocolFilter,
+    protocols,
     searchQuery,
     selectedNodeIds,
     createNode: createMutation.mutate,
@@ -136,6 +140,7 @@ export function useNodesPage() {
     setEditForm,
     setForm,
     setGroupFilter,
+    setProtocolFilter,
     setSearchQuery,
     startEdit,
     toggleEnabled: (node: NodeDto) => updateMutation.mutate({ id: node.id, input: { enabled: !node.enabled } }),

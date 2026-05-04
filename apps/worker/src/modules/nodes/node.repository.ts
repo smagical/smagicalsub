@@ -47,6 +47,20 @@ export async function findNodeById(db: D1Database, id: string, scope?: OwnerScop
   return row ? toNodeDto(row) : null;
 }
 
+export async function countNodesByIds(db: D1Database, ids: string[], scope: OwnerScope) {
+  if (ids.length === 0) {
+    return 0;
+  }
+
+  const filter = ownerWhere(scope);
+  const result = await db
+    .prepare(`SELECT COUNT(*) AS count FROM nodes WHERE id IN (${ids.map(() => "?").join(", ")})${filter.sql}`)
+    .bind(...ids, ...filter.params)
+    .first<{ count: number }>();
+
+  return result?.count ?? 0;
+}
+
 export async function createManualNode(db: D1Database, input: CreateNodeInput, ownerId: string | null = null) {
   const parsed = parseNodeUri(input.uri);
 
@@ -119,17 +133,23 @@ export async function deleteNode(db: D1Database, id: string, scope?: OwnerScope)
 }
 
 export async function listEnabledRenderableNodes(db: D1Database, ownerId?: string | null) {
+  return listEnabledRenderableNodesByIds(db, ownerId, []);
+}
+
+export async function listEnabledRenderableNodesByIds(db: D1Database, ownerId: string | null | undefined, nodeIds: string[] = []) {
   const ownerSql = typeof ownerId === "string" ? " AND nodes.owner_id = ?" : "";
+  const nodeSql = nodeIds.length > 0 ? ` AND nodes.id IN (${nodeIds.map(() => "?").join(", ")})` : "";
   const statement = db.prepare(
     `SELECT nodes.id, nodes.name, nodes.protocol, nodes.config_json, nodes.tags
      FROM nodes
      LEFT JOIN subscription_sources ON subscription_sources.id = nodes.source_id
      WHERE nodes.enabled = 1
-       AND (nodes.source_id IS NULL OR subscription_sources.enabled = 1)${ownerSql}
+       AND (nodes.source_id IS NULL OR subscription_sources.enabled = 1)${ownerSql}${nodeSql}
      ORDER BY nodes.name ASC`
   );
   // 订阅渲染只读取最小字段，降低 Worker 生成订阅时的 D1 查询和反序列化成本。
-  const result = await (typeof ownerId === "string" ? statement.bind(ownerId) : statement).all<RenderableNodeRow>();
+  const params = [...(typeof ownerId === "string" ? [ownerId] : []), ...nodeIds];
+  const result = await (params.length > 0 ? statement.bind(...params) : statement).all<RenderableNodeRow>();
 
   return (result.results ?? []).map(toRenderableNode);
 }

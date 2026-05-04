@@ -13,7 +13,7 @@ export function TokensPage() {
 
   return (
     <ModulePanel eyebrow="Tokens" title="订阅令牌" description="创建订阅访问令牌，控制启停、过期、重置和删除。">
-      <TokenForm form={page.form} pending={page.pending} profiles={page.profiles} setForm={page.setForm} onSubmit={page.createToken} />
+      <TokenForm form={page.form} nodes={page.nodes} pending={page.pending} profiles={page.profiles} setForm={page.setForm} onSubmit={page.createToken} />
       {page.outputToken ? (
         <SubscriptionOutputCenter
           copyFormat={page.copyFormat}
@@ -58,6 +58,7 @@ export function TokensPage() {
           editingTokenId={page.editingTokenId}
           pending={page.pending}
           profiles={page.profiles}
+          nodes={page.nodes}
           tokens={page.filteredTokens}
           onCancelEdit={page.resetEdit}
           onCopy={(token) => void page.handleCopy(token)}

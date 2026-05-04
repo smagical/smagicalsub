@@ -25,7 +25,8 @@ export function useTokenOutputDiagnostics(token: SubscribeTokenDto | null, profi
   const nodes = nodesQuery.data?.items ?? [];
   const rules = rulesQuery.data?.items ?? [];
   const profile = token?.profile_id ? profiles.find((item) => item.id === token.profile_id) ?? null : null;
-  const enabledNodes = nodes.filter((node) => Boolean(node.enabled));
+  const scopedNodes = token?.node_ids.length ? nodes.filter((node) => token.node_ids.includes(node.id)) : nodes;
+  const enabledNodes = scopedNodes.filter((node) => Boolean(node.enabled));
   const enabledRules = rules.filter((rule) => Boolean(rule.enabled));
   const profileAvailable = !token?.profile_id || Boolean(profile?.enabled);
   const warnings = outputWarnings(token, profileAvailable, enabledNodes.length, enabledRules.length);

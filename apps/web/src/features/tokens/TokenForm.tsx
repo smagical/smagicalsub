@@ -2,22 +2,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
-import type { ProfileDto } from "@smagicalsub/shared";
+import type { NodeDto, ProfileDto } from "@smagicalsub/shared";
 import { CheckboxField } from "../../shared/CheckboxField";
 import { FilterField } from "../../shared/FilterField";
 import { FormGrid } from "../../shared/FormGrid";
+import { TokenNodeSelector } from "./TokenNodeSelector";
 import type { TokenFormState } from "./types";
 import { toCreateTokenInput } from "./utils";
 
 type TokenFormProps = {
   form: TokenFormState;
+  nodes: NodeDto[];
   pending: boolean;
   profiles: ProfileDto[];
   setForm: Dispatch<SetStateAction<TokenFormState>>;
   onSubmit: (value: ReturnType<typeof toCreateTokenInput>) => void;
 };
 
-export function TokenForm({ form, pending, profiles, setForm, onSubmit }: TokenFormProps) {
+export function TokenForm({ form, nodes, pending, profiles, setForm, onSubmit }: TokenFormProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onSubmit(toCreateTokenInput(form));
@@ -53,6 +55,17 @@ export function TokenForm({ form, pending, profiles, setForm, onSubmit }: TokenF
           type="datetime-local"
           value={form.expires_at}
         />
+      </FilterField>
+      <FilterField label="自定义路径">
+        <Input
+          onChange={(event) => setForm((current) => ({ ...current, custom_path: event.target.value }))}
+          placeholder="my-sub"
+          type="text"
+          value={form.custom_path}
+        />
+      </FilterField>
+      <FilterField label="订阅节点">
+        <TokenNodeSelector nodes={nodes} selectedIds={form.node_ids} onChange={(node_ids) => setForm((current) => ({ ...current, node_ids }))} />
       </FilterField>
       <CheckboxField
         checked={form.enabled}

@@ -5,11 +5,13 @@ import { z } from "zod";
 import type { AppContext } from "../../env";
 import { ownerScope, type OwnerScope } from "../../lib/auth-scope";
 import { listResponse } from "../../lib/list-response";
+import { countNodesByIds } from "../nodes/node.repository";
 import { findProfileById } from "../profiles/profile.repository";
-import { deleteGeneratedSubscriptionCache } from "../subscribe/subscribe-cache";
+import { deleteGeneratedSubscriptionCacheKeys } from "../subscribe/subscribe-cache";
 import {
   createSubscribeToken,
   deleteSubscribeToken,
+  findSubscribeTokenPathConflict,
   listSubscribeTokens,
   resetSubscribeToken,
   updateSubscribeToken
@@ -33,6 +35,16 @@ tokenRoutes.post("/", zValidator("json", createSubscribeTokenSchema), async (c) 
   if (invalidProfile) {
     return invalidProfile;
   }
+  const invalidNodes = await validateNodeScope(c.env.DB, input.node_ids, scope);
+
+  if (invalidNodes) {
+    return invalidNodes;
+  }
+  const pathConflict = await validateCustomPath(c.env.DB, input.custom_path);
+
+  if (pathConflict) {
+    return pathConflict;
+  }
 
   const token = await createSubscribeToken(c.env.DB, input, scope.ownerId);
   return c.json(success(token), 201);
@@ -46,6 +58,16 @@ tokenRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json",
   if (invalidProfile) {
     return invalidProfile;
   }
+  const invalidNodes = await validateNodeScope(c.env.DB, input.node_ids, scope);
+
+  if (invalidNodes) {
+    return invalidNodes;
+  }
+  const pathConflict = await validateCustomPath(c.env.DB, input.custom_path, c.req.valid("param").id);
+
+  if (pathConflict) {
+    return pathConflict;
+  }
 
   const token = await updateSubscribeToken(c.env.DB, c.req.valid("param").id, input, scope);
 
@@ -53,7 +75,7 @@ tokenRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json",
     return c.json(failure({ code: "TOKEN_NOT_FOUND", message: "订阅令牌不存在" }), 404);
   }
 
-  await deleteGeneratedSubscriptionCache(c.env.KV, token.token);
+  await deleteGeneratedSubscriptionCacheKeys(c.env.KV, [token.token, token.custom_path]);
   return c.json(success(token));
 });
 
@@ -64,7 +86,7 @@ tokenRoutes.post("/:id/reset", zValidator("param", idParamSchema), async (c) => 
     return c.json(failure({ code: "TOKEN_NOT_FOUND", message: "订阅令牌不存在" }), 404);
   }
 
-  await deleteGeneratedSubscriptionCache(c.env.KV, result.oldToken);
+  await deleteGeneratedSubscriptionCacheKeys(c.env.KV, [result.oldToken, result.oldCustomPath, result.token.token, result.token.custom_path]);
   return c.json(success(result.token));
 });
 
@@ -75,7 +97,7 @@ tokenRoutes.delete("/:id", zValidator("param", idParamSchema), async (c) => {
     return c.json(failure({ code: "TOKEN_NOT_FOUND", message: "订阅令牌不存在" }), 404);
   }
 
-  await deleteGeneratedSubscriptionCache(c.env.KV, token.token);
+  await deleteGeneratedSubscriptionCacheKeys(c.env.KV, [token.token, token.custom_path]);
   return c.json(success({ id: token.id }));
 });
 
@@ -88,6 +110,35 @@ async function validateProfileBinding(db: D1Database, profileId: string | null |
 
   if (!profile) {
     return Response.json(failure({ code: "PROFILE_NOT_FOUND", message: "配置档不存在" }), { status: 404 });
+  }
+
+  return null;
+}
+
+async function validateNodeScope(db: D1Database, nodeIds: string[] | undefined, scope: OwnerScope) {
+  if (!nodeIds?.length) {
+    return null;
+  }
+
+  const expectedCount = new Set(nodeIds).size;
+  const actualCount = await countNodesByIds(db, nodeIds, scope);
+
+  if (actualCount !== expectedCount) {
+    return Response.json(failure({ code: "NODE_SCOPE_INVALID", message: "订阅节点范围包含不可用节点" }), { status: 404 });
+  }
+
+  return null;
+}
+
+async function validateCustomPath(db: D1Database, customPath: string | null | undefined, excludingId?: string) {
+  if (!customPath?.trim()) {
+    return null;
+  }
+
+  const conflictId = await findSubscribeTokenPathConflict(db, customPath.trim(), excludingId);
+
+  if (conflictId) {
+    return Response.json(failure({ code: "TOKEN_PATH_CONFLICT", message: "订阅路径已被其他令牌使用" }), { status: 409 });
   }
 
   return null;

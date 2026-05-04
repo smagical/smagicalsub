@@ -21,14 +21,15 @@ export function useSubscriptionPreview() {
   const [healthCheckResult, setHealthCheckResult] = useState<SubscriptionHealthResult>(null);
   const healthCheckRequestId = useRef(0);
 
-  async function previewSubscription(token: string, format: TokenSubscriptionFormat) {
+  async function previewSubscription(token: string, format: TokenSubscriptionFormat, customPath?: string | null) {
+    const requestToken = customPath || token;
     setPreviewPending(true);
     setPreviewError(null);
 
     try {
-      const content = await loadSubscriptionPreview(token, format);
+      const content = await loadSubscriptionPreview(requestToken, format);
       setPreviewContent(content);
-      setPreviewSource({ token, format });
+      setPreviewSource({ token: requestToken, format });
       return true;
     } catch (error) {
       setPreviewContent("");
@@ -40,13 +41,13 @@ export function useSubscriptionPreview() {
     }
   }
 
-  async function checkSubscriptionHealth(token: string, format: TokenSubscriptionFormat) {
+  async function checkSubscriptionHealth(token: string, format: TokenSubscriptionFormat, customPath?: string | null) {
     const requestId = ++healthCheckRequestId.current;
     setHealthCheckPending(true);
     setHealthCheckResult(null);
 
     try {
-      const result = await loadSubscriptionHealth(token, format);
+      const result = await loadSubscriptionHealth(token, format, customPath);
       if (healthCheckRequestId.current === requestId) {
         setHealthCheckResult(result);
       }

@@ -11,9 +11,12 @@ type NodeFiltersProps = {
   exportDisabled?: boolean;
   groups: string[];
   groupFilter: string;
+  protocolFilter: string;
+  protocols: string[];
   searchQuery: string;
   onExport?: () => void;
   onGroupFilterChange: (group: string) => void;
+  onProtocolFilterChange: (protocol: string) => void;
   onSearchQueryChange: (query: string) => void;
 };
 
@@ -21,9 +24,12 @@ export function NodeFilters({
   exportDisabled = false,
   groups,
   groupFilter,
+  protocolFilter,
+  protocols,
   searchQuery,
   onExport,
   onGroupFilterChange,
+  onProtocolFilterChange,
   onSearchQueryChange
 }: NodeFiltersProps) {
   return (
@@ -43,6 +49,16 @@ export function NodeFilters({
           {groups.map((group) => (
             <option key={group} value={group}>
               {group}
+            </option>
+          ))}
+        </NativeSelect>
+      </FilterField>
+      <FilterField label="协议筛选">
+        <NativeSelect onChange={(event) => onProtocolFilterChange(event.target.value)} value={protocolFilter}>
+          <option value="all">全部协议</option>
+          {protocols.map((protocol) => (
+            <option key={protocol} value={protocol}>
+              {protocol}
             </option>
           ))}
         </NativeSelect>

@@ -7,9 +7,9 @@ export type SubscriptionHealthResult = {
   statusText: string;
 } | null;
 
-export async function loadSubscriptionHealth(token: string, format: TokenSubscriptionFormat): Promise<SubscriptionHealthResult> {
+export async function loadSubscriptionHealth(token: string, format: TokenSubscriptionFormat, customPath?: string | null): Promise<SubscriptionHealthResult> {
   try {
-    const response = await fetch(subscriptionUrl(token, format));
+    const response = await fetch(subscriptionUrl(token, format, customPath));
     const content = await response.text();
     const trimmed = content.trim();
 

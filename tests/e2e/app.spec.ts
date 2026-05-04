@@ -17,6 +17,9 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
   await page.getByRole("button", { exact: true, name: "节点" }).click();
   await expect(page.getByText("添加单个节点，按分组查看订阅源解析和手动维护的节点。")).toBeVisible();
   await expect(page.getByRole("button", { name: "添加节点" })).toBeVisible();
+  await page.getByLabel("协议筛选").selectOption("vless");
+  await expect(page.getByText("手动节点")).toBeVisible();
+  await expect(page.getByRole("row", { name: /订阅源节点/ })).toBeHidden();
 });
 
 test("logs in and sends the session token with API requests", async ({ page }) => {
@@ -86,11 +89,11 @@ test("shows subscription output center for tokens", async ({ page }) => {
   const outputCenter = page.getByRole("region", { name: "订阅输出中心" });
 
   await expect(outputCenter).toBeVisible();
-  await expect(outputCenter.getByText("/sub/tok_e2e_default?format=clash")).toBeVisible();
+  await expect(outputCenter.getByText("/sub/primary-sub?format=clash")).toBeVisible();
   await expect(outputCenter.getByText("启用节点")).toBeVisible();
   await expect(outputCenter.getByText("节点分组")).toBeVisible();
   await expect(outputCenter.getByText("启用规则")).toBeVisible();
-  await expect(outputCenter.getByText("手动节点 1 个，订阅源节点 1 个。")).toBeVisible();
+  await expect(outputCenter.getByText("手动节点 1 个，订阅源节点 0 个。")).toBeVisible();
   await expect(outputCenter.getByText("输出状态正常")).toBeVisible();
   await page.getByLabel("输出令牌").selectOption("token_backup");
   await expect(outputCenter.getByText("/sub/tok_e2e_backup?format=clash")).toBeVisible();

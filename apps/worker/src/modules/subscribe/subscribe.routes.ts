@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { normalizeSubscriptionFormat, renderSubscription, type SubscriptionFormat } from "@smagicalsub/subscription";
 import type { Env } from "../../env";
-import { listEnabledRenderableNodes } from "../nodes/node.repository";
+import { listEnabledRenderableNodesByIds } from "../nodes/node.repository";
 import { listEnabledProfileRuleText } from "../profiles/profile-rule.repository";
 import { findActiveSubscribeToken, markSubscribeTokenUsed } from "../tokens/token.repository";
 import { generatedSubscriptionCacheKey } from "./subscribe-cache";
@@ -35,7 +35,7 @@ subscribeRoutes.get("/:token", async (c) => {
     return subscriptionResponse(cached, format);
   }
 
-  const nodes = await listEnabledRenderableNodes(c.env.DB, tokenRow.owner_id);
+  const nodes = await listEnabledRenderableNodesByIds(c.env.DB, tokenRow.owner_id, tokenRow.node_ids);
   const profileName = tokenRow.profile_name ?? tokenRow.name;
   const defaultStrategy = tokenRow.profile_default_strategy ?? "Proxy";
   const rules = tokenRow.profile_id ? await listEnabledProfileRuleText(c.env.DB, tokenRow.profile_id) : [];

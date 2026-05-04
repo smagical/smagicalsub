@@ -35,18 +35,23 @@ export function exportNodesCsv(nodes: NodeDto[]) {
   downloadCsv("nodes", toNodesCsvRows(nodes));
 }
 
-export function filterNodes(nodes: NodeDto[], groupFilter: string, searchQuery: string) {
+export function nodeProtocols(nodes: NodeDto[]) {
+  return Array.from(new Set(nodes.map((node) => node.protocol))).sort((a, b) => a.localeCompare(b));
+}
+
+export function filterNodes(nodes: NodeDto[], groupFilter: string, protocolFilter: string, searchQuery: string) {
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const grouped =
     groupFilter === "all"
       ? nodes
       : nodes.filter((node) => (groupFilter === "ungrouped" ? node.groups.length === 0 : node.groups.includes(groupFilter)));
+  const protocolNodes = protocolFilter === "all" ? grouped : grouped.filter((node) => node.protocol === protocolFilter);
 
   if (!normalizedSearch) {
-    return grouped;
+    return protocolNodes;
   }
 
-  return grouped.filter((node) =>
+  return protocolNodes.filter((node) =>
     [node.name, node.protocol, node.server ?? "", String(node.port ?? ""), ...node.groups].some((value) =>
       value.toLowerCase().includes(normalizedSearch)
     )

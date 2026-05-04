@@ -135,6 +135,8 @@ export type SubscribeTokenDto = {
   profile_id: string | null;
   profile_name: string | null;
   token: string;
+  custom_path: string | null;
+  node_ids: string[];
   name: string;
   enabled: number;
   expires_at: string | null;

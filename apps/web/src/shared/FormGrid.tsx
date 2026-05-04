@@ -6,7 +6,7 @@ const formGridColumns = {
   profile: "grid-cols-[minmax(180px,0.8fr)_minmax(140px,0.6fr)_minmax(260px,1.4fr)_auto_auto]",
   rule: "grid-cols-[minmax(320px,1.6fr)_minmax(120px,0.4fr)_auto_auto]",
   source: "grid-cols-[minmax(160px,0.8fr)_minmax(260px,1.6fr)_auto_auto]",
-  token: "grid-cols-[minmax(160px,0.8fr)_minmax(180px,0.8fr)_minmax(220px,1fr)_auto_auto]"
+  token: "grid-cols-[minmax(140px,0.7fr)_minmax(170px,0.7fr)_minmax(190px,0.8fr)_minmax(160px,0.7fr)_minmax(240px,1.2fr)_auto_auto]"
 } as const;
 
 type FormGridProps = ComponentProps<"form"> & {

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { SubscribeTokenDto, UpdateSubscribeTokenInput } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listProfiles } from "../profiles/api";
+import { listNodes } from "../nodes/api";
 import { createToken, deleteToken, listTokens, resetToken as resetTokenRequest, updateToken } from "./api";
 import { initialTokenEditFormState, initialTokenFormState } from "./types";
 import { useTokenOutputCenter } from "./useTokenOutputCenter";
@@ -19,8 +20,10 @@ export function useTokensPage() {
   const outputCenter = useTokenOutputCenter(setNotice);
   const query = useQuery({ queryKey: ["tokens"], queryFn: listTokens, retry: false });
   const profilesQuery = useQuery({ queryKey: ["profiles"], queryFn: listProfiles, retry: false });
+  const nodesQuery = useQuery({ queryKey: ["nodes"], queryFn: listNodes, retry: false });
   const tokens = query.data?.items ?? [];
   const profiles = profilesQuery.data?.items ?? [];
+  const nodes = nodesQuery.data?.items ?? [];
   const filteredTokens = filterTokens(tokens, searchQuery);
   const outputToken = filteredTokens.find((token) => token.id === outputCenter.outputTokenId) ?? filteredTokens[0] ?? null;
   const { diagnostics, diagnosticsError } = useTokenOutputDiagnostics(outputToken, profiles);
@@ -68,16 +71,16 @@ export function useTokensPage() {
       return;
     }
 
-    await navigator.clipboard.writeText(subscriptionUrl(token.token, outputCenter.copyFormat));
+    await navigator.clipboard.writeText(subscriptionUrl(token.token, outputCenter.copyFormat, token.custom_path));
     setNotice("订阅地址已复制");
   }
 
   function openSubscription(token: SubscribeTokenDto) {
-    window.open(subscriptionUrl(token.token, outputCenter.copyFormat), "_blank", "noopener,noreferrer");
+    window.open(subscriptionUrl(token.token, outputCenter.copyFormat, token.custom_path), "_blank", "noopener,noreferrer");
   }
 
   async function copyAllFormats(token: SubscribeTokenDto) {
-    if (await copyAllSubscriptionUrls(token.token)) {
+    if (await copyAllSubscriptionUrls(token.token, token.custom_path)) {
       setNotice("全部格式订阅地址已复制");
     } else {
       setNotice("当前浏览器不支持自动复制，请手动复制订阅路径");
@@ -87,13 +90,18 @@ export function useTokensPage() {
   function startEdit(token: SubscribeTokenDto) {
     setNotice(null);
     setEditingTokenId(token.id);
-    setEditForm({ name: token.name, expires_at: toDatetimeLocalValue(token.expires_at) });
+    setEditForm({ name: token.name, custom_path: token.custom_path ?? "", node_ids: token.node_ids, expires_at: toDatetimeLocalValue(token.expires_at) });
   }
 
   function saveEdit(token: SubscribeTokenDto) {
     updateMutation.mutate({
       id: token.id,
-      input: { name: editForm.name.trim() || token.name, expires_at: editForm.expires_at.trim() || null }
+      input: {
+        name: editForm.name.trim() || token.name,
+        custom_path: editForm.custom_path.trim() || null,
+        node_ids: editForm.node_ids,
+        expires_at: editForm.expires_at.trim() || null
+      }
     });
   }
 
@@ -111,6 +119,7 @@ export function useTokensPage() {
     filteredTokens,
     form,
     outputDiagnostics: diagnostics,
+    nodes,
     notice,
     outputToken,
     outputTokenId: outputToken?.id ?? "",
@@ -142,6 +151,7 @@ export function useTokensPage() {
     startEdit,
     downloadPreviewContent: outputCenter.downloadPreviewContent,
     previewSubscription: outputCenter.previewSubscription,
+    updateNodeSelection: (token: SubscribeTokenDto, nodeIds: string[]) => updateMutation.mutate({ id: token.id, input: { node_ids: nodeIds } }),
     updateProfileBinding: (token: SubscribeTokenDto, profileId: string | null) => updateMutation.mutate({ id: token.id, input: { profile_id: profileId } }),
     toggleEnabled: (token: SubscribeTokenDto) => updateMutation.mutate({ id: token.id, input: { enabled: !token.enabled } })
   };

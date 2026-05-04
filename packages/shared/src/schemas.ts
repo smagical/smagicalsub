@@ -102,6 +102,8 @@ export type UpdateProfileRuleInput = z.infer<typeof updateProfileRuleSchema>;
 export const createSubscribeTokenSchema = z.object({
   name: z.string().trim().min(1).max(80),
   profile_id: z.string().trim().min(1).nullable().optional(),
+  custom_path: z.string().trim().min(3).max(80).regex(/^[a-zA-Z0-9_-]+$/).nullable().optional(),
+  node_ids: z.array(z.string().trim().min(1)).max(500).default([]),
   enabled: z.boolean().default(true),
   expires_at: z.string().trim().max(32).nullable().optional()
 });
@@ -112,6 +114,8 @@ export const updateSubscribeTokenSchema = z
   .object({
     name: z.string().trim().min(1).max(80).optional(),
     profile_id: z.string().trim().min(1).nullable().optional(),
+    custom_path: z.string().trim().min(3).max(80).regex(/^[a-zA-Z0-9_-]+$/).nullable().optional(),
+    node_ids: z.array(z.string().trim().min(1)).max(500).optional(),
     enabled: z.boolean().optional(),
     expires_at: z.string().trim().max(32).nullable().optional()
   })

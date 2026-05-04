@@ -1,12 +1,10 @@
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { NativeSelect } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { ProfileDto, SubscribeTokenDto } from "@smagicalsub/shared";
+import type { NodeDto, ProfileDto, SubscribeTokenDto } from "@smagicalsub/shared";
 import { StatusBadge } from "../../shared/StatusBadge";
 import { TokenActions } from "./TokenActions";
+import { TokenExpiresCell, TokenNodeScopeCell, TokenPathCell, TokenProfileCell } from "./TokenScopeCell";
 import type { TokenEditFormState, TokenSubscriptionFormat } from "./types";
-import { subscriptionFormatPath } from "./subscriptionOutput";
 import { maskToken } from "./utils";
 
 type TokensTableProps = {
@@ -14,6 +12,7 @@ type TokensTableProps = {
   editForm: TokenEditFormState;
   editingTokenId: string | null;
   pending: boolean;
+  nodes: NodeDto[];
   profiles: ProfileDto[];
   tokens: SubscribeTokenDto[];
   onCancelEdit: () => void;
@@ -32,6 +31,7 @@ export function TokensTable({
   copyFormat,
   editForm,
   editingTokenId,
+  nodes,
   pending,
   profiles,
   tokens,
@@ -54,6 +54,7 @@ export function TokensTable({
             <TableHead>名称</TableHead>
             <TableHead>令牌</TableHead>
             <TableHead>配置档</TableHead>
+            <TableHead>节点范围</TableHead>
             <TableHead>订阅路径</TableHead>
             <TableHead>过期时间</TableHead>
             <TableHead>最近使用</TableHead>
@@ -81,9 +82,38 @@ export function TokensTable({
                   )}
                 </TableCell>
                 <TableCell className="font-mono text-xs">{maskToken(token.token)}</TableCell>
-                <TableCell>{profileSelect(token, profiles, pending, onProfileChange)}</TableCell>
-                <TableCell className="max-w-md truncate font-mono text-xs">{subscriptionFormatPath(token.token, copyFormat)}</TableCell>
-                <TableCell>{editing ? editExpiresAt(editForm, pending, onEditFormChange) : expiresBadge(token.expires_at)}</TableCell>
+                <TableCell>
+                  <TokenProfileCell pending={pending} profiles={profiles} token={token} onProfileChange={onProfileChange} />
+                </TableCell>
+                <TableCell>
+                  <TokenNodeScopeCell
+                    editForm={editForm}
+                    editing={editing}
+                    nodes={nodes}
+                    pending={pending}
+                    token={token}
+                    onEditFormChange={onEditFormChange}
+                  />
+                </TableCell>
+                <TableCell className="max-w-md truncate font-mono text-xs">
+                  <TokenPathCell
+                    copyFormat={copyFormat}
+                    editForm={editForm}
+                    editing={editing}
+                    pending={pending}
+                    token={token}
+                    onEditFormChange={onEditFormChange}
+                  />
+                </TableCell>
+                <TableCell>
+                  <TokenExpiresCell
+                    editForm={editForm}
+                    editing={editing}
+                    pending={pending}
+                    token={token}
+                    onEditFormChange={onEditFormChange}
+                  />
+                </TableCell>
                 <TableCell className="font-mono text-xs">{token.last_used_at ?? "未使用"}</TableCell>
                 <TableCell>
                   <StatusBadge enabled={token.enabled} />
@@ -110,51 +140,4 @@ export function TokensTable({
       </Table>
     </div>
   );
-}
-
-function expiresBadge(expiresAt: string | null) {
-  return expiresAt ? <span className="font-mono text-xs">{expiresAt}</span> : <Badge variant="secondary">永不过期</Badge>;
-}
-
-function editExpiresAt(editForm: TokenEditFormState, pending: boolean, onEditFormChange: (form: TokenEditFormState) => void) {
-  return (
-    <Input
-      aria-label="令牌过期时间"
-      disabled={pending}
-      onChange={(event) => onEditFormChange({ ...editForm, expires_at: event.target.value })}
-      type="datetime-local"
-      value={editForm.expires_at}
-    />
-  );
-}
-
-function profileSelect(
-  token: SubscribeTokenDto,
-  profiles: ProfileDto[],
-  pending: boolean,
-  onProfileChange: (token: SubscribeTokenDto, profileId: string | null) => void
-) {
-  return (
-    <NativeSelect
-      disabled={pending}
-      onChange={(event) => onProfileChange(token, event.target.value || null)}
-      value={token.profile_id ?? ""}
-    >
-      <option value="">不绑定</option>
-      {profiles.map((profile) => (
-        <option key={profile.id} value={profile.id}>
-          {profile.enabled ? profile.name : `${profile.name}（停用）`}
-        </option>
-      ))}
-      {missingProfileOption(token, profiles)}
-    </NativeSelect>
-  );
-}
-
-function missingProfileOption(token: SubscribeTokenDto, profiles: ProfileDto[]) {
-  if (!token.profile_id || profiles.some((profile) => profile.id === token.profile_id)) {
-    return null;
-  }
-
-  return <option value={token.profile_id}>{token.profile_name ?? "配置档不可用"}</option>;
 }

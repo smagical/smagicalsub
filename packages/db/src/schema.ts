@@ -70,6 +70,8 @@ export const subscribeTokens = sqliteTable("subscribe_tokens", {
   ownerId: text("owner_id").references(() => users.id, { onDelete: "cascade" }),
   profileId: text("profile_id").references(() => profiles.id, { onDelete: "set null" }),
   token: text("token").notNull().unique(),
+  customPath: text("custom_path").unique(),
+  nodeIdsJson: text("node_ids_json").notNull().default("[]"),
   name: text("name").notNull(),
   enabled: integer("enabled").notNull().default(1),
   expiresAt: text("expires_at"),

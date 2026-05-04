@@ -7,6 +7,8 @@ export function toCreateTokenInput(form: TokenFormState): CreateSubscribeTokenIn
   return {
     name: form.name.trim(),
     profile_id: form.profile_id || null,
+    custom_path: form.custom_path.trim() || null,
+    node_ids: form.node_ids,
     enabled: form.enabled,
     expires_at: form.expires_at.trim() || null
   };

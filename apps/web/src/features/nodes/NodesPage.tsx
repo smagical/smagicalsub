@@ -17,9 +17,12 @@ export function NodesPage() {
         exportDisabled={page.filteredNodes.length === 0}
         groups={page.groups}
         groupFilter={page.groupFilter}
+        protocolFilter={page.protocolFilter}
+        protocols={page.protocols}
         searchQuery={page.searchQuery}
         onExport={() => exportNodesCsv(page.filteredNodes)}
         onGroupFilterChange={page.setGroupFilter}
+        onProtocolFilterChange={page.setProtocolFilter}
         onSearchQueryChange={page.setSearchQuery}
       />
       <NodeBatchBar
