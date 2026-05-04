@@ -1,4 +1,4 @@
-import { expect, test, type Download } from "@playwright/test";
+import { expect, test, type Download, type Locator } from "@playwright/test";
 import { mockApi } from "./mock-api";
 
 test("renders the dashboard and navigates between modules", async ({ page }) => {
@@ -21,6 +21,7 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
   await expect(page.locator('[aria-label="订阅源列表"]')).toBeVisible();
   await expect(page.getByText("主力订阅源")).toBeVisible();
   await expect(page.getByText("备用订阅源")).toBeVisible();
+  await expectSourceCreateFormSingleRow(page.getByPlaceholder("我的订阅").locator("xpath=ancestor::form"));
 
   await page.getByRole("button", { exact: true, name: "节点" }).click();
   await expect(page.getByText("添加单个节点，按分组查看订阅源解析和手动维护的节点。")).toBeVisible();
@@ -162,6 +163,19 @@ async function previewDownloadText(download: Download) {
   }
 
   return Buffer.concat(chunks).toString("utf8");
+}
+
+async function expectSourceCreateFormSingleRow(form: Locator) {
+  await expect(form).toBeVisible();
+
+  // 新增订阅源有 6 个控件，字段增加时必须保持桌面端同一行底部对齐。
+  const controls = form.locator(":scope > *");
+  await expect(controls).toHaveCount(6);
+  const bottoms = await controls.evaluateAll((elements) =>
+    elements.map((element) => Math.round(element.getBoundingClientRect().bottom))
+  );
+
+  expect(Math.max(...bottoms) - Math.min(...bottoms)).toBeLessThanOrEqual(2);
 }
 
 declare global {
