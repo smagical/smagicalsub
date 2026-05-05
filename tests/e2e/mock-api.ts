@@ -197,7 +197,7 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
       items: [
         {
           enabled: 1,
-          groups: ["Proxy", "Media"],
+          groups: [],
           id: "node_manual",
           name: "手动节点",
           port: 443,

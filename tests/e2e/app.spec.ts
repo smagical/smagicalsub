@@ -2,6 +2,16 @@ import { expect, test, type Download, type Locator } from "@playwright/test";
 import { mockApi } from "./mock-api";
 
 test("renders the dashboard and navigates between modules", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          window.__clipboardText = text;
+        }
+      }
+    });
+  });
   await mockApi(page);
 
   await page.goto("/");
@@ -30,6 +40,10 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
   await page.getByLabel("协议筛选").selectOption("vless");
   await expect(page.locator('[aria-label="节点 手动节点"]')).toBeVisible();
   await expect(page.locator('[aria-label="节点 订阅源节点"]')).toBeHidden();
+  await page.locator('[aria-label="节点 手动节点"]').getByRole("button", { name: "复制分组" }).click();
+  await expect(page.getByText("节点内容已复制")).toBeVisible();
+  await expect(page.locator('[role="status"]').filter({ hasText: "已复制" })).toBeVisible();
+  expect(await page.evaluate(() => window.__clipboardText)).toBe("默认");
   await page.getByRole("button", { exact: true, name: "编辑" }).click();
   const editDialog = page.getByRole("dialog", { name: "编辑节点" });
   await expect(editDialog).toBeVisible();

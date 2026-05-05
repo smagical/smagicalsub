@@ -143,7 +143,7 @@ function NodeCard({
             <InfoTile copyValue={node.server ?? ""} label="服务端" title={node.server ?? "-"} value={node.server ?? "-"} onCopy={handleCopy} />
             <InfoTile copyValue={node.port?.toString() ?? ""} label="端口" value={node.port?.toString() ?? "-"} onCopy={handleCopy} />
             <InfoTile
-              copyValue={node.groups.join(",")}
+              copyValue={node.groups.length > 0 ? node.groups.join(",") : "默认"}
               label="分组"
               value={node.groups.length > 0 ? `${node.groups.length} 个` : "默认"}
               onCopy={handleCopy}
