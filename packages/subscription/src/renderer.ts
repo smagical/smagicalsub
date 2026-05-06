@@ -1,12 +1,14 @@
 import { renderClashConfig } from "./renderers/clash";
 import { renderPlainSubscription, renderV2rayNSubscription } from "./renderers/plain";
 import { renderSingBoxConfig } from "./renderers/sing-box";
+import { renderXrayConfig } from "./renderers/xray";
 import type { RenderableNode, RenderSubscriptionInput, SubscriptionFormat } from "./renderers/types";
 
 export type { RenderableNode, RenderSubscriptionBaseInput, RenderSubscriptionInput, SubscriptionFormat } from "./renderers/types";
 export { renderClashConfig } from "./renderers/clash";
 export { renderPlainSubscription, renderV2rayNSubscription } from "./renderers/plain";
 export { renderSingBoxConfig } from "./renderers/sing-box";
+export { renderXrayConfig } from "./renderers/xray";
 
 // 统一格式别名入口，避免路由层散落 v2ray/base64/singbox 等兼容判断。
 export function normalizeSubscriptionFormat(value: string | null | undefined): SubscriptionFormat {
@@ -22,6 +24,9 @@ export function normalizeSubscriptionFormat(value: string | null | undefined): S
     case "singbox":
     case "sing-box":
       return "sing-box";
+    case "xray":
+    case "xray-core":
+      return "xray";
     case "clash":
     case "yaml":
     case "yml":
@@ -41,6 +46,8 @@ export function renderSubscription(input: RenderSubscriptionInput): string {
       return renderPlainSubscription(dedupedInput);
     case "sing-box":
       return renderSingBoxConfig(dedupedInput);
+    case "xray":
+      return renderXrayConfig(dedupedInput);
     case "clash":
       return renderClashConfig(dedupedInput);
   }

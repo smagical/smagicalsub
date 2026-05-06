@@ -19,11 +19,41 @@ export const profileRuleKinds = [
 ] as const;
 
 export const profileRuleTemplates = [
+  { label: "私有 IP", sample: "private", value: "GEOIP,private,DIRECT" },
+  { label: "中国站点", sample: "cn", value: "GEOSITE,cn,DIRECT" },
+  { label: "中国 IP", sample: "CN", value: "GEOIP,CN,DIRECT" },
+  { label: "广告拦截", sample: "ads", value: "GEOSITE,category-ads-all,REJECT" },
   { label: "域名后缀", sample: "example.com", value: "DOMAIN-SUFFIX,example.com,Proxy" },
   { label: "关键词", sample: "google", value: "DOMAIN-KEYWORD,google,Proxy" },
-  { label: "地理 IP", sample: "CN", value: "GEOIP,CN,DIRECT" },
-  { label: "进程名", sample: "Telegram.exe", value: "PROCESS-NAME,Telegram.exe,Proxy" },
+  { label: "Google", sample: "geosite", value: "GEOSITE,google,Proxy" },
+  { label: "Telegram", sample: "geoip", value: "GEOIP,telegram,Proxy" },
+  { label: "Netflix", sample: "geosite", value: "GEOSITE,netflix,Proxy" },
   { label: "兜底", sample: "MATCH", value: "MATCH,Proxy" }
+] as const;
+
+export const profileRulePresets = [
+  {
+    label: "默认分流",
+    description: "私有地址和国内流量直连，广告拦截，其余走默认代理。",
+    rules: [
+      "GEOIP,private,DIRECT",
+      "GEOSITE,private,DIRECT",
+      "GEOSITE,category-ads-all,REJECT",
+      "GEOSITE,cn,DIRECT",
+      "GEOIP,CN,DIRECT",
+      "MATCH,Proxy"
+    ]
+  },
+  {
+    label: "国内直连",
+    description: "保留国内直连和最终代理，适合轻量规则配置。",
+    rules: ["GEOIP,private,DIRECT", "GEOSITE,cn,DIRECT", "GEOIP,CN,DIRECT", "MATCH,Proxy"]
+  },
+  {
+    label: "全局代理",
+    description: "只保留私有地址直连，其余流量全部进入默认代理。",
+    rules: ["GEOIP,private,DIRECT", "MATCH,Proxy"]
+  }
 ] as const;
 
 export type ProfileRuleKind = (typeof profileRuleKinds)[number]["value"];

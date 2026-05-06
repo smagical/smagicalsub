@@ -63,6 +63,7 @@ describe("subscription renderer", () => {
   it("normalizes common format aliases", () => {
     expect(normalizeSubscriptionFormat("base64")).toBe("v2rayn");
     expect(normalizeSubscriptionFormat("singbox")).toBe("sing-box");
+    expect(normalizeSubscriptionFormat("xray-core")).toBe("xray");
     expect(normalizeSubscriptionFormat("raw")).toBe("plain");
     expect(normalizeSubscriptionFormat(undefined)).toBe("clash");
   });
@@ -158,15 +159,48 @@ describe("subscription renderer", () => {
       format: "sing-box",
       profileName: "Default",
       defaultStrategy: "Proxy",
+      rules: ["GEOSITE,cn,DIRECT", "GEOSITE,category-ads-all,REJECT"],
       nodes: [renderableNode()]
     });
-    const parsed = JSON.parse(output) as { outbounds: Array<Record<string, unknown>> };
+    const parsed = JSON.parse(output) as { outbounds: Array<Record<string, unknown>>; route: { rules: Array<Record<string, unknown>> } };
 
     expect(parsed.outbounds).toEqual([
       expect.objectContaining({ type: "selector", tag: "Proxy" }),
       expect.objectContaining({ type: "selector", tag: "Group: hk" }),
       expect.objectContaining({ type: "shadowsocks", tag: "HK" }),
-      expect.objectContaining({ type: "direct", tag: "direct" })
+      expect.objectContaining({ type: "direct", tag: "direct" }),
+      expect.objectContaining({ type: "block", tag: "block" })
+    ]);
+    expect(parsed.route.rules).toEqual([
+      expect.objectContaining({ geosite: ["cn"], outbound: "direct" }),
+      expect.objectContaining({ geosite: ["category-ads-all"], outbound: "block" }),
+      expect.objectContaining({ network: ["tcp", "udp"], outbound: "Proxy" })
+    ]);
+  });
+
+  it("renders Xray JSON with routing rules and proxy balancer", () => {
+    const output = renderSubscription({
+      format: "xray",
+      profileName: "Default",
+      defaultStrategy: "Proxy",
+      rules: ["GEOSITE,cn,DIRECT", "GEOSITE,category-ads-all,REJECT"],
+      nodes: [renderableNode()]
+    });
+    const parsed = JSON.parse(output) as {
+      outbounds: Array<Record<string, unknown>>;
+      routing: { balancers: Array<Record<string, unknown>>; rules: Array<Record<string, unknown>> };
+    };
+
+    expect(parsed.outbounds).toEqual([
+      expect.objectContaining({ protocol: "shadowsocks", tag: "node:HK" }),
+      expect.objectContaining({ protocol: "freedom", tag: "direct" }),
+      expect.objectContaining({ protocol: "blackhole", tag: "block" })
+    ]);
+    expect(parsed.routing.balancers).toEqual([expect.objectContaining({ selector: ["node:"], tag: "Proxy" })]);
+    expect(parsed.routing.rules).toEqual([
+      expect.objectContaining({ domain: ["geosite:cn"], outboundTag: "direct" }),
+      expect.objectContaining({ domain: ["geosite:category-ads-all"], outboundTag: "block" }),
+      expect.objectContaining({ balancerTag: "Proxy", network: "tcp,udp" })
     ]);
   });
 });

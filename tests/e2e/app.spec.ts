@@ -85,21 +85,44 @@ test("builds profile rules from structured fields", async ({ page }) => {
 
   await page.goto("/");
   await page.getByRole("button", { exact: true, name: "配置档" }).click();
+  await expect(page.getByText("配置档与规则编排")).toBeVisible();
+  await expect(page.getByText("当前规则面板：未选择配置档")).toBeVisible();
+  await expect(page.getByText("新建配置档")).toBeVisible();
+  await expect(page.getByRole("searchbox", { name: "搜索配置档" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "配置档列表" })).toBeVisible();
+
+  await page.getByRole("button", { exact: true, name: "编辑" }).click();
+  const editProfileDialog = page.getByRole("dialog", { name: "编辑配置档" });
+  await expect(editProfileDialog).toBeVisible();
+  await expect(editProfileDialog.getByLabel("配置档名称")).toHaveValue("默认配置");
+  await expect(editProfileDialog.getByLabel("默认策略")).toHaveValue("Proxy");
+  await editProfileDialog.getByRole("button", { name: "取消" }).click();
+  await expect(editProfileDialog).toBeHidden();
+
   await page.getByRole("button", { exact: true, name: "规则" }).click();
 
-  await expect(page.getByText("常用模板")).toBeVisible();
-  await page.getByLabel("规则类型").selectOption("DOMAIN-KEYWORD");
-  await page.getByLabel("匹配值").fill("youtube");
-  await page.getByRole("textbox", { exact: true, name: "策略" }).fill("Media");
+  const rulesDialog = page.getByRole("dialog", { name: "规则编排" });
+  await expect(rulesDialog).toBeVisible();
+  const rulesPanel = rulesDialog.getByRole("region", { name: "默认配置的规则面板" });
+  await expect(rulesPanel).toBeVisible();
+  await expect(rulesPanel.getByText("规则编排")).toBeVisible();
+  await expect(rulesPanel.getByText("规则总数")).toBeVisible();
+  await expect(rulesPanel.getByText("启用规则")).toBeVisible();
+  await expect(rulesPanel.getByText("停用规则")).toBeVisible();
+  await expect(rulesDialog.getByText("常用模板")).toBeVisible();
+  await rulesDialog.getByLabel("规则类型").selectOption("DOMAIN-KEYWORD");
+  await rulesDialog.getByRole("textbox", { exact: true, name: "匹配值" }).fill("youtube");
+  await rulesDialog.getByRole("checkbox", { name: "自定义策略" }).click();
+  await rulesDialog.getByLabel("自定义策略值").fill("Media");
 
-  await expect(page.getByRole("textbox", { exact: true, name: "规则" })).toHaveValue("DOMAIN-KEYWORD,youtube,Media");
-  await expect(page.getByText("DOMAIN-KEYWORD,youtube,Media")).toBeVisible();
+  await expect(rulesDialog.getByRole("textbox", { exact: true, name: "规则" })).toHaveValue("DOMAIN-KEYWORD,youtube,Media");
 
-  await page.getByLabel("规则类型").selectOption("GEOIP");
-  await page.getByLabel("匹配值").fill("CN");
-  await page.getByRole("textbox", { exact: true, name: "策略" }).fill("DIRECT");
+  await rulesDialog.getByLabel("规则类型").selectOption("GEOIP");
+  await rulesDialog.getByRole("textbox", { exact: true, name: "匹配值" }).fill("CN");
+  await rulesDialog.getByRole("checkbox", { name: "自定义策略" }).click();
+  await rulesDialog.locator('select[aria-label="策略"]').selectOption("DIRECT（直连）");
 
-  await expect(page.getByRole("textbox", { exact: true, name: "规则" })).toHaveValue("GEOIP,CN,DIRECT");
+  await expect(rulesDialog.getByRole("textbox", { exact: true, name: "规则" })).toHaveValue("GEOIP,CN,DIRECT");
 });
 
 test("shows subscription output center for tokens", async ({ page }) => {
@@ -134,6 +157,7 @@ test("shows subscription output center for tokens", async ({ page }) => {
   await expect(outputCenter.getByText("/sub/tok_e2e_backup?format=sing-box")).toBeVisible();
   await expect(outputCenter.getByText("Clash YAML .yaml")).toBeVisible();
   await expect(outputCenter.getByText("sing-box JSON .json")).toBeVisible();
+  await expect(outputCenter.getByText("Xray JSON .json")).toBeVisible();
   await expect(outputCenter.getByText("输出 sing-box JSON 配置，适合服务端或新版客户端。")).toBeVisible();
   await outputCenter.getByRole("button", { name: "健康检查" }).click();
   await expect(outputCenter.getByText("HTTP 200")).toBeVisible();
@@ -145,6 +169,7 @@ test("shows subscription output center for tokens", async ({ page }) => {
   expect(clipboardText).toContain("Clash YAML: http://127.0.0.1:4173/sub/tok_e2e_backup?format=clash");
   expect(clipboardText).toContain("v2rayN Base64: http://127.0.0.1:4173/sub/tok_e2e_backup?format=v2rayn");
   expect(clipboardText).toContain("sing-box JSON: http://127.0.0.1:4173/sub/tok_e2e_backup?format=sing-box");
+  expect(clipboardText).toContain("Xray JSON: http://127.0.0.1:4173/sub/tok_e2e_backup?format=xray");
   await expect(page.getByText("全部格式订阅地址已复制")).toBeVisible();
 
   await outputCenter.getByRole("button", { name: "加载预览" }).click();

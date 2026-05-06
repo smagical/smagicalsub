@@ -1,9 +1,11 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { NodeBatchActionInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
 import { batchNodes, createNode, deleteNode, listNodeGroups, listNodes, updateNode } from "./api";
 import { initialNodeBatchFormState, initialNodeEditFormState, initialNodeFormState } from "./types";
 import { filterNodes, formatGroups, nodeProtocols, parseGroups, toggleSelectedId, toggleVisibleSelection } from "./utils";
+
+const NODE_PAGE_SIZE = 6;
 
 export function useNodesPage() {
   const queryClient = useQueryClient();
@@ -15,6 +17,7 @@ export function useNodesPage() {
   const [groupFilter, setGroupFilter] = useState("all");
   const [protocolFilter, setProtocolFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [notice, setNotice] = useState<{ id: number; message: string } | null>(null);
   const noticeIdRef = useRef(0);
   const query = useQuery({ queryKey: ["nodes"], queryFn: listNodes, retry: false });
@@ -23,8 +26,22 @@ export function useNodesPage() {
   const groups = groupsQuery.data?.groups ?? [];
   const protocols = useMemo(() => nodeProtocols(nodes), [nodes]);
   const filteredNodes = useMemo(() => filterNodes(nodes, groupFilter, protocolFilter, searchQuery), [groupFilter, nodes, protocolFilter, searchQuery]);
-  const visibleNodeIds = useMemo(() => filteredNodes.map((node) => node.id), [filteredNodes]);
+  const pageCount = Math.max(1, Math.ceil(filteredNodes.length / NODE_PAGE_SIZE));
+  const paginatedNodes = useMemo(() => {
+    const start = (currentPage - 1) * NODE_PAGE_SIZE;
+
+    return filteredNodes.slice(start, start + NODE_PAGE_SIZE);
+  }, [currentPage, filteredNodes]);
+  const visibleNodeIds = useMemo(() => paginatedNodes.map((node) => node.id), [paginatedNodes]);
   const allVisibleSelected = visibleNodeIds.length > 0 && visibleNodeIds.every((id) => selectedNodeIds.includes(id));
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [groupFilter, protocolFilter, searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage((current) => Math.min(Math.max(current, 1), pageCount));
+  }, [pageCount]);
 
   const invalidateNodeData = async () => {
     await Promise.all(
@@ -145,22 +162,25 @@ export function useNodesPage() {
     setSelectedNodeIds((current) => toggleVisibleSelection(current, visibleNodeIds, checked));
   };
 
-  return {
-    allVisibleSelected,
-    batchGroups: batchForm.groups,
-    editForm,
-    editingNodeId,
-    emptyLabel,
-    error,
-    filteredNodes,
+    return {
+      allVisibleSelected,
+      batchGroups: batchForm.groups,
+      currentPage,
+      editForm,
+      editingNodeId,
+      emptyLabel,
+      error,
+      filteredNodes,
     form,
     groupFilter,
     groups,
-    nodes,
-    notice,
-    pending,
-    protocolFilter,
-    protocols,
+      nodes,
+      notice,
+      pageCount,
+      paginatedNodes,
+      pending,
+      protocolFilter,
+      protocols,
     searchQuery,
     selectedNodeIds,
     createNode: createMutation.mutate,
@@ -169,15 +189,16 @@ export function useNodesPage() {
     resetEdit,
     runBatchAction,
     saveEdit,
-    setBatchGroups: (value: string) => setBatchForm({ groups: value }),
-    setEditForm,
-    setForm,
-    setGroupFilter,
-    setProtocolFilter,
-    setSearchQuery,
-    startEdit,
-    toggleEnabled: (node: NodeDto) => updateMutation.mutate({ id: node.id, input: { enabled: !node.enabled } }),
-    toggleSelected,
+      setBatchGroups: (value: string) => setBatchForm({ groups: value }),
+      setEditForm,
+      setForm,
+      setGroupFilter,
+      setProtocolFilter,
+      setSearchQuery,
+      setCurrentPage,
+      startEdit,
+      toggleEnabled: (node: NodeDto) => updateMutation.mutate({ id: node.id, input: { enabled: !node.enabled } }),
+      toggleSelected,
     toggleVisible,
     clearSelection: () => setSelectedNodeIds([])
   };

@@ -91,6 +91,7 @@ function contentType(format: SubscriptionFormat) {
     case "clash":
       return "text/yaml; charset=utf-8";
     case "sing-box":
+    case "xray":
       return "application/json; charset=utf-8";
     case "v2rayn":
     case "plain":

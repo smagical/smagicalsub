@@ -5,6 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import { CheckCircle2, Layers3, RadioTower, Server, SquareCheckBig } from "lucide-react";
 import type { ReactNode } from "react";
 import { EmptyState } from "../../shared/EmptyState";
+import { ListPagination } from "../../shared/ListPagination";
 import { ModulePanel } from "../../shared/ModulePanel";
 import { PageFeedback } from "../../shared/PageFeedback";
 import { NodeBatchBar, NodeFilters } from "./NodeFilters";
@@ -64,23 +65,32 @@ export function NodesPage() {
         {page.filteredNodes.length === 0 ? (
           <EmptyState label={page.emptyLabel} />
         ) : (
-          <NodesTable
-            allVisibleSelected={page.allVisibleSelected}
-            editForm={page.editForm}
-            editingNodeId={page.editingNodeId}
-            nodes={page.filteredNodes}
-            pending={page.pending}
-            selectedNodeIds={page.selectedNodeIds}
-            onCancelEdit={page.resetEdit}
-            onCopy={page.copyNode}
-            onDelete={page.deleteNode}
-            onEditFormChange={page.setEditForm}
-            onSaveEdit={page.saveEdit}
-            onStartEdit={page.startEdit}
-            onToggleEnabled={page.toggleEnabled}
-            onToggleSelected={page.toggleSelected}
-            onToggleVisible={page.toggleVisible}
-          />
+          <div className="grid gap-3">
+            <NodesTable
+              allVisibleSelected={page.allVisibleSelected}
+              editForm={page.editForm}
+              editingNodeId={page.editingNodeId}
+              nodes={page.paginatedNodes}
+              pending={page.pending}
+              selectedNodeIds={page.selectedNodeIds}
+              onCancelEdit={page.resetEdit}
+              onCopy={page.copyNode}
+              onDelete={page.deleteNode}
+              onEditFormChange={page.setEditForm}
+              onSaveEdit={page.saveEdit}
+              onStartEdit={page.startEdit}
+              onToggleEnabled={page.toggleEnabled}
+              onToggleSelected={page.toggleSelected}
+              onToggleVisible={page.toggleVisible}
+            />
+            <ListPagination
+              currentPage={page.currentPage}
+              label="节点分页"
+              onPageChange={page.setCurrentPage}
+              pageCount={page.pageCount}
+              total={page.filteredNodes.length}
+            />
+          </div>
         )}
       </NodeSection>
     </ModulePanel>

@@ -1,9 +1,21 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ProfileDto } from "@smagicalsub/shared";
+import { cn } from "@/lib/utils";
 import { ActionGroup } from "../../shared/ActionGroup";
 import { ConfirmButton } from "../../shared/ConfirmButton";
+import { FilterField } from "../../shared/FilterField";
 import { StatusBadge } from "../../shared/StatusBadge";
 import type { ProfileEditFormState } from "./types";
 
@@ -12,6 +24,7 @@ type ProfilesTableProps = {
   editingProfileId: string | null;
   pending: boolean;
   profiles: ProfileDto[];
+  selectedProfileId: string | null;
   onCancelEdit: () => void;
   onDelete: (profile: ProfileDto) => void;
   onEditFormChange: (form: ProfileEditFormState) => void;
@@ -26,6 +39,7 @@ export function ProfilesTable({
   editingProfileId,
   pending,
   profiles,
+  selectedProfileId,
   onCancelEdit,
   onDelete,
   onEditFormChange,
@@ -34,109 +48,98 @@ export function ProfilesTable({
   onStartEdit,
   onToggleEnabled
 }: ProfilesTableProps) {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>名称</TableHead>
-          <TableHead>默认策略</TableHead>
-          <TableHead>描述</TableHead>
-          <TableHead>状态</TableHead>
-          <TableHead>更新时间</TableHead>
-          <TableHead>操作</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {profiles.map((profile) => {
-          const editing = editingProfileId === profile.id;
+  const editingProfile = profiles.find((profile) => profile.id === editingProfileId) ?? null;
 
-          return (
-            <TableRow key={profile.id}>
-              <TableCell>
-                {editing ? profileInput("配置档名称", editForm.name, pending, (name) => onEditFormChange({ ...editForm, name })) : profile.name}
-              </TableCell>
-              <TableCell>
-                {editing
-                  ? profileInput("默认策略", editForm.default_strategy, pending, (default_strategy) =>
-                      onEditFormChange({ ...editForm, default_strategy })
-                    )
-                  : profile.default_strategy}
-              </TableCell>
-              <TableCell>
-                {editing
-                  ? profileInput("配置档描述", editForm.description, pending, (description) =>
-                      onEditFormChange({ ...editForm, description })
-                    )
-                  : profile.description ?? "-"}
-              </TableCell>
-              <TableCell>
-                <StatusBadge enabled={profile.enabled} />
-              </TableCell>
-              <TableCell>{profile.updated_at}</TableCell>
-              <TableCell>
-                <ProfileActions
-                  editing={editing}
-                  pending={pending}
-                  profile={profile}
-                  onCancelEdit={onCancelEdit}
-                  onDelete={onDelete}
-                  onManageRules={onManageRules}
-                  onSaveEdit={onSaveEdit}
-                  onStartEdit={onStartEdit}
-                  onToggleEnabled={onToggleEnabled}
-                />
-              </TableCell>
+  return (
+    <>
+      <div className="overflow-hidden rounded-xl border bg-card/75 shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/55">
+              <TableHead>名称</TableHead>
+              <TableHead>默认策略</TableHead>
+              <TableHead>描述</TableHead>
+              <TableHead>状态</TableHead>
+              <TableHead>更新时间</TableHead>
+              <TableHead>操作</TableHead>
             </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
-  );
-}
+          </TableHeader>
+          <TableBody>
+            {profiles.map((profile) => {
+              const selected = selectedProfileId === profile.id;
 
-function profileInput(label: string, value: string, pending: boolean, onChange: (value: string) => void) {
-  return (
-    <Input aria-label={label} disabled={pending} onChange={(event) => onChange(event.target.value)} type="text" value={value} />
+              return (
+                <TableRow className={cn("hover:bg-muted/35", selected && "bg-chart-3/10 hover:bg-chart-3/10")} key={profile.id}>
+                  <TableCell className="min-w-[180px]">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="min-w-0 truncate font-medium">{profile.name}</span>
+                      {selected ? <Badge variant="secondary">规则面板</Badge> : null}
+                    </div>
+                  </TableCell>
+                  <TableCell className="min-w-[130px]">
+                    <Badge className="font-mono" variant="outline">
+                      {profile.default_strategy}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-md">
+                    <span className="line-clamp-2 text-sm text-muted-foreground">{profile.description ?? "未填写描述"}</span>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge enabled={profile.enabled} />
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{profile.updated_at}</TableCell>
+                  <TableCell className="min-w-[240px]">
+                    <ProfileActions
+                      pending={pending}
+                      profile={profile}
+                      selected={selected}
+                      onDelete={onDelete}
+                      onManageRules={onManageRules}
+                      onStartEdit={onStartEdit}
+                      onToggleEnabled={onToggleEnabled}
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      <ProfileEditDialog
+        editForm={editForm}
+        pending={pending}
+        profile={editingProfile}
+        onCancelEdit={onCancelEdit}
+        onEditFormChange={onEditFormChange}
+        onSaveEdit={onSaveEdit}
+      />
+    </>
   );
 }
 
 function ProfileActions({
-  editing,
   pending,
   profile,
-  onCancelEdit,
+  selected,
   onDelete,
   onManageRules,
-  onSaveEdit,
   onStartEdit,
   onToggleEnabled
 }: Pick<
   ProfilesTableProps,
-  "onCancelEdit" | "onDelete" | "onManageRules" | "onSaveEdit" | "onStartEdit" | "onToggleEnabled" | "pending"
+  "onDelete" | "onManageRules" | "onStartEdit" | "onToggleEnabled" | "pending"
 > & {
-  editing: boolean;
   profile: ProfileDto;
+  selected: boolean;
 }) {
-  if (editing) {
-    return (
-      <ActionGroup>
-        <Button disabled={pending} onClick={() => onSaveEdit(profile)} size="sm" type="button">
-          保存
-        </Button>
-        <Button disabled={pending} onClick={onCancelEdit} size="sm" type="button" variant="outline">
-          取消
-        </Button>
-      </ActionGroup>
-    );
-  }
-
   return (
     <ActionGroup>
-      <Button disabled={pending} onClick={() => onToggleEnabled(profile)} size="sm" type="button" variant="outline">
+      <Button disabled={pending} onClick={() => onToggleEnabled(profile)} size="sm" type="button" variant={profile.enabled ? "warning" : "success"}>
         {profile.enabled ? "停用" : "启用"}
       </Button>
-      <Button disabled={pending} onClick={() => onManageRules(profile)} size="sm" type="button" variant="outline">
-        规则
+      <Button disabled={pending} onClick={() => onManageRules(profile)} size="sm" type="button" variant={selected ? "secondary" : "info"}>
+        {selected ? "已选规则" : "规则"}
       </Button>
       <Button disabled={pending} onClick={() => onStartEdit(profile)} size="sm" type="button" variant="outline">
         编辑
@@ -152,5 +155,71 @@ function ProfileActions({
         删除
       </ConfirmButton>
     </ActionGroup>
+  );
+}
+
+function ProfileEditDialog({
+  editForm,
+  pending,
+  profile,
+  onCancelEdit,
+  onEditFormChange,
+  onSaveEdit
+}: {
+  editForm: ProfileEditFormState;
+  pending: boolean;
+  profile: ProfileDto | null;
+  onCancelEdit: () => void;
+  onEditFormChange: (form: ProfileEditFormState) => void;
+  onSaveEdit: (profile: ProfileDto) => void;
+}) {
+  return (
+    <Dialog open={Boolean(profile)} onOpenChange={(open) => (!open ? onCancelEdit() : undefined)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>编辑配置档</DialogTitle>
+          <DialogDescription>修改配置档名称、默认策略和描述，保存后会影响绑定该配置档的订阅输出。</DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(160px,0.55fr)] gap-3 max-[560px]:grid-cols-1">
+            <FilterField className="min-w-0" label="名称">
+              <Input
+                aria-label="配置档名称"
+                disabled={pending}
+                onChange={(event) => onEditFormChange({ ...editForm, name: event.target.value })}
+                type="text"
+                value={editForm.name}
+              />
+            </FilterField>
+            <FilterField className="min-w-0" label="默认策略">
+              <Input
+                aria-label="默认策略"
+                disabled={pending}
+                onChange={(event) => onEditFormChange({ ...editForm, default_strategy: event.target.value })}
+                type="text"
+                value={editForm.default_strategy}
+              />
+            </FilterField>
+          </div>
+          <FilterField className="min-w-0" label="描述">
+            <Input
+              aria-label="配置档描述"
+              disabled={pending}
+              onChange={(event) => onEditFormChange({ ...editForm, description: event.target.value })}
+              type="text"
+              value={editForm.description}
+            />
+          </FilterField>
+        </DialogBody>
+        <DialogFooter>
+          <Button disabled={pending} onClick={onCancelEdit} type="button" variant="outline">
+            取消
+          </Button>
+          <Button disabled={pending || !profile} onClick={() => (profile ? onSaveEdit(profile) : undefined)} type="button" variant="info">
+            保存
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

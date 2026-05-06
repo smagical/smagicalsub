@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "../../shared/EmptyState";
+import { ListPagination } from "../../shared/ListPagination";
 import { ModulePanel } from "../../shared/ModulePanel";
 import { PageFeedback } from "../../shared/PageFeedback";
 import { SourceFilters } from "./SourceFilters";
@@ -44,19 +45,28 @@ export function SourcesPage() {
         {page.filteredSources.length === 0 ? (
           <EmptyState label={page.emptyLabel} />
         ) : (
-          <SourcesTable
-            editForm={page.editForm}
-            editingSourceId={page.editingSourceId}
-            pending={page.pending}
-            sources={page.filteredSources}
-            onCancelEdit={page.resetEdit}
-            onDelete={page.deleteSource}
-            onEditFormChange={page.setEditForm}
-            onRefresh={page.refreshSource}
-            onSaveEdit={page.saveEdit}
-            onStartEdit={page.startEdit}
-            onToggleEnabled={page.toggleEnabled}
-          />
+          <div className="grid gap-3">
+            <SourcesTable
+              editForm={page.editForm}
+              editingSourceId={page.editingSourceId}
+              pending={page.pending}
+              sources={page.paginatedSources}
+              onCancelEdit={page.resetEdit}
+              onDelete={page.deleteSource}
+              onEditFormChange={page.setEditForm}
+              onRefresh={page.refreshSource}
+              onSaveEdit={page.saveEdit}
+              onStartEdit={page.startEdit}
+              onToggleEnabled={page.toggleEnabled}
+            />
+            <ListPagination
+              currentPage={page.currentPage}
+              label="订阅分页"
+              onPageChange={page.setCurrentPage}
+              pageCount={page.pageCount}
+              total={page.filteredSources.length}
+            />
+          </div>
         )}
       </SourceSection>
     </ModulePanel>

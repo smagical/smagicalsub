@@ -283,6 +283,13 @@ function subscriptionPreview(url: string) {
 }`;
   }
 
+  if (url.includes("format=xray")) {
+    return `{
+  "outbounds": [{ "protocol": "freedom", "tag": "direct" }],
+  "routing": { "rules": [] }
+}`;
+  }
+
   if (url.includes("format=v2rayn")) {
     return "dmxlc3M6Ly9leGFtcGxlLmNvbQ==";
   }

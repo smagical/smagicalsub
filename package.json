@@ -12,6 +12,8 @@
     "build": "pnpm --filter @smagicalsub/web build",
     "build:api": "pnpm --filter @smagicalsub/worker typecheck",
     "deploy": "pnpm --filter @smagicalsub/web deploy",
+    "preview": "pnpm --filter @smagicalsub/web preview",
+    "preview:worker": "pnpm --filter @smagicalsub/web preview:worker",
     "test": "pnpm test:unit && pnpm test:worker && pnpm test:e2e",
     "test:unit": "vitest run --configLoader runner --config vitest.unit.config.mjs",
     "test:worker": "pnpm --filter @smagicalsub/worker test",

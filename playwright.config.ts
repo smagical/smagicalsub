@@ -11,9 +11,9 @@ export default defineConfig({
     trace: "retain-on-failure"
   },
   webServer: {
-    command: "pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    command: "pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort --outDir dist/client",
     cwd: "apps/web",
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     timeout: 120_000,
     url: "http://127.0.0.1:4173"
   },

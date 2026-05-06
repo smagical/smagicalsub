@@ -8,21 +8,22 @@ import type { ProfileFormState } from "./types";
 import { toCreateProfileInput } from "./utils";
 
 type ProfileFormProps = {
+  className?: string;
   form: ProfileFormState;
   pending: boolean;
   setForm: Dispatch<SetStateAction<ProfileFormState>>;
   onSubmit: (value: ReturnType<typeof toCreateProfileInput>) => void;
 };
 
-export function ProfileForm({ form, pending, setForm, onSubmit }: ProfileFormProps) {
+export function ProfileForm({ className, form, pending, setForm, onSubmit }: ProfileFormProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onSubmit(toCreateProfileInput(form));
   }
 
   return (
-    <FormGrid variant="profile" onSubmit={handleSubmit}>
-      <FilterField label="名称">
+    <FormGrid className={className} variant="profile" onSubmit={handleSubmit}>
+      <FilterField className="min-w-0" label="名称">
         <Input
           onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
           placeholder="默认配置"
@@ -31,7 +32,7 @@ export function ProfileForm({ form, pending, setForm, onSubmit }: ProfileFormPro
           value={form.name}
         />
       </FilterField>
-      <FilterField label="默认策略">
+      <FilterField className="min-w-0" label="默认策略">
         <Input
           onChange={(event) => setForm((current) => ({ ...current, default_strategy: event.target.value }))}
           placeholder="Proxy"
@@ -40,7 +41,7 @@ export function ProfileForm({ form, pending, setForm, onSubmit }: ProfileFormPro
           value={form.default_strategy}
         />
       </FilterField>
-      <FilterField label="描述">
+      <FilterField className="min-w-0" label="描述">
         <Input
           onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
           placeholder="用于主力设备或备用线路"

@@ -35,7 +35,7 @@ export async function loadSubscriptionPreview(token: string, format: TokenSubscr
 }
 
 export function subscriptionPreviewExtension(format: TokenSubscriptionFormat) {
-  return format === "sing-box" ? "json" : format === "clash" ? "yaml" : "txt";
+  return format === "sing-box" || format === "xray" ? "json" : format === "clash" ? "yaml" : "txt";
 }
 
 export function subscriptionPreviewStats(content: string) {

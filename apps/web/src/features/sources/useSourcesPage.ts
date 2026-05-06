@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { SourceDto, UpdateSubscriptionSourceInput } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSource, deleteSource, listSources, refreshAllSources, refreshSource, updateSource } from "./api";
 import { initialSourceEditFormState, initialSourceFormState } from "./types";
 import { filterSources } from "./utils";
 import { formatSourceGroups, parseSourceGroups } from "./SourceForm";
+
+const SOURCE_PAGE_SIZE = 6;
 
 export function useSourcesPage() {
   const queryClient = useQueryClient();
@@ -13,10 +15,25 @@ export function useSourcesPage() {
   const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [notice, setNotice] = useState<string | null>(null);
   const query = useQuery({ queryKey: ["sources"], queryFn: listSources, retry: false });
   const sources = query.data?.items ?? [];
   const filteredSources = useMemo(() => filterSources(sources, searchQuery, statusFilter), [searchQuery, sources, statusFilter]);
+  const pageCount = Math.max(1, Math.ceil(filteredSources.length / SOURCE_PAGE_SIZE));
+  const paginatedSources = useMemo(() => {
+    const start = (currentPage - 1) * SOURCE_PAGE_SIZE;
+
+    return filteredSources.slice(start, start + SOURCE_PAGE_SIZE);
+  }, [currentPage, filteredSources]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage((current) => Math.min(Math.max(current, 1), pageCount));
+  }, [pageCount]);
 
   const invalidateSourceData = async () => {
     await Promise.all([
@@ -110,6 +127,7 @@ export function useSourcesPage() {
   };
 
   return {
+    currentPage,
     editForm,
     editingSourceId,
     emptyLabel,
@@ -117,6 +135,8 @@ export function useSourcesPage() {
     filteredSources,
     form,
     notice,
+    pageCount,
+    paginatedSources,
     pending,
     searchQuery,
     sourceCount: sources.length,
@@ -130,6 +150,7 @@ export function useSourcesPage() {
     setEditForm,
     setForm,
     setSearchQuery,
+    setCurrentPage,
     setStatusFilter,
     startEdit,
     toggleEnabled: (source: SourceDto) => updateMutation.mutate({ id: source.id, input: { enabled: !source.enabled } })

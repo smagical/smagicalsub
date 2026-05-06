@@ -19,7 +19,7 @@ export function TokensPage() {
     <ModulePanel
       eyebrow="Tokens"
       title="订阅令牌"
-      description="面向 Clash、v2rayN、Base64 明文和 sing-box 的订阅分发工作台。"
+      description="面向 Clash、v2rayN、明文 URI、sing-box 和 Xray 的订阅分发工作台。"
       tone="cyan"
     >
       <TokenHero tokens={page.tokens} nodes={page.nodes} profiles={page.profiles} />
@@ -132,6 +132,7 @@ function TokenHero({ nodes, profiles, tokens }: { nodes: NodeDto[]; profiles: Pr
               <Badge variant="secondary">v2rayN</Badge>
               <Badge variant="secondary">Base64 明文</Badge>
               <Badge variant="secondary">sing-box</Badge>
+              <Badge variant="secondary">Xray</Badge>
             </div>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -162,7 +163,7 @@ function TokenOutputEmptyPanel() {
         <div className="grid gap-2">
           <h3 className="text-xl font-semibold">创建令牌后生成订阅地址</h3>
           <p className="text-sm text-muted-foreground">
-            输出中心会集中展示 Clash、v2rayN、Base64 明文和 sing-box 的订阅路径、健康检查与预览内容。
+            输出中心会集中展示 Clash、v2rayN、明文 URI、sing-box 和 Xray 的订阅路径、健康检查与预览内容。
           </p>
         </div>
       </div>

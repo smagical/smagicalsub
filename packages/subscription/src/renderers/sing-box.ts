@@ -1,5 +1,6 @@
 import type { RenderSubscriptionBaseInput, RenderableNode } from "./types";
 import { toSingBoxOutbound } from "./sing-box-outbound";
+import { createPolicyContext, policyUsesBlock, renderSingBoxRouteRules } from "./rules";
 import { defaultGroupName, renderGroupName, uniqueStrings } from "./utils";
 
 export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string {
@@ -10,6 +11,9 @@ export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string 
     .filter((outbound): outbound is Record<string, unknown> => outbound !== null);
   const outboundTags = outbounds.map((outbound) => String(outbound.tag));
   const grouped = buildSingBoxSelectors(input.nodes, outboundTags);
+  const policyContext = createPolicyContext(input.nodes, outboundTags, primarySelector);
+  const routeRules = renderSingBoxRouteRules(input.rules ?? [], policyContext);
+  const needsBlockOutbound = policyUsesBlock(input.rules ?? []);
 
   const config = {
     log: {
@@ -30,9 +34,11 @@ export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string 
       {
         type: "direct",
         tag: "direct"
-      }
+      },
+      ...(needsBlockOutbound ? [{ type: "block", tag: "block" }] : [])
     ],
     route: {
+      rules: routeRules,
       final: primarySelector
     }
   };

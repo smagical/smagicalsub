@@ -64,10 +64,10 @@ export function NodesTable({
       <div className="grid gap-3.5" aria-label="节点列表">
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-card/75 px-3 py-2">
           <label className="inline-flex items-center gap-2 text-sm font-medium">
-            {selectionInput("选择当前列表节点", allVisibleSelected, pending || nodes.length === 0, onToggleVisible)}
-            <span>选择当前列表节点</span>
+            {selectionInput("选择当前页节点", allVisibleSelected, pending || nodes.length === 0, onToggleVisible)}
+            <span>选择当前页节点</span>
           </label>
-          <Badge variant="outline">当前列表 {nodes.length} 个</Badge>
+          <Badge variant="outline">当前页 {nodes.length} 个</Badge>
         </div>
         {nodes.map((node) => (
           <NodeCard

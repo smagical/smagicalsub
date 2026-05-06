@@ -93,6 +93,7 @@ export function useProfilesPage() {
     error,
     filteredProfiles,
     form,
+    profiles,
     notice,
     pending,
     searchQuery,
