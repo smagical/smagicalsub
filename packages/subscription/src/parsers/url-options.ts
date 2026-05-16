@@ -14,7 +14,19 @@ export function baseUrlConfig(protocol: string, url: URL) {
 
 export function urlPort(url: URL) {
   const parsed = url.port ? Number(url.port) : NaN;
-  return Number.isFinite(parsed) ? parsed : undefined;
+  if (Number.isFinite(parsed)) {
+    return parsed;
+  }
+
+  if (url.protocol === "https:") {
+    return 443;
+  }
+
+  if (url.protocol === "http:") {
+    return 80;
+  }
+
+  return undefined;
 }
 
 export function decodedUsername(url: URL) {
@@ -35,6 +47,7 @@ export function tlsOptions(url: URL, protocol: string) {
     security === "reality";
 
   return compact({
+    security,
     tls,
     servername: stringParam(params, "sni", "peer", "host", "servername"),
     sni: stringParam(params, "sni", "peer", "host", "servername"),
@@ -65,11 +78,13 @@ export function grpcOptions(params: URLSearchParams) {
 export function realityOptions(params: URLSearchParams) {
   const publicKey = stringParam(params, "pbk", "public-key", "public_key");
   const shortId = stringParam(params, "sid", "short-id", "short_id");
+  const spiderX = stringParam(params, "spx", "spider-x", "spiderX");
 
-  return publicKey || shortId
+  return publicKey || shortId || spiderX
     ? {
         "public-key": publicKey,
-        "short-id": shortId
+        "short-id": shortId,
+        spiderX
       }
     : undefined;
 }

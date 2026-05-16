@@ -3,22 +3,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { NodeBatchActionInput } from "@smagicalsub/shared";
-import { Download, Search, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Download, Search, Trash2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { ConfirmButton } from "../../shared/ConfirmButton";
 import { FilterBar } from "../../shared/FilterBar";
 import { FilterField } from "../../shared/FilterField";
+import { TagInput } from "../../shared/TagInput";
+import { UNGROUPED_GROUP_LABEL } from "./utils";
 
 type NodeFiltersProps = {
   exportDisabled?: boolean;
   groups: string[];
-  groupFilter: string;
+  groupFilters: string[];
+  includeUngrouped: boolean;
   nodeCount: number;
   protocolFilter: string;
   protocols: string[];
   searchQuery: string;
   totalCount: number;
   onExport?: () => void;
-  onGroupFilterChange: (group: string) => void;
+  onClearGroupFilters: () => void;
+  onGroupFiltersChange: (groups: string[]) => void;
+  onIncludeUngroupedChange: (checked: boolean) => void;
   onProtocolFilterChange: (protocol: string) => void;
   onSearchQueryChange: (query: string) => void;
 };
@@ -26,17 +33,22 @@ type NodeFiltersProps = {
 export function NodeFilters({
   exportDisabled = false,
   groups,
-  groupFilter,
+  groupFilters,
+  includeUngrouped,
   nodeCount,
   protocolFilter,
   protocols,
   searchQuery,
   totalCount,
   onExport,
-  onGroupFilterChange,
+  onClearGroupFilters,
+  onGroupFiltersChange,
+  onIncludeUngroupedChange,
   onProtocolFilterChange,
   onSearchQueryChange
 }: NodeFiltersProps) {
+  const selectedGroupCount = groupFilters.length + (includeUngrouped ? 1 : 0);
+
   return (
     <FilterBar align="start" className="mb-0 rounded-xl border bg-card/75 p-3 shadow-sm ring-1 ring-primary/10">
       <label className="grid min-w-[280px] flex-1 gap-1.5 max-[720px]:min-w-full">
@@ -55,16 +67,76 @@ export function NodeFilters({
           </Badge>
         </div>
       </label>
-      <FilterField className="min-w-[180px]" label="分组筛选">
-        <NativeSelect className="truncate" onChange={(event) => onGroupFilterChange(event.target.value)} value={groupFilter}>
-          <option value="all">全部节点</option>
-          <option value="default">默认</option>
-          {groups.map((group) => (
-            <option key={group} value={group}>
-              {group}
-            </option>
-          ))}
-        </NativeSelect>
+      <FilterField className="min-w-[240px] flex-1 max-[720px]:min-w-full" label="分组筛选">
+        <div className="flex flex-wrap items-center gap-2 max-[720px]:items-stretch">
+          <TagInput
+            ariaLabel="分组筛选"
+            className="min-w-0 flex-1"
+            onChange={onGroupFiltersChange}
+            placeholder="输入分组并回车，多选筛选"
+            suggestions={groups}
+            value={groupFilters}
+          />
+          <Button
+            className="shrink-0"
+            onClick={() => onIncludeUngroupedChange(!includeUngrouped)}
+            type="button"
+            variant={includeUngrouped ? "info" : "outline"}
+            size="sm"
+          >
+            {UNGROUPED_GROUP_LABEL}
+          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button className="shrink-0" type="button" variant="outline" size="sm">
+                快速选择
+                {selectedGroupCount > 0 ? <Badge variant="secondary">{selectedGroupCount}</Badge> : null}
+                <ChevronDown data-icon="inline-end" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72">
+              <div className="grid gap-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="grid gap-0.5">
+                    <span className="text-sm font-semibold">快速选择</span>
+                    <span className="text-xs text-muted-foreground">点击可多选，也可在左侧直接输入</span>
+                  </div>
+                  <Button disabled={selectedGroupCount === 0} onClick={onClearGroupFilters} type="button" variant="ghost" size="xs">
+                    清空
+                  </Button>
+                </div>
+                <div className="grid gap-1">
+                  <GroupFilterItem
+                    checked={includeUngrouped}
+                    label={UNGROUPED_GROUP_LABEL}
+                    onClick={() => onIncludeUngroupedChange(!includeUngrouped)}
+                  />
+                  <div className="h-px bg-border" />
+                  <div className="max-h-56 overflow-y-auto pr-1">
+                    <div className="grid gap-1">
+                      {groups.length === 0 ? (
+                        <div className="px-2 py-3 text-xs text-muted-foreground">暂无可选分组</div>
+                      ) : (
+                        groups.map((group) => (
+                          <GroupFilterItem
+                            checked={groupFilters.includes(group)}
+                            key={group}
+                            label={group}
+                            onClick={() =>
+                              onGroupFiltersChange(
+                                groupFilters.includes(group) ? groupFilters.filter((value) => value !== group) : [...groupFilters, group]
+                              )
+                            }
+                          />
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
       </FilterField>
       <FilterField className="min-w-[160px]" label="协议筛选">
         <NativeSelect className="truncate" onChange={(event) => onProtocolFilterChange(event.target.value)} value={protocolFilter}>
@@ -86,17 +158,50 @@ export function NodeFilters({
   );
 }
 
+function GroupFilterItem({
+  checked,
+  label,
+  onClick
+}: {
+  checked: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={cn(
+        "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+        checked && "bg-primary/10 text-primary"
+      )}
+      onClick={onClick}
+      type="button"
+    >
+      <span
+        className={cn(
+          "flex size-4 shrink-0 items-center justify-center rounded-sm border",
+          checked ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background"
+        )}
+      >
+        {checked ? <Check data-icon="inline-start" /> : null}
+      </span>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+    </button>
+  );
+}
+
 type NodeBatchBarProps = {
-  batchGroups: string;
+  batchGroups: string[];
+  groups: string[];
   pending: boolean;
   selectedCount: number;
   onAction: (action: NodeBatchActionInput["action"]) => void;
-  onBatchGroupsChange: (groups: string) => void;
+  onBatchGroupsChange: (groups: string[]) => void;
   onClearSelection: () => void;
 };
 
 export function NodeBatchBar({
   batchGroups,
+  groups,
   pending,
   selectedCount,
   onAction,
@@ -111,12 +216,12 @@ export function NodeBatchBar({
         已选择 {selectedCount} 个节点
       </Badge>
       <FilterField className="min-w-[260px] flex-1 max-[720px]:min-w-full" label="批量分组">
-        <Input
-          className="truncate"
+        <TagInput
+          ariaLabel="批量分组"
           disabled={disabled}
-          onChange={(event) => onBatchGroupsChange(event.target.value)}
-          placeholder="香港,日本,备用"
-          type="text"
+          onChange={onBatchGroupsChange}
+          placeholder="回车添加分组"
+          suggestions={groups}
           value={batchGroups}
         />
       </FilterField>

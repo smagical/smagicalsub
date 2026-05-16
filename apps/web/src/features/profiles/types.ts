@@ -1,3 +1,5 @@
+import type { ProfileRuleFormat } from "@smagicalsub/shared";
+
 export type ProfileFormState = {
   name: string;
   description: string;
@@ -25,23 +27,31 @@ export const initialProfileEditFormState: ProfileEditFormState = {
 };
 
 export type ProfileRuleFormState = {
+  content: string;
+  format: ProfileRuleFormat;
   rule: string;
   position: string;
   enabled: boolean;
 };
 
 export type ProfileRuleEditFormState = {
+  content: string;
+  format: ProfileRuleFormat;
   rule: string;
   position: string;
 };
 
 export const initialProfileRuleFormState: ProfileRuleFormState = {
+  content: "{}",
+  format: "common",
   rule: "",
   position: "",
   enabled: true
 };
 
 export const initialProfileRuleEditFormState: ProfileRuleEditFormState = {
+  content: "{}",
+  format: "common",
   rule: "",
   position: ""
 };

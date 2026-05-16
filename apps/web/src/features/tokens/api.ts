@@ -2,12 +2,17 @@ import type {
   CreateSubscribeTokenInput,
   ListDto,
   SubscribeTokenDto,
-  UpdateSubscribeTokenInput
+  UpdateSubscribeTokenInput,
+  ProfileModuleDto
 } from "@smagicalsub/shared";
 import { deleteJson, getJson, patchJson, postJson } from "../../lib/api-client";
 
 export function listTokens() {
   return getJson<ListDto<SubscribeTokenDto>>("/api/tokens");
+}
+
+export function listProfileModules() {
+  return getJson<ListDto<ProfileModuleDto>>("/api/profile-modules");
 }
 
 export function createToken(input: CreateSubscribeTokenInput) {

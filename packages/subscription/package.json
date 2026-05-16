@@ -6,7 +6,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "pnpm -w exec vitest run --configLoader runner --config vitest.unit.config.mjs tests/unit/subscription/subscription.test.ts",
+    "test": "pnpm -w exec vitest run --configLoader runner --config vitest.unit.config.mjs tests/unit/subscription",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

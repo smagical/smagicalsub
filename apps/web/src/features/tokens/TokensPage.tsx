@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import type { NodeDto, ProfileDto, SubscribeTokenDto } from "@smagicalsub/shared";
 import { ArrowRight, Clock3, KeyRound, Layers3, Link2, Route, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { EmptyState } from "../../shared/EmptyState";
+import { ListPagination } from "../../shared/ListPagination";
 import { ModulePanel } from "../../shared/ModulePanel";
 import { PageFeedback } from "../../shared/PageFeedback";
 import { SubscriptionOutputCenter } from "./SubscriptionOutputCenter";
@@ -19,7 +20,7 @@ export function TokensPage() {
     <ModulePanel
       eyebrow="Tokens"
       title="订阅令牌"
-      description="面向 Clash、v2rayN、明文 URI、sing-box 和 Xray 的订阅分发工作台。"
+      description="面向 Clash、Base64、明文、sing-box 和 Xray 的订阅分发工作台。"
       tone="cyan"
     >
       <TokenHero tokens={page.tokens} nodes={page.nodes} profiles={page.profiles} />
@@ -29,6 +30,7 @@ export function TokensPage() {
           form={page.form}
           nodes={page.nodes}
           pending={page.pending}
+          profileModules={page.profileModules}
           profiles={page.profiles}
           setForm={page.setForm}
           onSubmit={page.createToken}
@@ -75,25 +77,38 @@ export function TokensPage() {
       {page.filteredTokens.length === 0 ? (
         <EmptyState label={page.emptyLabel} />
       ) : (
-        <TokensTable
-          copyFormat={page.copyFormat}
-          editForm={page.editForm}
-          editingTokenId={page.editingTokenId}
-          pending={page.pending}
-          profiles={page.profiles}
-          nodes={page.nodes}
-          tokens={page.filteredTokens}
-          onCancelEdit={page.resetEdit}
-          onCopy={(token) => void page.handleCopy(token)}
-          onDelete={page.deleteToken}
-          onEditFormChange={page.setEditForm}
-          onOpen={page.openSubscription}
-          onProfileChange={page.updateProfileBinding}
-          onReset={page.resetToken}
-          onSaveEdit={page.saveEdit}
-          onStartEdit={page.startEdit}
-          onToggleEnabled={page.toggleEnabled}
-        />
+        <div className="grid gap-3">
+          <TokensTable
+            copyFormat={page.copyFormat}
+            editForm={page.editForm}
+            editingTokenId={page.editingTokenId}
+            pending={page.pending}
+            profiles={page.profiles}
+            profileModules={page.profileModules}
+            nodes={page.nodes}
+            tokens={page.paginatedTokens}
+            total={page.filteredTokens.length}
+            onCancelEdit={page.resetEdit}
+            onCopy={(token) => void page.handleCopy(token)}
+            onDelete={page.deleteToken}
+            onEditFormChange={page.setEditForm}
+            onOpen={page.openSubscription}
+            onReset={page.resetToken}
+            onSaveEdit={page.saveEdit}
+            onStartEdit={page.startEdit}
+            onToggleEnabled={page.toggleEnabled}
+          />
+          <ListPagination
+            currentPage={page.currentPage}
+            label="令牌分页"
+            onPageChange={page.setCurrentPage}
+            onPageSizeChange={page.setPageSize}
+            pageCount={page.pageCount}
+            pageSize={page.pageSize}
+            pageSizeOptions={page.pageSizeOptions}
+            total={page.filteredTokens.length}
+          />
+        </div>
       )}
     </ModulePanel>
   );
@@ -108,40 +123,42 @@ function TokenHero({ nodes, profiles, tokens }: { nodes: NodeDto[]; profiles: Pr
 
   return (
     <section className="overflow-hidden rounded-xl border bg-card">
-      <div className="grid gap-4 p-4 xl:grid-cols-[minmax(280px,0.72fr)_minmax(0,1.28fr)]">
-        <div className="flex min-h-56 flex-col justify-between gap-4 rounded-lg border bg-background/70 p-4">
-          <div className="grid gap-2">
-            <Badge className="w-fit gap-1.5 border-chart-2/30 bg-chart-2/10 text-chart-2" variant="outline">
-              <Sparkles />
-              多格式订阅
-            </Badge>
-            <div className="grid gap-1">
-              <h2 className="text-2xl font-semibold leading-tight">订阅分发工作台</h2>
-              <p className="text-sm text-muted-foreground">
-                创建令牌后可以绑定配置档、限制节点范围，并把自定义路径映射到专属订阅地址。
-              </p>
+      <div className="grid gap-3 p-3 xl:grid-cols-[minmax(300px,0.8fr)_minmax(0,1.2fr)]">
+        <div className="grid gap-2.5 rounded-lg border bg-background/70 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <Badge className="gap-1.5 border-chart-2/30 bg-chart-2/10 text-chart-2" variant="outline">
+                <Sparkles />
+                多格式订阅
+              </Badge>
+              <h2 className="truncate text-lg font-semibold leading-tight">订阅分发工作台</h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <MiniStat label="启用节点" value={`${enabledNodes}/${nodes.length}`} />
+              <MiniStat label="启用配置档" value={`${enabledProfiles}/${profiles.length}`} />
             </div>
           </div>
-          <div className="rounded-lg border border-chart-2/25 bg-chart-2/10 p-3">
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+
+          <p className="text-xs leading-5 text-muted-foreground">
+            创建令牌后绑定配置档、限制节点范围，并把自定义路径映射到专属订阅地址。
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-chart-2/25 bg-chart-2/10 px-2.5 py-2">
+            <div className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-chart-2">
               <Zap className="text-chart-2" />
               输出能力
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
               <Badge variant="secondary">Clash</Badge>
-              <Badge variant="secondary">v2rayN</Badge>
-              <Badge variant="secondary">Base64 明文</Badge>
+              <Badge variant="secondary">Base64</Badge>
+              <Badge variant="secondary">明文</Badge>
               <Badge variant="secondary">sing-box</Badge>
               <Badge variant="secondary">Xray</Badge>
             </div>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <MiniStat label="启用节点" value={`${enabledNodes}/${nodes.length}`} />
-            <MiniStat label="启用配置档" value={`${enabledProfiles}/${profiles.length}`} />
-          </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
+        <div className="grid gap-2 md:grid-cols-2 2xl:grid-cols-4">
           <SummaryCard icon={KeyRound} label="令牌总数" value={tokens.length} hint={`${enabledTokens} 个启用`} tone="primary" />
           <SummaryCard icon={Layers3} label="部分节点" value={partialTokens} hint="可按协议和节点定制" tone="cyan" />
           <SummaryCard icon={Link2} label="自定义路径" value={customPathTokens} hint="支持固定入口映射" tone="accent" />
@@ -163,7 +180,7 @@ function TokenOutputEmptyPanel() {
         <div className="grid gap-2">
           <h3 className="text-xl font-semibold">创建令牌后生成订阅地址</h3>
           <p className="text-sm text-muted-foreground">
-            输出中心会集中展示 Clash、v2rayN、明文 URI、sing-box 和 Xray 的订阅路径、健康检查与预览内容。
+            输出中心会集中展示 Clash、Base64、明文、sing-box 和 Xray 的订阅路径、健康检查与预览内容。
           </p>
         </div>
       </div>
@@ -202,15 +219,15 @@ function SummaryCard({
   }[tone];
 
   return (
-    <div className="flex min-h-36 flex-col justify-between gap-3 rounded-lg border bg-background/70 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium text-muted-foreground">{label}</span>
-        <span className={`rounded-md border p-2 ${toneClass}`}>
-          <Icon />
-        </span>
-      </div>
-      <div className="grid gap-1">
-        <strong className="text-3xl leading-none">{value}</strong>
+    <div className="flex min-h-20 items-center gap-3 rounded-lg border bg-background/70 p-3">
+      <span className={`rounded-md border p-2 ${toneClass}`}>
+        <Icon />
+      </span>
+      <div className="grid min-w-0 flex-1 gap-1">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <span className="truncate text-xs font-medium text-muted-foreground">{label}</span>
+          <strong className="font-mono text-xl leading-none">{value}</strong>
+        </div>
         <span className="text-xs text-muted-foreground">{hint}</span>
       </div>
     </div>
@@ -219,9 +236,9 @@ function SummaryCard({
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border bg-background/70 px-3 py-2">
-      <div className="text-[11px] font-medium text-muted-foreground">{label}</div>
-      <div className="font-semibold">{value}</div>
+    <div className="inline-flex items-center gap-1.5 rounded-md border bg-background/70 px-2.5 py-1 text-xs">
+      <span className="font-medium text-muted-foreground">{label}</span>
+      <strong className="font-mono">{value}</strong>
     </div>
   );
 }

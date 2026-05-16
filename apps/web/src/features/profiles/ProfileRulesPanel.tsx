@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { Dispatch, SetStateAction } from "react";
-import type { ProfileDto, ProfileRuleDto } from "@smagicalsub/shared";
+import type { CreateProfileRuleInput, ProfileDto, ProfileRuleDto } from "@smagicalsub/shared";
 import { ListChecks, Route, ShieldCheck } from "lucide-react";
 import { EmptyState } from "../../shared/EmptyState";
 import { ProfileRuleForm } from "./ProfileRuleForm";
@@ -19,7 +19,7 @@ type ProfileRulesPanelProps = {
   setForm: Dispatch<SetStateAction<ProfileRuleFormState>>;
   onCancelEdit: () => void;
   onApplyRulePreset: (rules: readonly string[]) => void;
-  onCreateRule: (value: { rule: string; position?: number; enabled: boolean }) => void;
+  onCreateRule: (value: CreateProfileRuleInput) => void;
   onDeleteRule: (rule: ProfileRuleDto) => void;
   onEditFormChange: (form: ProfileRuleEditFormState) => void;
   onMoveRule: (rule: ProfileRuleDto, direction: "down" | "up") => void;

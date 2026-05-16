@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import { defaultSiteSettings, type HealthDto } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,7 +20,7 @@ export function App() {
   const [theme, setTheme] = useState<ThemeMode>(readTheme);
   const settingsQuery = useQuery({ queryKey: ["site-settings"], queryFn: getSiteSettings, retry: false });
   const authStatusQuery = useQuery({ queryKey: ["auth-status"], queryFn: getAuthStatus, retry: false });
-  const userQuery = useQuery({ queryKey: ["auth-me"], queryFn: getCurrentUser, enabled: Boolean(authToken), retry: false });
+  const userQuery = useQuery({ queryKey: ["auth-me", authToken], queryFn: getCurrentUser, enabled: Boolean(authToken), retry: false });
   const healthQuery = useQuery({
     queryKey: ["health"],
     queryFn: () => getJson<HealthDto>("/api/health"),
@@ -44,8 +45,19 @@ export function App() {
     if (userQuery.error) {
       clearAuthToken();
       setAuthTokenState("");
+      queryClient.removeQueries({ queryKey: ["auth-me"] });
     }
-  }, [userQuery.error]);
+  }, [queryClient, userQuery.error]);
+
+  useEffect(() => {
+    function handleAuthExpired() {
+      setAuthTokenState("");
+      queryClient.removeQueries({ queryKey: ["auth-me"] });
+    }
+
+    window.addEventListener("smagicalsub:auth-expired", handleAuthExpired);
+    return () => window.removeEventListener("smagicalsub:auth-expired", handleAuthExpired);
+  }, [queryClient]);
 
   function handleLogout() {
     void logout();
@@ -57,7 +69,7 @@ export function App() {
   function handleAuthSuccess(result: { token: string }) {
     setAuthToken(result.token);
     setAuthTokenState(result.token);
-    void queryClient.invalidateQueries({ queryKey: ["auth-me"] });
+    void queryClient.invalidateQueries({ queryKey: ["auth-me", result.token] });
   }
 
   let content;
@@ -105,10 +117,10 @@ export function App() {
   }
 
   return (
-    <>
+    <TooltipProvider>
       {content}
       <Toaster position="top-right" richColors />
-    </>
+    </TooltipProvider>
   );
 }
 

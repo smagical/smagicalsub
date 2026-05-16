@@ -2,10 +2,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { NodeDto } from "@smagicalsub/shared";
-import { Check, Layers3, RadioTower, Search, Server, Sparkles, X } from "lucide-react";
+import { Check, ChevronDown, Layers3, RadioTower, Search, Sparkles, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { TagInput } from "../../shared/TagInput";
+import { splitNodeGroups, UNGROUPED_GROUP_LABEL } from "../nodes/utils";
 
 type TokenNodeSelectorProps = {
   compact?: boolean;
@@ -18,11 +21,19 @@ type TokenNodeSelectorProps = {
 export function TokenNodeSelector({ compact = false, disabled = false, nodes, selectedIds, onChange }: TokenNodeSelectorProps) {
   const [query, setQuery] = useState("");
   const [protocolFilter, setProtocolFilter] = useState("all");
+  const [groupFilters, setGroupFilters] = useState<string[]>([]);
+  const [includeUngrouped, setIncludeUngrouped] = useState(false);
   const protocolOptions = useMemo(() => protocolSummaries(nodes), [nodes]);
-  const visibleNodes = useMemo(() => filterNodes(nodes, query, protocolFilter), [nodes, protocolFilter, query]);
+  const groupOptions = useMemo(() => groupSummaries(nodes), [nodes]);
+  const ungroupedCount = useMemo(() => countUngroupedNodes(nodes), [nodes]);
+  const visibleNodes = useMemo(
+    () => filterNodes(nodes, query, protocolFilter, groupFilters, includeUngrouped),
+    [groupFilters, includeUngrouped, nodes, protocolFilter, query]
+  );
   const allMode = selectedIds.length === 0;
   const summary = selectorSummary(nodes, visibleNodes, selectedIds);
   const selectedPreview = allMode ? nodes.filter((node) => node.enabled).slice(0, 3) : getSelectedPreview(nodes, selectedIds);
+  const selectedGroupCount = groupFilters.length + (includeUngrouped ? 1 : 0);
 
   if (nodes.length === 0) {
     return <Badge variant="secondary">无可选节点</Badge>;
@@ -53,7 +64,7 @@ export function TokenNodeSelector({ compact = false, disabled = false, nodes, se
           </div>
         </div>
 
-        <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="mt-3 grid gap-2 xl:grid-cols-[minmax(220px,1fr)_minmax(300px,1.1fr)_auto]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -64,18 +75,104 @@ export function TokenNodeSelector({ compact = false, disabled = false, nodes, se
               value={query}
             />
           </div>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <TagInput
+              ariaLabel="令牌节点分组筛选"
+              className="min-w-0 flex-1"
+              disabled={disabled}
+              onChange={setGroupFilters}
+              placeholder="输入分组并回车"
+              suggestions={groupOptions.map((option) => option.group)}
+              value={groupFilters}
+            />
+            <Button
+              className="shrink-0"
+              disabled={disabled}
+              onClick={() => setIncludeUngrouped((current) => !current)}
+              size="sm"
+              type="button"
+              variant={includeUngrouped ? "info" : "outline"}
+            >
+              {UNGROUPED_GROUP_LABEL}
+            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button className="shrink-0" disabled={disabled} size="sm" type="button" variant="outline">
+                  快速选择
+                  {selectedGroupCount > 0 ? <Badge variant="secondary">{selectedGroupCount}</Badge> : null}
+                  <ChevronDown data-icon="inline-end" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72">
+                <div className="grid gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="grid gap-0.5">
+                      <span className="text-sm font-semibold">分组快速选择</span>
+                      <span className="text-xs text-muted-foreground">点击可多选，也可直接输入分组</span>
+                    </div>
+                    <Button
+                      disabled={selectedGroupCount === 0}
+                      onClick={() => {
+                        setGroupFilters([]);
+                        setIncludeUngrouped(false);
+                      }}
+                      size="xs"
+                      type="button"
+                      variant="ghost"
+                    >
+                      清空
+                    </Button>
+                  </div>
+                  <div className="grid gap-1">
+                    <GroupFilterItem
+                      checked={includeUngrouped}
+                      count={ungroupedCount}
+                      label={UNGROUPED_GROUP_LABEL}
+                      onClick={() => setIncludeUngrouped((current) => !current)}
+                    />
+                    <div className="h-px bg-border" />
+                    <div className="max-h-56 overflow-y-auto pr-1">
+                      <div className="grid gap-1">
+                        {groupOptions.length === 0 ? (
+                          <div className="px-2 py-3 text-xs text-muted-foreground">暂无可选分组</div>
+                        ) : (
+                          groupOptions.map((option) => (
+                            <GroupFilterItem
+                              checked={groupFilters.includes(option.group)}
+                              count={option.count}
+                              key={option.group}
+                              label={option.group}
+                              onClick={() =>
+                                setGroupFilters(
+                                  groupFilters.includes(option.group)
+                                    ? groupFilters.filter((value) => value !== option.group)
+                                    : [...groupFilters, option.group]
+                                )
+                              }
+                            />
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
           <Button
-            disabled={disabled || (query.trim() === "" && protocolFilter === "all")}
+            disabled={disabled || (query.trim() === "" && protocolFilter === "all" && groupFilters.length === 0 && !includeUngrouped)}
             onClick={() => {
               setQuery("");
               setProtocolFilter("all");
+              setGroupFilters([]);
+              setIncludeUngrouped(false);
             }}
             size="sm"
             type="button"
             variant="ghost"
           >
             <X data-icon="inline-start" />
-            清空搜索
+            清空筛选
           </Button>
         </div>
         {compact ? null : (
@@ -99,7 +196,7 @@ export function TokenNodeSelector({ compact = false, disabled = false, nodes, se
             ))}
           </div>
         )}
-        <div className={cn("mt-3 grid gap-2", compact ? "grid-cols-1" : "sm:grid-cols-3")}>
+        <div className={cn("mt-3 grid gap-2", compact ? "grid-cols-1" : "grid-cols-2 lg:grid-cols-4")}>
           <SummaryMetric label="当前范围" value={summary.scopeLabel} />
           {compact ? null : (
             <>
@@ -177,26 +274,25 @@ function NodeChoice({
   return (
     <label
       className={cn(
-        "grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-xl border bg-background/85 p-3 text-sm transition hover:bg-muted/45",
+        "flex cursor-pointer items-center gap-3 rounded-xl border bg-background/85 p-2.5 text-sm transition hover:bg-muted/45",
         selected && "border-primary/50 bg-primary/5 ring-1 ring-primary/20",
         !enabled && "opacity-70"
       )}
     >
       <Checkbox checked={checked} disabled={disabled} onCheckedChange={(value) => onToggle(value === true)} />
-      <span className="grid min-w-0 gap-2">
-        <span className="flex min-w-0 items-start justify-between gap-2">
-          <span className="truncate font-medium">{node.name}</span>
-          {selected ? <Check /> : null}
-        </span>
-        <span className="flex flex-wrap items-center gap-1">
-          <Badge variant="outline">{node.protocol}</Badge>
-          <Badge variant={node.source_id ? "secondary" : "outline"}>
-            <Server />
-            {node.source_id ? "订阅源" : "手动"}
+      <span className="flex min-w-0 flex-1 items-center gap-2">
+        <span className="min-w-0 truncate font-medium">{node.name}</span>
+        <span className="flex shrink-0 items-center gap-1">
+          <Badge className="h-5 px-1.5 text-[11px]" variant="outline">
+            {node.protocol}
           </Badge>
-          {enabled ? <Badge variant="secondary">可用</Badge> : <Badge variant="destructive">停用</Badge>}
+          <Badge className="h-5 px-1.5 text-[11px]" variant={node.source_id ? "secondary" : "outline"}>
+            {node.source_id ? "订阅" : "手动"}
+          </Badge>
+          {enabled ? <Badge className="h-5 px-1.5 text-[11px]" variant="secondary">可用</Badge> : <Badge className="h-5 px-1.5 text-[11px]" variant="destructive">停用</Badge>}
         </span>
       </span>
+      {selected ? <Check className="shrink-0 text-primary" /> : null}
     </label>
   );
 }
@@ -222,11 +318,47 @@ function ProtocolFilterPill({
   );
 }
 
+function GroupFilterItem({
+  checked,
+  count,
+  label,
+  onClick
+}: {
+  checked: boolean;
+  count: number;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={cn(
+        "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+        checked && "bg-primary/10 text-primary"
+      )}
+      onClick={onClick}
+      type="button"
+    >
+      <span
+        className={cn(
+          "flex size-4 shrink-0 items-center justify-center rounded-sm border",
+          checked ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background"
+        )}
+      >
+        {checked ? <Check data-icon="inline-start" /> : null}
+      </span>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <Badge className="shrink-0" variant="outline">
+        {count}
+      </Badge>
+    </button>
+  );
+}
+
 function SummaryMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-background/75 px-3 py-2">
-      <div className="text-[11px] font-medium text-muted-foreground">{label}</div>
-      <div className="truncate text-sm font-semibold">{value}</div>
+    <div className="flex min-w-0 items-center justify-between gap-2 rounded-lg border bg-background/75 px-2.5 py-1.5 text-xs">
+      <span className="shrink-0 font-medium text-muted-foreground">{label}</span>
+      <strong className="min-w-0 truncate text-right font-semibold">{value}</strong>
     </div>
   );
 }
@@ -256,15 +388,37 @@ function getSelectedPreview(nodes: NodeDto[], selectedIds: string[]) {
   return nodes.filter((node) => selected.has(node.id)).slice(0, 3);
 }
 
-function filterNodes(nodes: NodeDto[], query: string, protocolFilter: string) {
+function filterNodes(
+  nodes: NodeDto[],
+  query: string,
+  protocolFilter: string,
+  groupFilters: string[],
+  includeUngrouped: boolean
+) {
   const value = query.trim().toLowerCase();
   const filteredByProtocol = protocolFilter === "all" ? nodes : nodes.filter((node) => node.protocol === protocolFilter);
+  const groupFilterSet = new Set(groupFilters);
+  const filteredByGroup =
+    groupFilterSet.size === 0 && !includeUngrouped
+      ? filteredByProtocol
+      : filteredByProtocol.filter((node) => {
+          const nodeGroups = splitNodeGroups(node.groups);
+          const matchesUngrouped = includeUngrouped && nodeGroups.length === 0;
+          const matchesGroup = nodeGroups.some((group) => groupFilterSet.has(group));
+
+          return matchesUngrouped || matchesGroup;
+        });
 
   if (!value) {
-    return filteredByProtocol;
+    return filteredByGroup;
   }
 
-  return filteredByProtocol.filter((node) => node.name.toLowerCase().includes(value) || node.protocol.toLowerCase().includes(value));
+  return filteredByGroup.filter(
+    (node) =>
+      node.name.toLowerCase().includes(value) ||
+      node.protocol.toLowerCase().includes(value) ||
+      splitNodeGroups(node.groups).some((group) => group.toLowerCase().includes(value))
+  );
 }
 
 function protocolSummaries(nodes: NodeDto[]) {
@@ -275,6 +429,24 @@ function protocolSummaries(nodes: NodeDto[]) {
   }
 
   return Array.from(counts, ([protocol, count]) => ({ protocol, count })).sort((a, b) => a.protocol.localeCompare(b.protocol));
+}
+
+function groupSummaries(nodes: NodeDto[]) {
+  const counts = new Map<string, number>();
+
+  for (const node of nodes) {
+    const nodeGroups = splitNodeGroups(node.groups);
+
+    for (const group of nodeGroups) {
+      counts.set(group, (counts.get(group) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(counts, ([group, count]) => ({ group, count })).sort((a, b) => a.group.localeCompare(b.group));
+}
+
+function countUngroupedNodes(nodes: NodeDto[]) {
+  return nodes.filter((node) => splitNodeGroups(node.groups).length === 0).length;
 }
 
 function groupNodesByProtocol(nodes: NodeDto[]) {

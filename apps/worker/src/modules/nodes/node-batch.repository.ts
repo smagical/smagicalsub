@@ -1,4 +1,5 @@
 import { ownerWhere, type OwnerScope } from "../../lib/auth-scope";
+import { normalizeGroups } from "./node.mapper";
 import type { NodeRow } from "./node.types";
 
 export async function deleteNodes(db: D1Database, ids: string[], scope?: OwnerScope) {
@@ -32,7 +33,7 @@ export async function setNodesGroups(db: D1Database, ids: string[], groups: stri
   const filter = scope ? ownerWhere(scope) : emptyFilter();
   const result = await db
     .prepare(`UPDATE nodes SET tags = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders(ids)})${filter.sql}`)
-    .bind(JSON.stringify(groups), ...ids, ...filter.params)
+    .bind(JSON.stringify(normalizeGroups(groups)), ...ids, ...filter.params)
     .run();
   return result.meta.changes;
 }
@@ -58,7 +59,7 @@ export async function appendNodesGroups(db: D1Database, ids: string[], groups: s
     rows.map((row) =>
       db
         .prepare(`UPDATE nodes SET tags = ?1, updated_at = CURRENT_TIMESTAMP WHERE id = ?2`)
-        .bind(JSON.stringify(Array.from(new Set([...parseTags(row.tags), ...groups]))), row.id)
+        .bind(JSON.stringify(normalizeGroups([...parseTags(row.tags), ...groups])), row.id)
     )
   );
 
@@ -76,7 +77,7 @@ function emptyFilter() {
 function parseTags(value: string) {
   try {
     const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+    return Array.isArray(parsed) ? normalizeGroups(parsed.filter((item): item is string => typeof item === "string")) : [];
   } catch {
     return [];
   }

@@ -8,9 +8,23 @@ export type RenderableNode = {
 
 export type SubscriptionFormat = "clash" | "v2rayn" | "plain" | "sing-box" | "xray";
 
+export type RenderConfigModule = {
+  content: Record<string, unknown>;
+  format: "common" | "clash" | "sing-box" | "xray";
+  type: string;
+};
+
+export type RenderProfileRule = {
+  content?: Record<string, unknown>;
+  format: "common" | "clash" | "sing-box" | "xray";
+  rule: string;
+};
+
 export type RenderSubscriptionBaseInput = {
   profileName: string;
   defaultStrategy?: string;
+  modules?: RenderConfigModule[];
+  profileRules?: RenderProfileRule[];
   rules?: string[];
   nodes: RenderableNode[];
 };

@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSource, deleteSource, listSources, refreshAllSources, refreshSource, updateSource } from "./api";
 import { initialSourceEditFormState, initialSourceFormState } from "./types";
 import { filterSources } from "./utils";
-import { formatSourceGroups, parseSourceGroups } from "./SourceForm";
 
-const SOURCE_PAGE_SIZE = 6;
+const sourcePageSizeOptions = [10, 20, 30, 40, 50, 70, 100] as const;
+const defaultSourcePageSize = sourcePageSizeOptions[0];
 
 export function useSourcesPage() {
   const queryClient = useQueryClient();
@@ -16,16 +16,21 @@ export function useSourcesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(defaultSourcePageSize);
   const [notice, setNotice] = useState<string | null>(null);
   const query = useQuery({ queryKey: ["sources"], queryFn: listSources, retry: false });
   const sources = query.data?.items ?? [];
+  const groups = useMemo(
+    () => Array.from(new Set(sources.flatMap((source) => source.groups))).sort((a, b) => a.localeCompare(b)),
+    [sources]
+  );
   const filteredSources = useMemo(() => filterSources(sources, searchQuery, statusFilter), [searchQuery, sources, statusFilter]);
-  const pageCount = Math.max(1, Math.ceil(filteredSources.length / SOURCE_PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(filteredSources.length / pageSize));
   const paginatedSources = useMemo(() => {
-    const start = (currentPage - 1) * SOURCE_PAGE_SIZE;
+    const start = (currentPage - 1) * pageSize;
 
-    return filteredSources.slice(start, start + SOURCE_PAGE_SIZE);
-  }, [currentPage, filteredSources]);
+    return filteredSources.slice(start, start + pageSize);
+  }, [currentPage, filteredSources, pageSize]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -107,7 +112,7 @@ export function useSourcesPage() {
     setNotice(null);
     setEditingSourceId(source.id);
     setEditForm({
-      groups: formatSourceGroups(source.groups),
+      groups: [...source.groups],
       name: source.name,
       refresh_interval_minutes: String(source.refresh_interval_minutes ?? 0),
       url: source.url
@@ -118,12 +123,17 @@ export function useSourcesPage() {
     updateMutation.mutate({
       id: source.id,
       input: {
-        groups: parseSourceGroups(editForm.groups),
+        groups: editForm.groups,
         name: editForm.name.trim() || source.name,
         refresh_interval_minutes: Number(editForm.refresh_interval_minutes) || 0,
         url: editForm.url.trim() || source.url
       }
     });
+  };
+
+  const changePageSize = (value: number) => {
+    setPageSize(value);
+    setCurrentPage(1);
   };
 
   return {
@@ -134,8 +144,11 @@ export function useSourcesPage() {
     error,
     filteredSources,
     form,
+    groups,
     notice,
     pageCount,
+    pageSize,
+    pageSizeOptions: sourcePageSizeOptions,
     paginatedSources,
     pending,
     searchQuery,
@@ -147,10 +160,11 @@ export function useSourcesPage() {
     refreshSource: (id: string) => refreshMutation.mutate(id),
     resetEdit,
     saveEdit,
+    setCurrentPage,
     setEditForm,
     setForm,
+    setPageSize: changePageSize,
     setSearchQuery,
-    setCurrentPage,
     setStatusFilter,
     startEdit,
     toggleEnabled: (source: SourceDto) => updateMutation.mutate({ id: source.id, input: { enabled: !source.enabled } })

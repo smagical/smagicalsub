@@ -137,12 +137,54 @@ export type ProfileDto = {
   updated_at: string;
 };
 
+export type ProfileRuleFormat = "common" | "clash" | "sing-box" | "xray";
+
 export type ProfileRuleDto = {
   id: string;
   profile_id: string;
   position: number;
+  format: ProfileRuleFormat;
   rule: string;
+  content: Record<string, unknown>;
   enabled: number;
+};
+
+export type ProfileModuleFormat = ProfileRuleFormat;
+export type ProfileModuleType =
+  | "advanced-override"
+  | "dns"
+  | "inbound"
+  | "tun"
+  | "policy-group"
+  | "rule-provider"
+  | "proxy-provider"
+  | "observatory";
+
+export type ProfileModuleDto = {
+  id: string;
+  owner_id: string | null;
+  profile_id: string | null;
+  profile_name: string | null;
+  name: string;
+  format: ProfileModuleFormat;
+  type: ProfileModuleType;
+  content: Record<string, unknown>;
+  enabled: number;
+  is_default: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SubscribeTokenModuleBindingDto = {
+  format: ProfileModuleFormat;
+  module_id: string;
+  type: ProfileModuleType;
+};
+
+export type RemoteProfileConfigDto = {
+  content: string;
+  contentType: string | null;
+  url: string;
 };
 
 export type SubscribeTokenDto = {
@@ -153,6 +195,7 @@ export type SubscribeTokenDto = {
   token: string;
   custom_path: string | null;
   node_ids: string[];
+  module_bindings: SubscribeTokenModuleBindingDto[];
   name: string;
   enabled: number;
   expires_at: string | null;

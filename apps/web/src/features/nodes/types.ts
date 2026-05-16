@@ -1,37 +1,37 @@
 export type NodeFormState = {
   uri: string;
   name: string;
-  groups: string;
+  groups: string[];
   enabled: boolean;
 };
 
 export type NodeEditFormState = {
   name: string;
-  groups: string;
+  groups: string[];
   uri: string;
   enabled: boolean;
   configJson: string;
 };
 
 export type NodeBatchFormState = {
-  groups: string;
+  groups: string[];
 };
 
 export const initialNodeFormState: NodeFormState = {
   uri: "",
   name: "",
-  groups: "",
+  groups: [],
   enabled: true
 };
 
 export const initialNodeEditFormState: NodeEditFormState = {
   name: "",
-  groups: "",
+  groups: [],
   uri: "",
   enabled: true,
   configJson: "{}"
 };
 
 export const initialNodeBatchFormState: NodeBatchFormState = {
-  groups: ""
+  groups: []
 };

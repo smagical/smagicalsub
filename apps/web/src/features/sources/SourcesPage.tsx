@@ -21,7 +21,7 @@ export function SourcesPage() {
           <CardDescription>填写名称、订阅链接和自动刷新频率，创建后会进入下方订阅列表。</CardDescription>
         </CardHeader>
         <CardContent>
-          <SourceForm className="mb-0" form={page.form} pending={page.pending} setForm={page.setForm} onSubmit={page.createSource} />
+          <SourceForm className="mb-0" form={page.form} groups={page.groups} pending={page.pending} setForm={page.setForm} onSubmit={page.createSource} />
         </CardContent>
       </Card>
 
@@ -49,6 +49,7 @@ export function SourcesPage() {
             <SourcesTable
               editForm={page.editForm}
               editingSourceId={page.editingSourceId}
+              groups={page.groups}
               pending={page.pending}
               sources={page.paginatedSources}
               onCancelEdit={page.resetEdit}
@@ -63,7 +64,10 @@ export function SourcesPage() {
               currentPage={page.currentPage}
               label="订阅分页"
               onPageChange={page.setCurrentPage}
+              onPageSizeChange={page.setPageSize}
               pageCount={page.pageCount}
+              pageSize={page.pageSize}
+              pageSizeOptions={page.pageSizeOptions}
               total={page.filteredSources.length}
             />
           </div>

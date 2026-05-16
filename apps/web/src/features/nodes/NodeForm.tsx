@@ -4,24 +4,25 @@ import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { CheckboxField } from "../../shared/CheckboxField";
 import { FilterField } from "../../shared/FilterField";
 import { FormGrid } from "../../shared/FormGrid";
+import { TagInput } from "../../shared/TagInput";
 import type { NodeFormState } from "./types";
-import { parseGroups } from "./utils";
 
 type NodeFormProps = {
   className?: string;
   form: NodeFormState;
+  groups: string[];
   pending: boolean;
   setForm: Dispatch<SetStateAction<NodeFormState>>;
   onSubmit: (value: { uri: string; name?: string; groups: string[]; enabled: boolean }) => void;
 };
 
-export function NodeForm({ className, form, pending, setForm, onSubmit }: NodeFormProps) {
+export function NodeForm({ className, form, groups, pending, setForm, onSubmit }: NodeFormProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onSubmit({
       uri: form.uri,
       name: form.name.trim() ? form.name : undefined,
-      groups: parseGroups(form.groups),
+      groups: form.groups,
       enabled: form.enabled
     });
   }
@@ -48,11 +49,11 @@ export function NodeForm({ className, form, pending, setForm, onSubmit }: NodeFo
         />
       </FilterField>
       <FilterField className="min-w-0" label="分组">
-        <Input
-          className="truncate"
-          onChange={(event) => setForm((current) => ({ ...current, groups: event.target.value }))}
-          placeholder="香港,日本,备用"
-          type="text"
+        <TagInput
+          ariaLabel="节点分组"
+          onChange={(groups) => setForm((current) => ({ ...current, groups }))}
+          placeholder="回车添加分组"
+          suggestions={groups}
           value={form.groups}
         />
       </FilterField>

@@ -27,6 +27,7 @@ type ProfilesTableProps = {
   selectedProfileId: string | null;
   onCancelEdit: () => void;
   onDelete: (profile: ProfileDto) => void;
+  onDuplicate: (profile: ProfileDto) => void;
   onEditFormChange: (form: ProfileEditFormState) => void;
   onManageRules: (profile: ProfileDto) => void;
   onSaveEdit: (profile: ProfileDto) => void;
@@ -42,6 +43,7 @@ export function ProfilesTable({
   selectedProfileId,
   onCancelEdit,
   onDelete,
+  onDuplicate,
   onEditFormChange,
   onManageRules,
   onSaveEdit,
@@ -88,12 +90,13 @@ export function ProfilesTable({
                     <StatusBadge enabled={profile.enabled} />
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">{profile.updated_at}</TableCell>
-                  <TableCell className="min-w-[240px]">
+                  <TableCell className="min-w-[300px]">
                     <ProfileActions
                       pending={pending}
                       profile={profile}
                       selected={selected}
                       onDelete={onDelete}
+                      onDuplicate={onDuplicate}
                       onManageRules={onManageRules}
                       onStartEdit={onStartEdit}
                       onToggleEnabled={onToggleEnabled}
@@ -123,23 +126,27 @@ function ProfileActions({
   profile,
   selected,
   onDelete,
+  onDuplicate,
   onManageRules,
   onStartEdit,
   onToggleEnabled
 }: Pick<
   ProfilesTableProps,
-  "onDelete" | "onManageRules" | "onStartEdit" | "onToggleEnabled" | "pending"
+  "onDelete" | "onDuplicate" | "onManageRules" | "onStartEdit" | "onToggleEnabled" | "pending"
 > & {
   profile: ProfileDto;
   selected: boolean;
 }) {
   return (
-    <ActionGroup>
+    <ActionGroup className="flex-nowrap">
       <Button disabled={pending} onClick={() => onToggleEnabled(profile)} size="sm" type="button" variant={profile.enabled ? "warning" : "success"}>
         {profile.enabled ? "停用" : "启用"}
       </Button>
       <Button disabled={pending} onClick={() => onManageRules(profile)} size="sm" type="button" variant={selected ? "secondary" : "info"}>
         {selected ? "已选规则" : "规则"}
+      </Button>
+      <Button disabled={pending} onClick={() => onDuplicate(profile)} size="sm" type="button" variant="outline">
+        复制
       </Button>
       <Button disabled={pending} onClick={() => onStartEdit(profile)} size="sm" type="button" variant="outline">
         编辑

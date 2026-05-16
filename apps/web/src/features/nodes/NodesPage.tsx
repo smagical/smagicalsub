@@ -27,7 +27,7 @@ export function NodesPage() {
           <CardDescription>直接粘贴节点链接，可补充显示名称和分组，创建后会进入下方节点列表。</CardDescription>
         </CardHeader>
         <CardContent>
-          <NodeForm className="mb-0" form={page.form} pending={page.pending} setForm={page.setForm} onSubmit={page.createNode} />
+          <NodeForm className="mb-0" form={page.form} groups={page.groups} pending={page.pending} setForm={page.setForm} onSubmit={page.createNode} />
         </CardContent>
       </Card>
 
@@ -35,27 +35,31 @@ export function NodesPage() {
         <NodeFilters
           exportDisabled={page.filteredNodes.length === 0}
           groups={page.groups}
-          groupFilter={page.groupFilter}
+          groupFilters={page.groupFilters}
+          includeUngrouped={page.includeUngrouped}
           nodeCount={page.filteredNodes.length}
           protocolFilter={page.protocolFilter}
           protocols={page.protocols}
           searchQuery={page.searchQuery}
           totalCount={page.nodes.length}
           onExport={() => exportNodesCsv(page.filteredNodes)}
-          onGroupFilterChange={page.setGroupFilter}
+          onClearGroupFilters={page.clearGroupFilters}
+          onGroupFiltersChange={page.setGroupFilters}
+          onIncludeUngroupedChange={page.setIncludeUngrouped}
           onProtocolFilterChange={page.setProtocolFilter}
           onSearchQueryChange={page.setSearchQuery}
         />
       </NodeSection>
 
       <NodeSection description="勾选节点后可以批量启停、覆盖分组、追加分组或删除。" title="批量操作">
-        <NodeBatchBar
-          batchGroups={page.batchGroups}
-          pending={page.pending}
-          selectedCount={page.selectedNodeIds.length}
-          onAction={page.runBatchAction}
-          onBatchGroupsChange={page.setBatchGroups}
-          onClearSelection={page.clearSelection}
+          <NodeBatchBar
+            batchGroups={page.batchGroups}
+            groups={page.groups}
+            pending={page.pending}
+            selectedCount={page.selectedNodeIds.length}
+            onAction={page.runBatchAction}
+            onBatchGroupsChange={page.setBatchGroups}
+            onClearSelection={page.clearSelection}
         />
       </NodeSection>
 
@@ -71,6 +75,7 @@ export function NodesPage() {
               editForm={page.editForm}
               editingNodeId={page.editingNodeId}
               nodes={page.paginatedNodes}
+              groups={page.groups}
               pending={page.pending}
               selectedNodeIds={page.selectedNodeIds}
               onCancelEdit={page.resetEdit}
@@ -87,7 +92,10 @@ export function NodesPage() {
               currentPage={page.currentPage}
               label="节点分页"
               onPageChange={page.setCurrentPage}
+              onPageSizeChange={page.setPageSize}
               pageCount={page.pageCount}
+              pageSize={page.pageSize}
+              pageSizeOptions={page.pageSizeOptions}
               total={page.filteredNodes.length}
             />
           </div>
@@ -105,32 +113,32 @@ function NodeSummary({ filteredCount, nodes, selectedCount }: { filteredCount: n
   const protocolCount = new Set(nodes.map((node) => node.protocol)).size;
 
   return (
-    <section className="grid gap-3 rounded-xl border bg-card p-4 md:grid-cols-[minmax(260px,0.72fr)_minmax(0,1.28fr)]">
-      <div className="flex min-h-40 flex-col justify-between gap-3 rounded-lg border bg-background/70 p-4">
-        <div className="grid gap-2">
-          <Badge className="w-fit gap-1.5 border-primary/30 bg-primary/10 text-primary" variant="outline">
-            <RadioTower />
-            节点库
-          </Badge>
-          <div className="grid gap-1">
-            <h3 className="text-xl font-semibold leading-tight">节点接入与筛选中心</h3>
-            <p className="text-sm text-muted-foreground">手动节点和订阅源节点统一维护，后续令牌可以按节点范围自由定制输出。</p>
+    <section className="grid gap-3 rounded-xl border bg-card p-3 md:grid-cols-[minmax(300px,0.8fr)_minmax(0,1.2fr)]">
+      <div className="grid gap-2.5 rounded-lg border bg-background/70 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <Badge className="gap-1.5 border-primary/30 bg-primary/10 text-primary" variant="outline">
+              <RadioTower />
+              节点库
+            </Badge>
+            <h3 className="truncate text-lg font-semibold leading-tight">节点接入与筛选中心</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge className="border-chart-2/30 bg-chart-2/10 text-chart-2" variant="outline">
+              手动 {manualCount}
+            </Badge>
+            <Badge className="border-chart-3/30 bg-chart-3/10 text-chart-3" variant="outline">
+              订阅源 {sourceCount}
+            </Badge>
+            <Badge className="border-chart-4/30 bg-chart-4/10 text-chart-4" variant="outline">
+              分组 {groupCount}
+            </Badge>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge className="border-chart-2/30 bg-chart-2/10 text-chart-2" variant="outline">
-            手动 {manualCount}
-          </Badge>
-          <Badge className="border-chart-3/30 bg-chart-3/10 text-chart-3" variant="outline">
-            订阅源 {sourceCount}
-          </Badge>
-          <Badge className="border-chart-4/30 bg-chart-4/10 text-chart-4" variant="outline">
-            分组 {groupCount}
-          </Badge>
-        </div>
+        <p className="text-xs leading-5 text-muted-foreground">手动节点和订阅源节点统一维护，后续令牌可以按节点范围自由定制输出。</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <NodeSummaryCard icon={Server} label="节点总数" tone="primary" value={nodes.length} />
         <NodeSummaryCard icon={CheckCircle2} label="启用节点" tone="success" value={enabledCount} />
         <NodeSummaryCard icon={Layers3} label="协议类型" tone="cyan" value={protocolCount} />
@@ -142,14 +150,14 @@ function NodeSummary({ filteredCount, nodes, selectedCount }: { filteredCount: n
 
 function NodeSummaryCard({ icon: Icon, label, tone, value }: { icon: LucideIcon; label: string; tone: NodeSummaryTone; value: number | string }) {
   return (
-    <div className="flex min-h-32 flex-col justify-between gap-3 rounded-lg border bg-background/70 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium text-muted-foreground">{label}</span>
-        <span className={`rounded-md border p-2 ${summaryToneClasses[tone]}`}>
-          <Icon />
-        </span>
+    <div className="flex min-h-20 items-center gap-3 rounded-lg border bg-background/70 p-3">
+      <span className={`rounded-md border p-2 ${summaryToneClasses[tone]}`}>
+        <Icon />
+      </span>
+      <div className="grid min-w-0 flex-1 gap-1">
+        <span className="truncate text-xs font-medium text-muted-foreground">{label}</span>
+        <strong className="font-mono text-xl leading-none">{value}</strong>
       </div>
-      <strong className="font-mono text-3xl leading-none">{value}</strong>
     </div>
   );
 }

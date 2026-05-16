@@ -3,9 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { NodeBatchActionInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
 import { batchNodes, createNode, deleteNode, listNodeGroups, listNodes, updateNode } from "./api";
 import { initialNodeBatchFormState, initialNodeEditFormState, initialNodeFormState } from "./types";
-import { filterNodes, formatGroups, nodeProtocols, parseGroups, toggleSelectedId, toggleVisibleSelection } from "./utils";
+import { filterNodes, nodeProtocols, splitNodeGroups, toggleSelectedId, toggleVisibleSelection } from "./utils";
 
-const NODE_PAGE_SIZE = 6;
+const nodePageSizeOptions = [10, 20, 30, 40, 50, 70, 100] as const;
+const defaultNodePageSize = nodePageSizeOptions[0];
 
 export function useNodesPage() {
   const queryClient = useQueryClient();
@@ -14,30 +15,38 @@ export function useNodesPage() {
   const [batchForm, setBatchForm] = useState(initialNodeBatchFormState);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
-  const [groupFilter, setGroupFilter] = useState("all");
+  const [groupFilters, setGroupFilters] = useState<string[]>([]);
+  const [includeUngrouped, setIncludeUngrouped] = useState(false);
   const [protocolFilter, setProtocolFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(defaultNodePageSize);
   const [notice, setNotice] = useState<{ id: number; message: string } | null>(null);
   const noticeIdRef = useRef(0);
   const query = useQuery({ queryKey: ["nodes"], queryFn: listNodes, retry: false });
   const groupsQuery = useQuery({ queryKey: ["node-groups"], queryFn: listNodeGroups, retry: false });
   const nodes = query.data?.items ?? [];
-  const groups = groupsQuery.data?.groups ?? [];
+  const groups = useMemo(
+    () => splitNodeGroups(groupsQuery.data?.groups ?? []).sort((a, b) => a.localeCompare(b)),
+    [groupsQuery.data?.groups]
+  );
   const protocols = useMemo(() => nodeProtocols(nodes), [nodes]);
-  const filteredNodes = useMemo(() => filterNodes(nodes, groupFilter, protocolFilter, searchQuery), [groupFilter, nodes, protocolFilter, searchQuery]);
-  const pageCount = Math.max(1, Math.ceil(filteredNodes.length / NODE_PAGE_SIZE));
+  const filteredNodes = useMemo(
+    () => filterNodes(nodes, groupFilters, includeUngrouped, protocolFilter, searchQuery),
+    [groupFilters, includeUngrouped, nodes, protocolFilter, searchQuery]
+  );
+  const pageCount = Math.max(1, Math.ceil(filteredNodes.length / pageSize));
   const paginatedNodes = useMemo(() => {
-    const start = (currentPage - 1) * NODE_PAGE_SIZE;
+    const start = (currentPage - 1) * pageSize;
 
-    return filteredNodes.slice(start, start + NODE_PAGE_SIZE);
-  }, [currentPage, filteredNodes]);
+    return filteredNodes.slice(start, start + pageSize);
+  }, [currentPage, filteredNodes, pageSize]);
   const visibleNodeIds = useMemo(() => paginatedNodes.map((node) => node.id), [paginatedNodes]);
   const allVisibleSelected = visibleNodeIds.length > 0 && visibleNodeIds.every((id) => selectedNodeIds.includes(id));
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [groupFilter, protocolFilter, searchQuery]);
+  }, [groupFilters, includeUngrouped, protocolFilter, searchQuery]);
 
   useEffect(() => {
     setCurrentPage((current) => Math.min(Math.max(current, 1), pageCount));
@@ -102,7 +111,7 @@ export function useNodesPage() {
     setEditingNodeId(node.id);
     setEditForm({
       name: node.name,
-      groups: formatGroups(node.groups),
+      groups: splitNodeGroups(node.groups),
       uri: node.uri ?? "",
       enabled: Boolean(node.enabled),
       configJson: JSON.stringify(node.config ?? {}, null, 2)
@@ -121,7 +130,7 @@ export function useNodesPage() {
       id: node.id,
       input: {
         name: editForm.name.trim() || node.name,
-        groups: parseGroups(editForm.groups),
+        groups: editForm.groups,
         uri: editForm.uri.trim() && editForm.uri.trim() !== (node.uri ?? "") ? editForm.uri.trim() : undefined,
         enabled: editForm.enabled,
         config: config.value
@@ -134,7 +143,7 @@ export function useNodesPage() {
       return;
     }
 
-    const groups = parseGroups(batchForm.groups);
+    const groups = batchForm.groups;
     if (action === "append-groups" && groups.length === 0) {
       pushNotice("请输入要追加的分组");
       return;
@@ -162,25 +171,33 @@ export function useNodesPage() {
     setSelectedNodeIds((current) => toggleVisibleSelection(current, visibleNodeIds, checked));
   };
 
-    return {
-      allVisibleSelected,
-      batchGroups: batchForm.groups,
-      currentPage,
-      editForm,
-      editingNodeId,
-      emptyLabel,
-      error,
-      filteredNodes,
+  const changePageSize = (value: number) => {
+    setPageSize(value);
+    setCurrentPage(1);
+  };
+
+  return {
+    allVisibleSelected,
+    batchGroups: batchForm.groups,
+    currentPage,
+    editForm,
+    editingNodeId,
+    emptyLabel,
+    error,
+    filteredNodes,
     form,
-    groupFilter,
+    groupFilters,
     groups,
-      nodes,
-      notice,
-      pageCount,
-      paginatedNodes,
-      pending,
-      protocolFilter,
-      protocols,
+    includeUngrouped,
+    nodes,
+    notice,
+    pageCount,
+    pageSize,
+    pageSizeOptions: nodePageSizeOptions,
+    paginatedNodes,
+    pending,
+    protocolFilter,
+    protocols,
     searchQuery,
     selectedNodeIds,
     createNode: createMutation.mutate,
@@ -189,17 +206,23 @@ export function useNodesPage() {
     resetEdit,
     runBatchAction,
     saveEdit,
-      setBatchGroups: (value: string) => setBatchForm({ groups: value }),
-      setEditForm,
-      setForm,
-      setGroupFilter,
-      setProtocolFilter,
-      setSearchQuery,
-      setCurrentPage,
-      startEdit,
-      toggleEnabled: (node: NodeDto) => updateMutation.mutate({ id: node.id, input: { enabled: !node.enabled } }),
-      toggleSelected,
+    setBatchGroups: (value: string[]) => setBatchForm({ groups: value }),
+    setCurrentPage,
+    setEditForm,
+    setForm,
+    setGroupFilters,
+    setIncludeUngrouped,
+    setPageSize: changePageSize,
+    setProtocolFilter,
+    setSearchQuery,
+    startEdit,
+    toggleEnabled: (node: NodeDto) => updateMutation.mutate({ id: node.id, input: { enabled: !node.enabled } }),
+    toggleSelected,
     toggleVisible,
+    clearGroupFilters: () => {
+      setGroupFilters([]);
+      setIncludeUngrouped(false);
+    },
     clearSelection: () => setSelectedNodeIds([])
   };
 

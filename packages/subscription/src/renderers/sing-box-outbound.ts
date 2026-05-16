@@ -66,8 +66,14 @@ function createOutbound(parsed: Record<string, unknown>, tag: string, server: st
         server,
         server_port: serverPort,
         auth: stringValue(parsed.auth) ?? stringValue(parsed["auth-str"]),
+        auth_str: stringValue(parsed["auth-str"]),
+        obfs: stringValue(parsed.obfs),
+        network: stringValue(parsed.protocol),
         up: stringValue(parsed.up),
-        down: stringValue(parsed.down)
+        up_mbps: numberLike(parsed.up),
+        down: stringValue(parsed.down),
+        down_mbps: numberLike(parsed.down),
+        hop_interval: stringValue(parsed["hop-interval"])
       });
     case "hysteria2":
       return withTls(parsed, {
@@ -75,7 +81,17 @@ function createOutbound(parsed: Record<string, unknown>, tag: string, server: st
         tag,
         server,
         server_port: serverPort,
-        password: stringValue(parsed.password)
+        password: stringValue(parsed.password),
+        up_mbps: numberLike(parsed.up),
+        down_mbps: numberLike(parsed.down),
+        network: stringValue(parsed.protocol),
+        hop_interval: stringValue(parsed["hop-interval"]),
+        obfs: stringValue(parsed.obfs)
+          ? {
+              type: stringValue(parsed.obfs),
+              password: stringValue(parsed["obfs-password"])
+            }
+          : undefined
       });
     case "tuic":
       return withTls(parsed, {
@@ -113,4 +129,17 @@ function createOutbound(parsed: Record<string, unknown>, tag: string, server: st
     default:
       return null;
   }
+}
+
+function numberLike(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
 }

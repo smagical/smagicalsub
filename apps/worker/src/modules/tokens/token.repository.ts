@@ -32,6 +32,8 @@ export async function createSubscribeToken(db: D1Database, input: CreateSubscrib
     )
     .run();
 
+  await replaceSubscribeTokenModules(db, id, input.module_bindings);
+
   return findSubscribeTokenById(db, id);
 }
 
@@ -64,7 +66,39 @@ export async function updateSubscribeToken(db: D1Database, id: string, input: Up
     )
     .run();
 
+  if (input.module_bindings !== undefined) {
+    await replaceSubscribeTokenModules(db, id, input.module_bindings);
+  }
+
   return findSubscribeTokenById(db, id, scope);
+}
+
+async function replaceSubscribeTokenModules(
+  db: D1Database,
+  tokenId: string,
+  bindings: Array<{ format: string; module_id: string; type: string }> | undefined
+) {
+  await db.prepare(`DELETE FROM subscribe_token_modules WHERE token_id = ?1`).bind(tokenId).run();
+
+  for (const binding of dedupeModuleBindings(bindings ?? [])) {
+    await db
+      .prepare(
+        `INSERT INTO subscribe_token_modules (token_id, module_id, format, type)
+         VALUES (?1, ?2, ?3, ?4)`
+      )
+      .bind(tokenId, binding.module_id, binding.format, binding.type)
+      .run();
+  }
+}
+
+function dedupeModuleBindings(bindings: Array<{ format: string; module_id: string; type: string }>) {
+  const unique = new Map<string, { format: string; module_id: string; type: string }>();
+
+  for (const binding of bindings) {
+    unique.set(`${binding.format}:${binding.type}`, binding);
+  }
+
+  return Array.from(unique.values());
 }
 
 function normalizeCustomPath(value: string | null | undefined) {

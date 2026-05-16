@@ -1,20 +1,7 @@
 import type { NodeDto } from "@smagicalsub/shared";
 import { downloadCsv } from "../../lib/download-csv";
 
-export function parseGroups(value: string) {
-  return Array.from(
-    new Set(
-      value
-        .split(",")
-        .map((group) => group.trim())
-        .filter(Boolean)
-    )
-  );
-}
-
-export function formatGroups(groups: string[]) {
-  return groups.join(",");
-}
+export const UNGROUPED_GROUP_LABEL = "无分组";
 
 export function toNodesCsvRows(nodes: NodeDto[]) {
   const header = ["名称", "协议", "服务端", "端口", "分组", "状态", "来源类型"];
@@ -23,7 +10,7 @@ export function toNodesCsvRows(nodes: NodeDto[]) {
     node.protocol,
     node.server,
     node.port,
-    node.groups.join(","),
+    splitNodeGroups(node.groups).join(","),
     node.enabled ? "启用" : "停用",
     node.source_id ? "订阅源" : "手动"
   ]);
@@ -39,12 +26,45 @@ export function nodeProtocols(nodes: NodeDto[]) {
   return Array.from(new Set(nodes.map((node) => node.protocol))).sort((a, b) => a.localeCompare(b));
 }
 
-export function filterNodes(nodes: NodeDto[], groupFilter: string, protocolFilter: string, searchQuery: string) {
+export function splitNodeGroups(groups: string[]) {
+  const normalizedGroups: string[] = [];
+  const seen = new Set<string>();
+
+  for (const group of groups) {
+    for (const segment of group.split(/[\r\n,，;；]+/g)) {
+      const value = segment.trim();
+
+      if (!value || seen.has(value)) {
+        continue;
+      }
+
+      seen.add(value);
+      normalizedGroups.push(value);
+    }
+  }
+
+  return normalizedGroups;
+}
+
+export function filterNodes(
+  nodes: NodeDto[],
+  groupFilters: string[],
+  includeUngrouped: boolean,
+  protocolFilter: string,
+  searchQuery: string
+) {
   const normalizedSearch = searchQuery.trim().toLowerCase();
-  const grouped =
-    groupFilter === "all"
-      ? nodes
-      : nodes.filter((node) => (groupFilter === "default" ? node.groups.length === 0 : node.groups.includes(groupFilter)));
+  const hasGroupFilters = includeUngrouped || groupFilters.length > 0;
+  const groupFilterSet = new Set(groupFilters);
+  const grouped = !hasGroupFilters
+    ? nodes
+    : nodes.filter((node) => {
+        const nodeGroups = splitNodeGroups(node.groups);
+        const matchesUngrouped = includeUngrouped && nodeGroups.length === 0;
+        const matchesGroup = groupFilterSet.size > 0 && nodeGroups.some((group) => groupFilterSet.has(group));
+
+        return matchesUngrouped || matchesGroup;
+      });
   const protocolNodes = protocolFilter === "all" ? grouped : grouped.filter((node) => node.protocol === protocolFilter);
 
   if (!normalizedSearch) {
@@ -52,7 +72,7 @@ export function filterNodes(nodes: NodeDto[], groupFilter: string, protocolFilte
   }
 
   return protocolNodes.filter((node) =>
-    [node.name, node.protocol, node.server ?? "", String(node.port ?? ""), ...node.groups].some((value) =>
+    [node.name, node.protocol, node.server ?? "", String(node.port ?? ""), ...splitNodeGroups(node.groups)].some((value) =>
       value.toLowerCase().includes(normalizedSearch)
     )
   );

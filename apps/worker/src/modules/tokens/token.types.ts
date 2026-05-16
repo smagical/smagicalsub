@@ -7,6 +7,8 @@ export type SubscribeTokenRow = {
   custom_path: string | null;
   node_ids_json: string;
   node_ids: string[];
+  module_bindings_json: string | null;
+  module_bindings: Array<{ format: string; module_id: string; type: string }>;
   name: string;
   enabled: number;
   expires_at: string | null;
@@ -21,6 +23,8 @@ export type ActiveSubscribeTokenRow = {
   custom_path: string | null;
   node_ids_json: string;
   node_ids: string[];
+  module_bindings_json: string | null;
+  module_bindings: Array<{ format: string; module_id: string; type: string }>;
   name: string;
   profile_id: string | null;
   profile_name: string | null;

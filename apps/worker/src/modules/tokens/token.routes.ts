@@ -6,11 +6,13 @@ import type { AppContext } from "../../env";
 import { ownerScope, type OwnerScope } from "../../lib/auth-scope";
 import { listResponse } from "../../lib/list-response";
 import { countNodesByIds } from "../nodes/node.repository";
+import { countProfileModulesByIds } from "../profile-modules/profile-module.repository";
 import { findProfileById } from "../profiles/profile.repository";
 import { deleteGeneratedSubscriptionCacheKeys } from "../subscribe/subscribe-cache";
 import {
   createSubscribeToken,
   deleteSubscribeToken,
+  findSubscribeTokenById,
   findSubscribeTokenPathConflict,
   listSubscribeTokens,
   resetSubscribeToken,
@@ -40,6 +42,11 @@ tokenRoutes.post("/", zValidator("json", createSubscribeTokenSchema), async (c) 
   if (invalidNodes) {
     return invalidNodes;
   }
+  const invalidModules = await validateModuleScope(c.env.DB, input.module_bindings, scope);
+
+  if (invalidModules) {
+    return invalidModules;
+  }
   const pathConflict = await validateCustomPath(c.env.DB, input.custom_path);
 
   if (pathConflict) {
@@ -63,10 +70,21 @@ tokenRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json",
   if (invalidNodes) {
     return invalidNodes;
   }
+  const invalidModules = await validateModuleScope(c.env.DB, input.module_bindings, scope);
+
+  if (invalidModules) {
+    return invalidModules;
+  }
   const pathConflict = await validateCustomPath(c.env.DB, input.custom_path, c.req.valid("param").id);
 
   if (pathConflict) {
     return pathConflict;
+  }
+
+  const currentToken = await findSubscribeTokenById(c.env.DB, c.req.valid("param").id, scope);
+
+  if (!currentToken) {
+    return c.json(failure({ code: "TOKEN_NOT_FOUND", message: "订阅令牌不存在" }), 404);
   }
 
   const token = await updateSubscribeToken(c.env.DB, c.req.valid("param").id, input, scope);
@@ -75,7 +93,7 @@ tokenRoutes.patch("/:id", zValidator("param", idParamSchema), zValidator("json",
     return c.json(failure({ code: "TOKEN_NOT_FOUND", message: "订阅令牌不存在" }), 404);
   }
 
-  await deleteGeneratedSubscriptionCacheKeys(c.env.KV, [token.token, token.custom_path]);
+  await deleteGeneratedSubscriptionCacheKeys(c.env.KV, [currentToken.token, currentToken.custom_path, token.token, token.custom_path]);
   return c.json(success(token));
 });
 
@@ -139,6 +157,25 @@ async function validateCustomPath(db: D1Database, customPath: string | null | un
 
   if (conflictId) {
     return Response.json(failure({ code: "TOKEN_PATH_CONFLICT", message: "订阅路径已被其他令牌使用" }), { status: 409 });
+  }
+
+  return null;
+}
+
+async function validateModuleScope(
+  db: D1Database,
+  moduleBindings: Array<{ module_id: string }> | undefined,
+  scope: OwnerScope
+) {
+  if (!moduleBindings?.length) {
+    return null;
+  }
+
+  const moduleIds = Array.from(new Set(moduleBindings.map((binding) => binding.module_id)));
+  const actualCount = await countProfileModulesByIds(db, moduleIds, scope);
+
+  if (actualCount !== moduleIds.length) {
+    return Response.json(failure({ code: "PROFILE_MODULE_SCOPE_INVALID", message: "令牌模块包含不可用配置模块" }), { status: 404 });
   }
 
   return null;

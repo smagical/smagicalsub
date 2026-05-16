@@ -1,11 +1,14 @@
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import type { ProfileRuleDto } from "@smagicalsub/shared";
+import type { ProfileRuleDto, ProfileRuleFormat } from "@smagicalsub/shared";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "../../shared/StatusBadge";
 import { ProfileRuleActions } from "./ProfileRuleActions";
 import type { ProfileRuleEditFormState } from "./types";
+import { profileRuleFormats } from "./utils";
 
 type ProfileRulesTableProps = {
   editForm: ProfileRuleEditFormState;
@@ -50,6 +53,7 @@ export function ProfileRulesTable({
         <TableHeader>
           <TableRow className="bg-muted/60">
             <TableHead className="w-[84px]">排序</TableHead>
+            <TableHead className="w-[128px]">格式</TableHead>
             <TableHead>规则</TableHead>
             <TableHead className="w-[92px]">状态</TableHead>
             <TableHead className="w-[260px]">操作</TableHead>
@@ -68,9 +72,27 @@ export function ProfileRulesTable({
                       <span className="rounded-md border bg-background px-2 py-1 font-mono text-xs text-muted-foreground">#{rule.position}</span>
                     )}
                 </TableCell>
+                <TableCell className="py-2">
+                  {editing ? (
+                    <NativeSelect
+                      aria-label="规则格式"
+                      disabled={pending}
+                      onChange={(event) => onEditFormChange({ ...editForm, format: event.target.value as ProfileRuleFormat })}
+                      value={editForm.format}
+                    >
+                      {profileRuleFormats.map((format) => (
+                        <option key={format.value} value={format.value}>
+                          {format.label}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  ) : (
+                    <RuleFormatBadge format={rule.format} />
+                  )}
+                </TableCell>
                 <TableCell className="min-w-[280px] whitespace-normal py-2">
                   {editing
-                    ? editInput("规则内容", editForm.rule, pending, (value) => onEditFormChange({ ...editForm, rule: value }), "text")
+                    ? ruleEditor(editForm, pending, onEditFormChange)
                     : (
                       <span className="block whitespace-normal break-all font-mono text-xs leading-5 text-foreground" title={rule.rule}>
                         {rule.rule}
@@ -102,6 +124,26 @@ export function ProfileRulesTable({
       </Table>
     </div>
   );
+}
+
+function RuleFormatBadge({ format }: { format: ProfileRuleFormat }) {
+  const item = profileRuleFormats.find((entry) => entry.value === format) ?? profileRuleFormats[0];
+
+  return (
+    <Badge className={cn("whitespace-nowrap", format === "common" && "border-chart-2/30 bg-chart-2/10 text-chart-2")} variant={format === "common" ? "outline" : "secondary"}>
+      {item.label}
+    </Badge>
+  );
+}
+
+function ruleEditor(editForm: ProfileRuleEditFormState, pending: boolean, onEditFormChange: (form: ProfileRuleEditFormState) => void) {
+  if (editForm.format === "sing-box" || editForm.format === "xray") {
+    return editInput("JSON 规则内容", editForm.content, pending, (content) => {
+      onEditFormChange({ ...editForm, content, rule: content.trim() });
+    }, "text");
+  }
+
+  return editInput("规则内容", editForm.rule, pending, (rule) => onEditFormChange({ ...editForm, rule }), "text");
 }
 
 function editInput(label: string, value: string, pending: boolean, onChange: (value: string) => void, type: "number" | "text") {

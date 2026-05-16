@@ -10,7 +10,7 @@ import { SubscriptionPreviewBlock } from "./SubscriptionPreviewBlock";
 import { TokenOutputDiagnosticsPanel } from "./TokenOutputDiagnosticsPanel";
 import type { SubscriptionHealthResult } from "./subscriptionHealth";
 import type { TokenSubscriptionFormat } from "./types";
-import { tokenFormatHints, tokenSubscriptionFormats } from "./types";
+import { tokenSubscriptionFormats } from "./types";
 import type { TokenOutputDiagnostics } from "./useTokenOutputDiagnostics";
 import { subscriptionFormatLinks, subscriptionFormatPath } from "./subscriptionOutput";
 
@@ -76,7 +76,7 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
           </div>
           <div className="flex flex-wrap items-center gap-2">{metaBadges(props.token)}</div>
         </div>
-        <div className="grid content-start gap-2 rounded-xl border bg-muted/35 p-3">
+        <div className="grid self-start rounded-xl border bg-muted/35 p-2.5">
           <div className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
               <ShieldCheck />
@@ -84,28 +84,20 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
             </span>
             <SubscriptionHealthStatus pending={props.healthCheckPending} result={props.healthCheckResult} />
           </div>
-          <div className="flex flex-wrap items-center gap-2">{actionButtons(props, previewReady)}</div>
+          <div className="mt-2 grid grid-cols-2 gap-1.5">{actionButtons(props, previewReady)}</div>
         </div>
       </div>
-      <Separator className="my-4" />
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(240px,0.68fr)]">
-        <div className="grid gap-2">
-          <div className="rounded-xl border bg-muted/30 px-3 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <Link2 />
-                当前订阅路径
-              </p>
-            </div>
-            <p className="break-all font-mono text-sm text-foreground">{subscriptionFormatPath(props.token.token, props.copyFormat, props.token.custom_path)}</p>
-          </div>
-          <p className="text-sm text-muted-foreground">{tokenFormatHints[props.copyFormat]}</p>
+      <Separator className="my-3" />
+      <div className="rounded-xl border bg-muted/30 px-3 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Link2 />
+            当前订阅路径
+          </p>
         </div>
-        <div className="grid gap-2 rounded-xl border bg-background/90 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">快速提示</p>
-          <p className="text-sm text-muted-foreground">路径为空时使用系统生成地址，填写后会覆盖默认订阅路径。</p>
-          <p className="text-sm text-muted-foreground">节点为空时输出全部启用节点，选择部分节点后只输出所选内容。</p>
-        </div>
+        <p className="break-all font-mono text-sm text-foreground">
+          {subscriptionFormatPath(props.token.token, props.copyFormat, props.token.custom_path)}
+        </p>
       </div>
       {props.previewError ? <p className="mt-3 text-sm text-destructive">{props.previewError}</p> : null}
       <TokenOutputDiagnosticsPanel diagnostics={props.diagnostics} />
@@ -124,7 +116,7 @@ export function SubscriptionOutputCenter(props: SubscriptionOutputCenterProps) {
 function formatBadges(token: SubscribeTokenDto) {
   return subscriptionFormatLinks(token.token, token.custom_path).map((link) => (
     <Badge key={link.value} variant="secondary">
-      {link.label} .{link.extension}
+      {link.label}
     </Badge>
   ));
 }
@@ -142,27 +134,27 @@ function metaBadges(token: SubscribeTokenDto) {
 function actionButtons(props: SubscriptionOutputCenterProps, previewReady: boolean) {
   return (
     <>
-      <Button onClick={() => props.onCopy(props.token)} size="sm" type="button" variant="outline">
+      <Button className="justify-start px-2" onClick={() => props.onCopy(props.token)} size="sm" type="button" variant="outline">
         <Copy data-icon="inline-start" />
         复制当前格式
       </Button>
-      <Button onClick={() => props.onCopyAllFormats(props.token)} size="sm" type="button" variant="secondary">
+      <Button className="justify-start px-2" onClick={() => props.onCopyAllFormats(props.token)} size="sm" type="button" variant="secondary">
         <Copy data-icon="inline-start" />
         复制全部格式
       </Button>
-      <Button disabled={props.previewPending} onClick={() => props.onPreview(props.token)} size="sm" type="button" variant="outline">
+      <Button className="justify-start px-2" disabled={props.previewPending} onClick={() => props.onPreview(props.token)} size="sm" type="button" variant="outline">
         <FileText data-icon="inline-start" />
         {props.previewPending ? "加载中" : "加载预览"}
       </Button>
-      <Button disabled={props.healthCheckPending} onClick={() => props.onHealthCheck(props.token)} size="sm" type="button" variant="outline">
+      <Button className="justify-start px-2" disabled={props.healthCheckPending} onClick={() => props.onHealthCheck(props.token)} size="sm" type="button" variant="outline">
         <Activity data-icon="inline-start" />
         {props.healthCheckPending ? "检查中" : "健康检查"}
       </Button>
-      <Button disabled={!previewReady} onClick={() => props.onDownloadPreview(props.token)} size="sm" type="button" variant="outline">
+      <Button className="justify-start px-2" disabled={!previewReady} onClick={() => props.onDownloadPreview(props.token)} size="sm" type="button" variant="outline">
         <Download data-icon="inline-start" />
         下载预览
       </Button>
-      <Button onClick={() => props.onOpen(props.token)} size="sm" type="button" variant="ghost">
+      <Button className="justify-start px-2" onClick={() => props.onOpen(props.token)} size="sm" type="button" variant="ghost">
         <ExternalLink data-icon="inline-start" />
         打开预览
       </Button>

@@ -65,8 +65,24 @@ export const profileRules = sqliteTable("profile_rules", {
   id: text("id").primaryKey(),
   profileId: text("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
   position: integer("position").notNull(),
+  format: text("format").notNull().default("common"),
   rule: text("rule").notNull(),
+  contentJson: text("content_json").notNull().default("{}"),
   enabled: integer("enabled").notNull().default(1)
+});
+
+export const profileModules = sqliteTable("profile_modules", {
+  id: text("id").primaryKey(),
+  ownerId: text("owner_id").references(() => users.id, { onDelete: "cascade" }),
+  profileId: text("profile_id").references(() => profiles.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  format: text("format").notNull(),
+  type: text("type").notNull().default("advanced-override"),
+  contentJson: text("content_json").notNull().default("{}"),
+  enabled: integer("enabled").notNull().default(1),
+  isDefault: integer("is_default").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`)
 });
 
 export const subscribeTokens = sqliteTable("subscribe_tokens", {
@@ -81,6 +97,13 @@ export const subscribeTokens = sqliteTable("subscribe_tokens", {
   expiresAt: text("expires_at"),
   lastUsedAt: text("last_used_at"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const subscribeTokenModules = sqliteTable("subscribe_token_modules", {
+  tokenId: text("token_id").notNull().references(() => subscribeTokens.id, { onDelete: "cascade" }),
+  moduleId: text("module_id").notNull().references(() => profileModules.id, { onDelete: "cascade" }),
+  format: text("format").notNull(),
+  type: text("type").notNull().default("advanced-override")
 });
 
 export const refreshJobs = sqliteTable("refresh_jobs", {

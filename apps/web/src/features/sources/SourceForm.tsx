@@ -6,22 +6,24 @@ import type { CreateSubscriptionSourceInput } from "@smagicalsub/shared";
 import { CheckboxField } from "../../shared/CheckboxField";
 import { FilterField } from "../../shared/FilterField";
 import { FormGrid } from "../../shared/FormGrid";
+import { TagInput } from "../../shared/TagInput";
 import type { SourceFormState } from "./types";
 
 type SourceFormProps = {
   className?: string;
   form: SourceFormState;
+  groups: string[];
   pending: boolean;
   setForm: Dispatch<SetStateAction<SourceFormState>>;
   onSubmit: (value: CreateSubscriptionSourceInput) => void;
 };
 
-export function SourceForm({ className, form, pending, setForm, onSubmit }: SourceFormProps) {
+export function SourceForm({ className, form, groups, pending, setForm, onSubmit }: SourceFormProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onSubmit({
       enabled: form.enabled,
-      groups: parseSourceGroups(form.groups),
+      groups: form.groups,
       name: form.name,
       refresh_interval_minutes: normalizedInterval(form.refresh_interval_minutes),
       url: form.url
@@ -51,11 +53,11 @@ export function SourceForm({ className, form, pending, setForm, onSubmit }: Sour
         />
       </FilterField>
       <FilterField className="min-w-0" label="默认分组">
-        <Input
-          className="truncate"
-          onChange={(event) => setForm((current) => ({ ...current, groups: event.target.value }))}
-          placeholder="Proxy,Media"
-          type="text"
+        <TagInput
+          ariaLabel="默认分组"
+          onChange={(groups) => setForm((current) => ({ ...current, groups }))}
+          placeholder="回车添加分组"
+          suggestions={groups}
           value={form.groups}
         />
       </FilterField>
@@ -96,19 +98,4 @@ export const refreshIntervalOptions = [
 export function normalizedInterval(value: string) {
   const minutes = Number(value);
   return Number.isFinite(minutes) ? minutes : 0;
-}
-
-export function parseSourceGroups(value: string) {
-  return Array.from(
-    new Set(
-      value
-        .split(",")
-        .map((group) => group.trim())
-        .filter(Boolean)
-    )
-  );
-}
-
-export function formatSourceGroups(groups: string[]) {
-  return groups.join(",");
 }

@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { FilterField } from "../../shared/FilterField";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { TagInput } from "../../shared/TagInput";
 import { SourceActions } from "./SourceActions";
 import { normalizedInterval, refreshIntervalOptions } from "./SourceForm";
 import type { SourceEditFormState } from "./types";
@@ -24,6 +25,7 @@ import type { SourceEditFormState } from "./types";
 type SourcesTableProps = {
   editForm: SourceEditFormState;
   editingSourceId: string | null;
+  groups: string[];
   pending: boolean;
   sources: SourceDto[];
   onCancelEdit: () => void;
@@ -38,6 +40,7 @@ type SourcesTableProps = {
 export function SourcesTable({
   editForm,
   editingSourceId,
+  groups,
   pending,
   sources,
   onCancelEdit,
@@ -68,6 +71,7 @@ export function SourcesTable({
 
       <SourceEditDialog
         editForm={editForm}
+        groups={groups}
         pending={pending}
         source={editingSource}
         onCancelEdit={onCancelEdit}
@@ -189,6 +193,7 @@ function FetchResultLines({ source }: { source: SourceDto }) {
 
 function SourceEditDialog({
   editForm,
+  groups,
   pending,
   source,
   onCancelEdit,
@@ -196,6 +201,7 @@ function SourceEditDialog({
   onSaveEdit
 }: {
   editForm: SourceEditFormState;
+  groups: string[];
   pending: boolean;
   source: SourceDto | null;
   onCancelEdit: () => void;
@@ -236,14 +242,14 @@ function SourceEditDialog({
             </FilterField>
           </div>
           <FilterField className="min-w-0" label="默认分组">
-            <Input
-              aria-label="订阅源默认分组"
-              disabled={pending}
-              onChange={(event) => onEditFormChange({ ...editForm, groups: event.target.value })}
-              placeholder="Proxy,Media"
-              type="text"
-              value={editForm.groups}
-            />
+          <TagInput
+            ariaLabel="订阅源默认分组"
+            disabled={pending}
+            onChange={(groups) => onEditFormChange({ ...editForm, groups })}
+            placeholder="回车添加分组"
+            suggestions={groups}
+            value={editForm.groups}
+          />
           </FilterField>
           <FilterField className="min-w-0" label="订阅链接">
             <Input

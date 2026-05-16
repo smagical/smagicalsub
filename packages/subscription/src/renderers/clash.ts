@@ -1,5 +1,7 @@
 import YAML from "yaml";
 import type { RenderSubscriptionBaseInput, RenderableNode } from "./types";
+import { mergeConfig, moduleOverridesFor } from "./modules";
+import { textRulesForFormat } from "./rules";
 import { defaultGroupName, getNodeConfig, renderGroupName, stripInternalFields, uniqueStrings } from "./utils";
 
 export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
@@ -14,9 +16,10 @@ export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
   const proxyNames = proxies.map((proxy) => String(proxy.name));
   const primaryProxyGroup = input.defaultStrategy ?? "Proxy";
   const proxyGroups = buildProxyGroups(renderableNodes, primaryProxyGroup);
-  const rules = buildRules(input.rules ?? [], primaryProxyGroup);
+  const rules = buildRules(textRulesForFormat(input.profileRules, "clash"), primaryProxyGroup);
 
-  const config = {
+  const config = mergeConfig(
+    {
     "mixed-port": 7890,
     "allow-lan": false,
     mode: "rule",
@@ -24,7 +27,9 @@ export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
     proxies,
     "proxy-groups": proxyGroups.length > 0 ? proxyGroups : [createProxyGroup(primaryProxyGroup, proxyNames)],
     rules
-  };
+    },
+    moduleOverridesFor(input.modules, "clash")
+  );
 
   return `# ${input.profileName}\n${YAML.stringify(config)}`;
 }

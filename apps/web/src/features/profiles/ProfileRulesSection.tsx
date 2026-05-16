@@ -7,12 +7,13 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import type { ProfileDto, ProfileRuleDto } from "@smagicalsub/shared";
+import type { CreateProfileRuleInput, ProfileDto, ProfileRuleDto } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageFeedback } from "../../shared/PageFeedback";
 import { createProfileRule, deleteProfileRule, listProfileRules, updateProfileRule } from "./api";
 import { ProfileRulesPanel } from "./ProfileRulesPanel";
 import { initialProfileRuleEditFormState, initialProfileRuleFormState } from "./types";
+import { parseRuleContent, toProfileRuleEditForm } from "./utils";
 
 type ProfileRulesSectionProps = {
   onClose: () => void;
@@ -42,7 +43,7 @@ export function ProfileRulesSection({ onClose, parentPending, profile, setNotice
   };
 
   const createRuleMutation = useMutation({
-    mutationFn: (value: { rule: string; position?: number; enabled: boolean }) => createProfileRule(profile?.id ?? "", value),
+    mutationFn: (value: CreateProfileRuleInput) => createProfileRule(profile?.id ?? "", value),
     onSuccess: async () => {
       setRuleForm(initialProfileRuleFormState);
       setNotice("规则已添加");
@@ -58,7 +59,9 @@ export function ProfileRulesSection({ onClose, parentPending, profile, setNotice
 
       for (const [index, rule] of newRules.entries()) {
         await createProfileRule(profile?.id ?? "", {
+          content: {},
           enabled: true,
+          format: "common",
           position: startPosition + index * 10,
           rule
         });
@@ -128,13 +131,15 @@ export function ProfileRulesSection({ onClose, parentPending, profile, setNotice
 
   function startEdit(rule: ProfileRuleDto) {
     setEditingRuleId(rule.id);
-    setEditForm({ rule: rule.rule, position: String(rule.position) });
+    setEditForm(toProfileRuleEditForm(rule));
   }
 
   function saveEdit(rule: ProfileRuleDto) {
     updateRuleMutation.mutate({
       ruleId: rule.id,
       input: {
+        content: parseRuleContent(editForm.content),
+        format: editForm.format,
         rule: editForm.rule.trim() || rule.rule,
         position: Number(editForm.position.trim() || rule.position)
       }
@@ -149,7 +154,7 @@ export function ProfileRulesSection({ onClose, parentPending, profile, setNotice
             <DialogTitle>规则编排</DialogTitle>
             <DialogDescription>正在维护「{profile.name}」的分流规则，添加、排序和编辑都在弹窗内完成。</DialogDescription>
           </DialogHeader>
-          <DialogBody className="max-h-[calc(92dvh-132px)] gap-3 border-0 bg-transparent p-0 shadow-none">
+          <DialogBody className="min-h-0 gap-3 border-0 bg-transparent p-0 shadow-none">
             <PageFeedback error={error} />
             <ProfileRulesPanel
               form={ruleForm}

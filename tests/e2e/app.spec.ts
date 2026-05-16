@@ -29,14 +29,36 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
 
   await page.getByRole("button", { exact: true, name: "订阅源" }).click();
   await expect(page.locator('[aria-label="订阅源列表"]')).toBeVisible();
+  await expect(page.getByLabel("订阅分页每页数量")).toHaveValue("10");
+  await expect(page.getByLabel("订阅分页跳转页码")).toBeVisible();
+  await page.getByLabel("订阅分页跳转页码").fill("2");
+  await page.getByRole("button", { name: "跳转" }).click();
+  await expect(page.getByText("第 2 / 2 页")).toBeVisible();
+  await expect(page.getByText("补充订阅源 9")).toBeVisible();
+  await page.getByLabel("订阅分页每页数量").selectOption("50");
+  await expect(page.getByLabel("订阅分页每页数量")).toHaveValue("50");
   await expect(page.getByText("主力订阅源")).toBeVisible();
   await expect(page.getByText("备用订阅源")).toBeVisible();
   await expectSourceCreateFormSingleRow(page.getByPlaceholder("我的订阅").locator("xpath=ancestor::form"));
+  const sourceGroupInput = page.getByPlaceholder("回车添加分组").first();
+  await sourceGroupInput.fill("Proxy");
+  await sourceGroupInput.press("Enter");
+  await sourceGroupInput.fill("Media");
+  await sourceGroupInput.press("Enter");
+  await expect(page.getByRole("button", { name: "删除分组 Proxy" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "删除分组 Media" })).toBeVisible();
 
   await page.getByRole("button", { exact: true, name: "节点" }).click();
   await expect(page.getByText("添加单个节点，按分组查看订阅源解析和手动维护的节点。")).toBeVisible();
   await expect(page.locator("header").getByText("控制面板", { exact: true })).toBeHidden();
   await expect(page.getByRole("button", { name: "添加节点" })).toBeVisible();
+  await expect(page.getByLabel("节点分页每页数量")).toHaveValue("10");
+  await expect(page.getByLabel("节点分页跳转页码")).toBeVisible();
+  await page.getByLabel("节点分页跳转页码").fill("2");
+  await page.getByRole("button", { name: "跳转" }).click();
+  await expect(page.getByText("第 2 / 2 页")).toBeVisible();
+  await page.getByLabel("节点分页每页数量").selectOption("70");
+  await expect(page.getByLabel("节点分页每页数量")).toHaveValue("70");
   await page.getByLabel("协议筛选").selectOption("vless");
   await expect(page.locator('[aria-label="节点 手动节点"]')).toBeVisible();
   await expect(page.locator('[aria-label="节点 订阅源节点"]')).toBeHidden();
@@ -49,6 +71,13 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
   await expect(editDialog).toBeVisible();
   await expect(editDialog.getByLabel("节点链接")).toContainText("vless://");
   await expect(editDialog.getByLabel("高级参数 JSON")).toContainText('"server": "manual.example.com"');
+  const editGroupInput = editDialog.getByPlaceholder("回车添加分组");
+  await editGroupInput.fill("Proxy");
+  await editGroupInput.press("Enter");
+  await editGroupInput.fill("Media");
+  await editGroupInput.press("Enter");
+  await expect(editDialog.getByRole("button", { name: "删除分组 Proxy" })).toBeVisible();
+  await expect(editDialog.getByRole("button", { name: "删除分组 Media" })).toBeVisible();
   await page.getByRole("button", { exact: true, name: "取消" }).click();
 });
 
@@ -86,12 +115,21 @@ test("builds profile rules from structured fields", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { exact: true, name: "配置档" }).click();
   await expect(page.getByText("配置档与规则编排")).toBeVisible();
-  await expect(page.getByText("当前规则面板：未选择配置档")).toBeVisible();
   await expect(page.getByText("新建配置档")).toBeVisible();
   await expect(page.getByRole("searchbox", { name: "搜索配置档" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "配置档列表" })).toBeVisible();
+  await expect(page.getByLabel("配置档分页每页数量")).toHaveValue("10");
+  await expect(page.getByLabel("配置档分页跳转页码")).toBeVisible();
+  await page.getByLabel("配置档分页跳转页码").fill("2");
+  await page.getByRole("button", { name: "跳转" }).click();
+  await expect(page.getByText("第 2 / 2 页")).toBeVisible();
+  await expect(page.getByText("扩展配置 10")).toBeVisible();
+  await page.getByLabel("配置档分页每页数量").selectOption("30");
+  await expect(page.getByLabel("配置档分页每页数量")).toHaveValue("30");
 
-  await page.getByRole("button", { exact: true, name: "编辑" }).click();
+  const defaultProfileRow = page.getByRole("row").filter({ hasText: "默认配置" }).first();
+
+  await defaultProfileRow.getByRole("button", { exact: true, name: "编辑" }).click();
   const editProfileDialog = page.getByRole("dialog", { name: "编辑配置档" });
   await expect(editProfileDialog).toBeVisible();
   await expect(editProfileDialog.getByLabel("配置档名称")).toHaveValue("默认配置");
@@ -99,7 +137,7 @@ test("builds profile rules from structured fields", async ({ page }) => {
   await editProfileDialog.getByRole("button", { name: "取消" }).click();
   await expect(editProfileDialog).toBeHidden();
 
-  await page.getByRole("button", { exact: true, name: "规则" }).click();
+  await defaultProfileRow.getByRole("button", { exact: true, name: "规则" }).click();
 
   const rulesDialog = page.getByRole("dialog", { name: "规则编排" });
   await expect(rulesDialog).toBeVisible();
@@ -167,7 +205,7 @@ test("shows subscription output center for tokens", async ({ page }) => {
 
   const clipboardText = await page.evaluate(() => window.__clipboardText);
   expect(clipboardText).toContain("Clash YAML: http://127.0.0.1:4173/sub/tok_e2e_backup?format=clash");
-  expect(clipboardText).toContain("v2rayN Base64: http://127.0.0.1:4173/sub/tok_e2e_backup?format=v2rayn");
+  expect(clipboardText).toContain("Base64: http://127.0.0.1:4173/sub/tok_e2e_backup?format=v2rayn");
   expect(clipboardText).toContain("sing-box JSON: http://127.0.0.1:4173/sub/tok_e2e_backup?format=sing-box");
   expect(clipboardText).toContain("Xray JSON: http://127.0.0.1:4173/sub/tok_e2e_backup?format=xray");
   await expect(page.getByText("全部格式订阅地址已复制")).toBeVisible();

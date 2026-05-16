@@ -41,7 +41,7 @@ function DialogContent({ children, className, ...props }: React.ComponentProps<t
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 grid w-[min(92vw,560px)] max-h-[88dvh] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-hidden rounded-xl border bg-card/95 p-5 text-card-foreground shadow-2xl ring-1 ring-primary/15 backdrop-blur",
+          "fixed left-1/2 top-1/2 z-50 grid w-[min(92vw,560px)] max-h-[88dvh] -translate-x-1/2 -translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-4 overflow-hidden rounded-xl border bg-card/95 p-5 text-card-foreground shadow-2xl ring-1 ring-primary/15 backdrop-blur",
           "before:absolute before:inset-x-0 before:top-0 before:h-1 before:bg-primary/70 before:content-['']",
           "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-open:slide-in-from-bottom-2",
           "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:slide-out-to-bottom-2",
@@ -69,14 +69,14 @@ function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-body"
-      className={cn("-mx-1 grid max-h-[min(62dvh,560px)] gap-3 overflow-auto rounded-lg border bg-background/55 p-3 shadow-inner", className)}
+      className={cn("-mx-1 grid min-h-0 gap-3 overflow-auto rounded-lg border bg-background/55 p-3 shadow-inner", className)}
       {...props}
     />
   );
 }
 
 function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="dialog-footer" className={cn("-mx-5 -mb-5 flex flex-wrap justify-end gap-2 border-t bg-muted/35 px-5 py-4", className)} {...props} />;
+  return <div data-slot="dialog-footer" className={cn("-mx-5 -mb-5 flex shrink-0 flex-wrap justify-end gap-2 border-t bg-muted/35 px-5 py-4", className)} {...props} />;
 }
 
 function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {

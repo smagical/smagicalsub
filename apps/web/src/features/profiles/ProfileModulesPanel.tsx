@@ -20,6 +20,7 @@ import type { CreateProfileModuleInput, ProfileDto, ProfileModuleDto, ProfileMod
 import type { LucideIcon } from "lucide-react";
 import { Cable, FileJson2, Globe2, Layers3, Plus, Save, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { FilterField } from "../../shared/FilterField";
+import { ConfigParameterTable } from "./ProfileParameterTable";
 
 type ProfileModulesPanelProps = {
   modules: ProfileModuleDto[];
@@ -65,6 +66,7 @@ const moduleTypes: Array<{ label: string; value: ProfileModuleType }> = [
   { label: "DNS 表单", value: "dns" },
   { label: "入站表单", value: "inbound" },
   { label: "TUN 模块", value: "tun" },
+  { label: "策略组模块", value: "policy-group" },
   { label: "规则集模块", value: "rule-provider" },
   { label: "代理集模块", value: "proxy-provider" },
   { label: "观测模块", value: "observatory" },
@@ -164,6 +166,11 @@ const xrayDomainStrategies = [
   { label: "AsIs", value: "AsIs" },
   { label: "IPIfNonMatch", value: "IPIfNonMatch" },
   { label: "IPOnDemand", value: "IPOnDemand" }
+];
+
+const policyGroupTypes = [
+  { label: "手动选择", value: "select" },
+  { label: "自动测速", value: "url-test" }
 ];
 
 const moduleDnsHints: Record<ProfileModuleFormat, string> = {
@@ -598,6 +605,7 @@ function ModuleCreateDialog({
           </div>
 
             <ModuleContentEditor content={form.content} disabled={pending} format={form.format} type={form.type} onChange={(content) => patch({ content })} />
+          <ConfigParameterTable content={form.content} format={form.format} type={form.type} />
           <FilterField className="min-w-0" label="JSON 内容">
             <Textarea
               className="min-h-36 font-mono text-xs"
@@ -720,6 +728,7 @@ function ModuleEditDialog({
                 <Badge variant={module.enabled ? "outline" : "destructive"}>{module.enabled ? "启用" : "停用"}</Badge>
               </div>
               <ModuleContentEditor content={content} disabled={pending} format={module.format} type={module.type} onChange={onContentChange} />
+              <ConfigParameterTable content={content} format={module.format} type={module.type} />
               <FilterField className="min-w-0" label="JSON 内容">
                 <Textarea
                   className="min-h-40 font-mono text-xs"
@@ -768,6 +777,10 @@ function ModuleContentEditor({
 
   if (type === "tun") {
     return <TunEditor content={content} disabled={disabled} onChange={onChange} />;
+  }
+
+  if (type === "policy-group") {
+    return <PolicyGroupEditor content={content} disabled={disabled} format={format} onChange={onChange} />;
   }
 
   if (type === "rule-provider") {
@@ -1034,6 +1047,92 @@ function RuleProviderEditor({
   );
 }
 
+function PolicyGroupEditor({
+  content,
+  disabled,
+  format,
+  onChange
+}: {
+  content: string;
+  disabled: boolean;
+  format: ProfileModuleFormat;
+  onChange: (content: string) => void;
+}) {
+  const parsed = parseJsonObject(content) ?? parseJsonObject(defaultContentForFormat("policy-group", format)) ?? {};
+  const groups = policyGroupSources(parsed, format);
+  const firstGroup = groups[0] ?? {};
+  const members = toLines(firstGroup.proxies ?? firstGroup.outbounds ?? firstGroup.selector);
+
+  function patch(next: Record<string, unknown>) {
+    const name = stringValue(next.name ?? firstGroup.name ?? firstGroup.tag) || "Manual";
+    const type = stringValue(next.type ?? firstGroup.type) || "select";
+    const group = compactObject({
+      ...firstGroup,
+      ...next,
+      name: format === "sing-box" || format === "xray" ? undefined : name,
+      tag: format === "sing-box" || format === "xray" ? name : undefined,
+      type: format === "xray" ? undefined : type,
+      proxies: format === "clash" || format === "common" ? next.members ?? firstGroup.proxies : undefined,
+      outbounds: format === "sing-box" ? next.members ?? firstGroup.outbounds : undefined,
+      selector: format === "xray" ? next.members ?? firstGroup.selector : undefined,
+      members: undefined
+    });
+
+    if (format === "sing-box") {
+      onChange(JSON.stringify({ ...parsed, outbounds: [group] }, null, 2));
+      return;
+    }
+
+    if (format === "xray") {
+      const routing = objectRecord(parsed.routing);
+      onChange(JSON.stringify({ ...parsed, routing: { ...routing, balancers: [group] } }, null, 2));
+      return;
+    }
+
+    onChange(JSON.stringify({ ...parsed, "proxy-groups": [group] }, null, 2));
+  }
+
+  return (
+    <div className="grid gap-3 rounded-xl border bg-card/70 p-3">
+      <div className="flex items-center gap-2 text-sm font-semibold text-chart-5">
+        <Layers3 />
+        策略组参数
+      </div>
+      <p className="rounded-lg border bg-background/70 px-2.5 py-2 text-xs leading-5 text-muted-foreground">
+        策略组用于给订阅输出增加额外选择器：Clash 输出到 proxy-groups，sing-box 输出到 selector/urltest 出站，Xray 输出到 routing.balancers。成员可以写节点名、自动分组名或 Xray 的 node: 选择前缀。
+      </p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <FilterField className="min-w-0" label={format === "xray" || format === "sing-box" ? "标签 / tag" : "名称 / name"}>
+          <Input disabled={disabled} onChange={(event) => patch({ name: event.target.value })} placeholder="Manual" value={stringValue(firstGroup.name ?? firstGroup.tag)} />
+        </FilterField>
+        {format !== "xray" ? (
+          <FilterField className="min-w-0" label="策略组类型">
+            <NativeSelect disabled={disabled} onChange={(event) => patch({ type: event.target.value })} value={stringValue(firstGroup.type) || "select"}>
+              {policyGroupTypes.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </NativeSelect>
+          </FilterField>
+        ) : (
+          <div className="rounded-lg border bg-background/70 px-2.5 py-2">
+            <div className="text-[11px] font-medium text-muted-foreground">Xray 目标</div>
+            <div className="font-mono text-sm font-semibold">routing.balancers</div>
+          </div>
+        )}
+      </div>
+      <FilterField className="min-w-0" label={format === "xray" ? "selector（每行一个）" : "成员（每行一个）"}>
+        <Textarea
+          className="min-h-20 font-mono text-xs"
+          disabled={disabled}
+          onChange={(event) => patch({ members: fromLines(event.target.value) })}
+          placeholder={format === "xray" ? "node:" : "direct"}
+          value={members}
+        />
+      </FilterField>
+    </div>
+  );
+}
+
 function ProxyProviderEditor({
   content,
   disabled,
@@ -1188,6 +1287,43 @@ function defaultContentForFormat(type: ProfileModuleType, format: ProfileModuleF
     return JSON.stringify({ name: "remote-rules", type: "http", url: "", interval: 86400, behavior: "domain", format: "yaml" }, null, 2);
   }
 
+  if (type === "policy-group") {
+    if (format === "sing-box") {
+      return JSON.stringify({
+        outbounds: [
+          {
+            type: "selector",
+            tag: "Manual",
+            outbounds: ["direct"]
+          }
+        ]
+      }, null, 2);
+    }
+
+    if (format === "xray") {
+      return JSON.stringify({
+        routing: {
+          balancers: [
+            {
+              tag: "Manual",
+              selector: ["node:"]
+            }
+          ]
+        }
+      }, null, 2);
+    }
+
+    return JSON.stringify({
+      "proxy-groups": [
+        {
+          name: "Manual",
+          type: "select",
+          proxies: ["DIRECT"]
+        }
+      ]
+    }, null, 2);
+  }
+
   if (type === "proxy-provider") {
     return JSON.stringify({
       name: "remote-proxies",
@@ -1253,6 +1389,10 @@ function moduleTypeLabel(type: ProfileModuleType) {
 
   if (type === "observatory") {
     return "观测";
+  }
+
+  if (type === "policy-group") {
+    return "策略组";
   }
 
   return "高级覆盖";
@@ -1327,6 +1467,18 @@ function summaryItemsForModule(module: ProfileModuleDto) {
     ];
   }
 
+  if (module.type === "policy-group") {
+    const groups = policyGroupSources(module.content, module.format);
+    const firstGroup = groups[0] ?? {};
+
+    return [
+      { label: "名称", value: stringValue(firstGroup.name ?? firstGroup.tag) || "策略组" },
+      { label: "类型", value: stringValue(firstGroup.type) || "select" },
+      { label: "成员", value: `${toArray(firstGroup.proxies ?? firstGroup.outbounds ?? firstGroup.selector).length} 个` }
+    ];
+  }
+
+
   if (module.type === "proxy-provider") {
     const source = providerSource(content, "remote-proxies");
 
@@ -1357,6 +1509,31 @@ function summaryItemsForModule(module: ProfileModuleDto) {
 function providerSource(content: Record<string, unknown>, fallbackName: string) {
   const name = stringValue(content.name) || fallbackName;
   return objectRecord(content[name]) || content;
+}
+
+function policyGroupSources(content: Record<string, unknown>, format: ProfileModuleFormat) {
+  if (format === "xray") {
+    const routing = objectRecord(content.routing);
+    return toRecordArray(routing.balancers ?? content.balancers ?? content.groups ?? content.group);
+  }
+
+  if (format === "sing-box") {
+    return toRecordArray(content.outbounds ?? content.selectors ?? content.groups ?? content.group);
+  }
+
+  return toRecordArray(content["proxy-groups"] ?? content.groups ?? content.group);
+}
+
+function toRecordArray(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object" && !Array.isArray(item)));
+  }
+
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return [value as Record<string, unknown>];
+  }
+
+  return [];
 }
 
 function firstArrayValue(value: unknown) {

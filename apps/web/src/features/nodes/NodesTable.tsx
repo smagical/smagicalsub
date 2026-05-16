@@ -19,12 +19,15 @@ import { useEffect, useState, type ReactNode } from "react";
 import { CheckboxField } from "../../shared/CheckboxField";
 import { FilterField } from "../../shared/FilterField";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { TagInput } from "../../shared/TagInput";
 import { NodeActions } from "./NodeActions";
 import type { NodeEditFormState } from "./types";
+import { splitNodeGroups, UNGROUPED_GROUP_LABEL } from "./utils";
 
 type NodesTableProps = {
   editForm: NodeEditFormState;
   editingNodeId: string | null;
+  groups: string[];
   selectedNodeIds: string[];
   allVisibleSelected: boolean;
   nodes: NodeDto[];
@@ -43,6 +46,7 @@ type NodesTableProps = {
 export function NodesTable({
   editForm,
   editingNodeId,
+  groups,
   selectedNodeIds,
   allVisibleSelected,
   nodes,
@@ -87,6 +91,7 @@ export function NodesTable({
       <NodeEditDialog
         editForm={editForm}
         node={editingNode}
+        groups={groups}
         pending={pending}
         onCancelEdit={onCancelEdit}
         onEditFormChange={onEditFormChange}
@@ -116,6 +121,8 @@ function NodeCard({
   onToggleSelected: (nodeId: string, checked: boolean) => void;
 }) {
   const [copyBubble, setCopyBubble] = useState<CopyBubbleState | null>(null);
+  const nodeGroups = splitNodeGroups(node.groups);
+  const groupLabel = nodeGroups.length > 0 ? nodeGroups.join(", ") : UNGROUPED_GROUP_LABEL;
 
   const handleCopy = async (value?: string) => {
     await onCopy(node, value);
@@ -143,11 +150,13 @@ function NodeCard({
             <InfoTile copyValue={node.server ?? ""} label="服务端" title={node.server ?? "-"} value={node.server ?? "-"} onCopy={handleCopy} />
             <InfoTile copyValue={node.port?.toString() ?? ""} label="端口" value={node.port?.toString() ?? "-"} onCopy={handleCopy} />
             <InfoTile
-              copyValue={node.groups.length > 0 ? node.groups.join(",") : "默认"}
+              copyValue={groupLabel}
               label="分组"
-              value={node.groups.length > 0 ? `${node.groups.length} 个` : "默认"}
+              title={groupLabel}
               onCopy={handleCopy}
-            />
+            >
+              <GroupTags groups={nodeGroups} title={groupLabel} />
+            </InfoTile>
             <InfoTile copyValue={node.updated_at} label="更新时间" title={node.updated_at} value={node.updated_at} onCopy={handleCopy} />
           </div>
 
@@ -192,22 +201,6 @@ function selectionInput(label: string, checked: boolean, disabled: boolean, onCh
   );
 }
 
-function GroupChips({ groups }: { groups: string[] }) {
-  if (groups.length === 0) {
-    return <Badge variant="secondary">默认</Badge>;
-  }
-
-  return (
-    <div className="inline-flex flex-wrap gap-1">
-      {groups.map((group) => (
-        <Badge key={group} variant="outline">
-          {group}
-        </Badge>
-      ))}
-    </div>
-  );
-}
-
 function InfoTile({
   children,
   copyValue,
@@ -230,7 +223,7 @@ function InfoTile({
     <>
       <span className="shrink-0 text-[11px] font-semibold text-muted-foreground">{label}</span>
       {children ? (
-        <span className="min-w-0">{children}</span>
+        <span className="min-w-0 flex-1 overflow-hidden">{children}</span>
       ) : (
         <span className="min-w-0 truncate font-mono text-xs" title={title ?? value}>
           {value}
@@ -263,6 +256,27 @@ function InfoTile({
   );
 }
 
+function GroupTags({ groups, title }: { groups: string[]; title: string }) {
+  const displayGroups = groups.length > 0 ? groups : [UNGROUPED_GROUP_LABEL];
+
+  return (
+    <span className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden" title={title}>
+      {displayGroups.map((group, index) => (
+        <Badge
+          className={cn(
+            "h-5 max-w-[8rem] shrink-0 truncate rounded-md border-border/70 bg-muted/35 px-1.5 py-0 text-[11px] font-normal text-foreground",
+            groups.length === 0 && "bg-secondary text-secondary-foreground"
+          )}
+          key={`${group}-${index}`}
+          variant="outline"
+        >
+          {group}
+        </Badge>
+      ))}
+    </span>
+  );
+}
+
 type CopyBubbleState = {
   id: number;
   label: string;
@@ -289,6 +303,7 @@ function CopyBubble({ bubble, onDone }: { bubble: CopyBubbleState; onDone: () =>
 function NodeEditDialog({
   editForm,
   node,
+  groups,
   pending,
   onCancelEdit,
   onEditFormChange,
@@ -296,6 +311,7 @@ function NodeEditDialog({
 }: {
   editForm: NodeEditFormState;
   node: NodeDto | null;
+  groups: string[];
   pending: boolean;
   onCancelEdit: () => void;
   onEditFormChange: (form: NodeEditFormState) => void;
@@ -308,7 +324,7 @@ function NodeEditDialog({
           <DialogTitle>编辑节点</DialogTitle>
           <DialogDescription>可直接替换节点链接，也可以调整名称、分组和解析后的高级参数。</DialogDescription>
         </DialogHeader>
-        <DialogBody className="max-h-[min(64dvh,640px)]">
+        <DialogBody className="min-h-0">
           <FormSection description="显示名称、分组和启用状态会直接影响订阅输出。" title="基本信息">
             <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-3 max-[760px]:grid-cols-1">
               <FilterField className="min-w-0" label="显示名称">
@@ -320,11 +336,12 @@ function NodeEditDialog({
                 />
               </FilterField>
               <FilterField className="min-w-0" label="分组">
-                <Input
-                  aria-label="节点分组"
+                <TagInput
+                  ariaLabel="节点分组"
                   disabled={pending}
-                  onChange={(event) => onEditFormChange({ ...editForm, groups: event.target.value })}
-                  placeholder="香港,日本,备用"
+                  onChange={(groups) => onEditFormChange({ ...editForm, groups })}
+                  placeholder="回车添加分组"
+                  suggestions={groups}
                   value={editForm.groups}
                 />
               </FilterField>

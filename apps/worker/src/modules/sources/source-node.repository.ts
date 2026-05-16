@@ -111,5 +111,21 @@ function parseTags(value: string) {
 }
 
 function uniqueGroups(groups: string[]) {
-  return Array.from(new Set(groups.map((group) => group.trim()).filter(Boolean)));
+  const normalizedGroups: string[] = [];
+  const seen = new Set<string>();
+
+  for (const group of groups) {
+    for (const segment of group.split(/[\r\n,，;；]+/g)) {
+      const value = segment.trim();
+
+      if (!value || seen.has(value)) {
+        continue;
+      }
+
+      seen.add(value);
+      normalizedGroups.push(value);
+    }
+  }
+
+  return normalizedGroups;
 }

@@ -121,18 +121,13 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
 
   if (url.endsWith("/api/profiles")) {
     return ok({
-      items: [
-        {
-          created_at: "2026-05-01 00:00:00",
-          default_strategy: "Proxy",
-          description: "用于 E2E 的默认配置档",
-          enabled: 1,
-          id: "profile_default",
-          name: "默认配置",
-          owner_id: null,
-          updated_at: "2026-05-01 00:00:00"
-        }
-      ]
+      items: mockProfiles()
+    });
+  }
+
+  if (url.endsWith("/api/profile-modules")) {
+    return ok({
+      items: []
     });
   }
 
@@ -140,14 +135,18 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
     return ok({
       items: [
         {
+          content: {},
           enabled: 1,
+          format: "common",
           id: "rule_media",
           position: 10,
           profile_id: "profile_default",
           rule: "DOMAIN-SUFFIX,example.com,Proxy"
         },
         {
+          content: {},
           enabled: 0,
+          format: "common",
           id: "rule_disabled",
           position: 20,
           profile_id: "profile_default",
@@ -159,36 +158,7 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
 
   if (url.endsWith("/api/sources")) {
     return ok({
-      items: [
-        {
-          created_at: "2026-05-01 00:00:00",
-          enabled: 1,
-          groups: ["Proxy"],
-          id: "source_default",
-          last_error: null,
-          last_fetched_at: "2026-05-01 08:00:00",
-          last_status: "success",
-          name: "主力订阅源",
-          next_refresh_at: "2026-05-01 10:00:00",
-          refresh_interval_minutes: 120,
-          updated_at: "2026-05-01 08:00:00",
-          url: "https://example.com/subscription"
-        },
-        {
-          created_at: "2026-05-01 00:00:00",
-          enabled: 0,
-          groups: ["Backup"],
-          id: "source_backup",
-          last_error: "上游暂时不可用",
-          last_fetched_at: null,
-          last_status: "failed",
-          name: "备用订阅源",
-          next_refresh_at: null,
-          refresh_interval_minutes: 0,
-          updated_at: "2026-05-01 00:00:00",
-          url: "https://backup.example.com/subscription"
-        }
-      ]
+      items: mockSources()
     });
   }
 
@@ -233,6 +203,110 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           uri: "trojan://password@disabled.example.com:443#停用节点",
           config: { type: "trojan", server: "disabled.example.com", port: 443, password: "password" },
           updated_at: "2026-05-01 02:00:00"
+        },
+        {
+          enabled: 1,
+          groups: ["Proxy"],
+          id: "node_extra_1",
+          name: "额外节点 1",
+          port: 80,
+          protocol: "vmess",
+          server: "extra1.example.com",
+          source_id: null,
+          uri: "vmess://extra-1",
+          config: { type: "vmess", server: "extra1.example.com", port: 80 },
+          updated_at: "2026-05-01 03:00:00"
+        },
+        {
+          enabled: 1,
+          groups: ["Media"],
+          id: "node_extra_2",
+          name: "额外节点 2",
+          port: 443,
+          protocol: "ss",
+          server: "extra2.example.com",
+          source_id: "source_default",
+          uri: "ss://extra-2",
+          config: { type: "ss", server: "extra2.example.com", port: 443 },
+          updated_at: "2026-05-01 04:00:00"
+        },
+        {
+          enabled: 0,
+          groups: ["Backup"],
+          id: "node_extra_3",
+          name: "额外节点 3",
+          port: 443,
+          protocol: "hysteria2",
+          server: "extra3.example.com",
+          source_id: null,
+          uri: "hysteria2://extra-3",
+          config: { type: "hysteria2", server: "extra3.example.com", port: 443 },
+          updated_at: "2026-05-01 05:00:00"
+        },
+        {
+          enabled: 1,
+          groups: ["Proxy"],
+          id: "node_extra_4",
+          name: "额外节点 4",
+          port: 8443,
+          protocol: "tuic",
+          server: "extra4.example.com",
+          source_id: null,
+          uri: "tuic://extra-4",
+          config: { type: "tuic", server: "extra4.example.com", port: 8443 },
+          updated_at: "2026-05-01 06:00:00"
+        },
+        {
+          enabled: 1,
+          groups: ["Proxy"],
+          id: "node_extra_5",
+          name: "额外节点 5",
+          port: 2080,
+          protocol: "socks",
+          server: "extra5.example.com",
+          source_id: null,
+          uri: "socks://extra-5",
+          config: { type: "socks", server: "extra5.example.com", port: 2080 },
+          updated_at: "2026-05-01 07:00:00"
+        },
+        {
+          enabled: 0,
+          groups: ["Backup"],
+          id: "node_extra_6",
+          name: "额外节点 6",
+          port: 8080,
+          protocol: "http",
+          server: "extra6.example.com",
+          source_id: null,
+          uri: "http://extra-6",
+          config: { type: "http", server: "extra6.example.com", port: 8080 },
+          updated_at: "2026-05-01 08:00:00"
+        },
+        {
+          enabled: 1,
+          groups: ["Proxy"],
+          id: "node_extra_7",
+          name: "额外节点 7",
+          port: 443,
+          protocol: "wireguard",
+          server: "extra7.example.com",
+          source_id: null,
+          uri: "wireguard://extra-7",
+          config: { type: "wireguard", server: "extra7.example.com", port: 443 },
+          updated_at: "2026-05-01 09:00:00"
+        },
+        {
+          enabled: 1,
+          groups: ["Media"],
+          id: "node_extra_8",
+          name: "额外节点 8",
+          port: 443,
+          protocol: "vmess",
+          server: "extra8.example.com",
+          source_id: null,
+          uri: "vmess://extra-8",
+          config: { type: "vmess", server: "extra8.example.com", port: 443 },
+          updated_at: "2026-05-01 10:00:00"
         }
       ]
     });
@@ -253,6 +327,7 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           profile_name: "默认配置",
           custom_path: "primary-sub",
           node_ids: ["node_manual"],
+          module_bindings: [],
           token: "tok_e2e_default"
         },
         {
@@ -267,6 +342,7 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           profile_name: "默认配置",
           custom_path: null,
           node_ids: [],
+          module_bindings: [],
           token: "tok_e2e_backup"
         }
       ]
@@ -274,6 +350,90 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
   }
 
   return ok({ items: [] });
+}
+
+function mockProfiles() {
+  const defaultProfile = {
+    created_at: "2026-05-01 00:00:00",
+    default_strategy: "Proxy",
+    description: "用于 E2E 的默认配置档",
+    enabled: 1,
+    id: "profile_default",
+    name: "默认配置",
+    owner_id: null,
+    updated_at: "2026-05-01 00:00:00"
+  };
+
+  // 生成超过默认每页 10 条的数据，确保配置档分页和跳转控件被真实覆盖。
+  const extraProfiles = Array.from({ length: 10 }, (_, index) => {
+    const sequence = index + 1;
+    const day = String(sequence + 1).padStart(2, "0");
+
+    return {
+      created_at: `2026-05-${day} 00:00:00`,
+      default_strategy: sequence % 2 === 0 ? "DIRECT" : "Proxy",
+      description: `用于分页验证的扩展配置档 ${sequence}`,
+      enabled: sequence % 3 === 0 ? 0 : 1,
+      id: `profile_extra_${sequence}`,
+      name: `扩展配置 ${sequence}`,
+      owner_id: null,
+      updated_at: `2026-05-${day} 08:00:00`
+    };
+  });
+
+  return [defaultProfile, ...extraProfiles];
+}
+
+function mockSources() {
+  const primarySource = {
+    created_at: "2026-05-01 00:00:00",
+    enabled: 1,
+    groups: ["Proxy"],
+    id: "source_default",
+    last_error: null,
+    last_fetched_at: "2026-05-01 08:00:00",
+    last_status: "success",
+    name: "主力订阅源",
+    next_refresh_at: "2026-05-01 10:00:00",
+    refresh_interval_minutes: 120,
+    updated_at: "2026-05-01 08:00:00",
+    url: "https://example.com/subscription"
+  };
+  const backupSource = {
+    created_at: "2026-05-01 00:00:00",
+    enabled: 0,
+    groups: ["Backup"],
+    id: "source_backup",
+    last_error: "上游暂时不可用",
+    last_fetched_at: null,
+    last_status: "failed",
+    name: "备用订阅源",
+    next_refresh_at: null,
+    refresh_interval_minutes: 0,
+    updated_at: "2026-05-01 00:00:00",
+    url: "https://backup.example.com/subscription"
+  };
+  const extraSources = Array.from({ length: 9 }, (_, index) => {
+    const sequence = index + 1;
+    const hour = String(sequence + 8).padStart(2, "0");
+
+    return {
+      created_at: "2026-05-01 00:00:00",
+      enabled: sequence % 4 === 0 ? 0 : 1,
+      groups: sequence % 2 === 0 ? ["Media"] : ["Proxy"],
+      id: `source_extra_${sequence}`,
+      last_error: null,
+      last_fetched_at: `2026-05-01 ${hour}:00:00`,
+      last_status: "success",
+      name: `补充订阅源 ${sequence}`,
+      next_refresh_at: `2026-05-01 ${String(sequence + 10).padStart(2, "0")}:00:00`,
+      refresh_interval_minutes: 120,
+      updated_at: `2026-05-01 ${hour}:00:00`,
+      url: `https://extra${sequence}.example.com/subscription`
+    };
+  });
+
+  return [primarySource, backupSource, ...extraSources];
 }
 
 function subscriptionPreview(url: string) {

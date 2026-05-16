@@ -1,17 +1,23 @@
+import type { ProfileModuleFormat, TokenModuleBindingInput } from "@smagicalsub/shared";
+
 export type TokenFormState = {
   name: string;
   profile_id: string;
   custom_path: string;
   node_ids: string[];
+  module_bindings: TokenModuleBindingInput[];
   expires_at: string;
   enabled: boolean;
 };
 
 export type TokenEditFormState = {
   name: string;
+  profile_id: string;
   custom_path: string;
   node_ids: string[];
+  module_bindings: TokenModuleBindingInput[];
   expires_at: string;
+  enabled: boolean;
 };
 
 export type TokenSubscriptionFormat = "clash" | "v2rayn" | "plain" | "sing-box" | "xray";
@@ -21,29 +27,33 @@ export const initialTokenFormState: TokenFormState = {
   profile_id: "",
   custom_path: "",
   node_ids: [],
+  module_bindings: [],
   expires_at: "",
   enabled: true
 };
 
 export const initialTokenEditFormState: TokenEditFormState = {
   name: "",
+  profile_id: "",
   custom_path: "",
   node_ids: [],
-  expires_at: ""
+  module_bindings: [],
+  expires_at: "",
+  enabled: true
 };
+
+export const tokenModuleFormats: Array<{ label: string; value: ProfileModuleFormat }> = [
+  { label: "通用", value: "common" },
+  { label: "Clash", value: "clash" },
+  { label: "sing-box", value: "sing-box" },
+  { label: "Xray", value: "xray" }
+];
+
 
 export const tokenSubscriptionFormats: Array<{ label: string; value: TokenSubscriptionFormat }> = [
   { label: "Clash YAML", value: "clash" },
-  { label: "v2rayN Base64", value: "v2rayn" },
-  { label: "明文 URI", value: "plain" },
+  { label: "Base64", value: "v2rayn" },
+  { label: "明文", value: "plain" },
   { label: "sing-box JSON", value: "sing-box" },
   { label: "Xray JSON", value: "xray" }
 ];
-
-export const tokenFormatHints: Record<TokenSubscriptionFormat, string> = {
-  clash: "适合 Clash、Clash Verge、OpenClash 等 YAML 客户端。",
-  plain: "输出逐行 URI，便于调试、转存或导入支持明文的客户端。",
-  "sing-box": "输出 sing-box JSON 配置，适合服务端或新版客户端。",
-  v2rayn: "输出 Base64 订阅，适合 v2rayN、NekoRay 等客户端。",
-  xray: "输出 Xray-core JSON 配置，包含 socks 入站、路由规则和可转换的代理出站。"
-};

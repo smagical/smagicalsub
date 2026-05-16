@@ -1,10 +1,15 @@
 import type {
   CreateProfileInput,
+  CreateProfileModuleInput,
   CreateProfileRuleInput,
+  FetchRemoteProfileConfigInput,
   ListDto,
   ProfileDto,
+  ProfileModuleDto,
+  RemoteProfileConfigDto,
   ProfileRuleDto,
   UpdateProfileInput,
+  UpdateProfileModuleInput,
   UpdateProfileRuleInput
 } from "@smagicalsub/shared";
 import { deleteJson, getJson, patchJson, postJson } from "../../lib/api-client";
@@ -15,6 +20,10 @@ export function listProfiles() {
 
 export function createProfile(input: CreateProfileInput) {
   return postJson<ProfileDto>("/api/profiles", input);
+}
+
+export function fetchRemoteProfileConfig(input: FetchRemoteProfileConfigInput) {
+  return postJson<RemoteProfileConfigDto>("/api/profiles/import/fetch", input);
 }
 
 export function updateProfile(id: string, input: UpdateProfileInput) {
@@ -39,4 +48,20 @@ export function updateProfileRule(profileId: string, ruleId: string, input: Upda
 
 export function deleteProfileRule(profileId: string, ruleId: string) {
   return deleteJson<{ id: string }>(`/api/profiles/${profileId}/rules/${ruleId}`);
+}
+
+export function listProfileModules() {
+  return getJson<ListDto<ProfileModuleDto>>("/api/profile-modules");
+}
+
+export function createProfileModule(input: CreateProfileModuleInput) {
+  return postJson<ProfileModuleDto>("/api/profile-modules", input);
+}
+
+export function updateProfileModule(id: string, input: UpdateProfileModuleInput) {
+  return patchJson<ProfileModuleDto>(`/api/profile-modules/${id}`, input);
+}
+
+export function deleteProfileModule(id: string) {
+  return deleteJson<{ id: string }>(`/api/profile-modules/${id}`);
 }

@@ -1,4 +1,5 @@
 import { ownerWhere, type OwnerScope } from "../../lib/auth-scope";
+import { parseModuleBindings } from "../profile-modules/profile-module.repository";
 import type { ActiveSubscribeTokenRow, SubscribeTokenRow } from "./token.types";
 
 export async function listSubscribeTokens(db: D1Database, scope?: OwnerScope) {
@@ -58,6 +59,11 @@ const tokenWithProfileSql = `SELECT subscribe_tokens.id,
                                     subscribe_tokens.token,
                                     subscribe_tokens.custom_path,
                                     subscribe_tokens.node_ids_json,
+                                    (
+                                      SELECT COALESCE(json_group_array(json_object('format', format, 'module_id', module_id, 'type', type)), '[]')
+                                      FROM subscribe_token_modules
+                                      WHERE subscribe_token_modules.token_id = subscribe_tokens.id
+                                    ) AS module_bindings_json,
                                     subscribe_tokens.name,
                                     subscribe_tokens.enabled,
                                     subscribe_tokens.expires_at,
@@ -71,6 +77,11 @@ const activeTokenSql = `SELECT subscribe_tokens.id,
                               subscribe_tokens.token,
                               subscribe_tokens.custom_path,
                               subscribe_tokens.node_ids_json,
+                              (
+                                SELECT COALESCE(json_group_array(json_object('format', format, 'module_id', module_id, 'type', type)), '[]')
+                                FROM subscribe_token_modules
+                                WHERE subscribe_token_modules.token_id = subscribe_tokens.id
+                              ) AS module_bindings_json,
                               subscribe_tokens.name,
                               subscribe_tokens.profile_id,
                               profiles.name AS profile_name,
@@ -86,8 +97,12 @@ function emptyFilter() {
   return { params: [] as string[], sql: "" };
 }
 
-function hydrateSubscribeTokenRow<T extends { node_ids_json: string }>(row: T): T & { node_ids: string[] } {
-  return { ...row, node_ids: parseNodeIds(row.node_ids_json) };
+function hydrateSubscribeTokenRow<T extends { module_bindings_json?: string | null; node_ids_json: string }>(row: T): T & { module_bindings: ReturnType<typeof parseModuleBindings>; node_ids: string[] } {
+  return {
+    ...row,
+    node_ids: parseNodeIds(row.node_ids_json),
+    module_bindings: parseModuleBindings(row.module_bindings_json)
+  };
 }
 
 function parseNodeIds(value: string) {

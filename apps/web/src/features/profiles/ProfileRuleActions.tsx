@@ -50,7 +50,7 @@ export function ProfileRuleActions(props: ProfileRuleActionsProps) {
         description="删除后该规则会从配置档输出中移除。"
         onConfirm={() => props.onDelete(props.rule)}
         size="xs"
-        title={`删除规则「${props.rule.rule}」？`}
+        title={`删除规则「${props.rule.rule.slice(0, 80)}」？`}
         type="button"
       >
         删除

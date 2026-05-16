@@ -36,13 +36,33 @@ export function parseGroups(tags: string) {
     const parsed = JSON.parse(tags) as unknown;
 
     if (Array.isArray(parsed)) {
-      return parsed.filter((tag): tag is string => typeof tag === "string" && tag.trim().length > 0);
+      return normalizeGroups(parsed.filter((tag): tag is string => typeof tag === "string"));
     }
   } catch {
     return [];
   }
 
   return [];
+}
+
+export function normalizeGroups(groups: string[]) {
+  const normalizedGroups: string[] = [];
+  const seen = new Set<string>();
+
+  for (const group of groups) {
+    for (const segment of group.split(/[\r\n,，;；]+/g)) {
+      const value = segment.trim();
+
+      if (!value || seen.has(value)) {
+        continue;
+      }
+
+      seen.add(value);
+      normalizedGroups.push(value);
+    }
+  }
+
+  return normalizedGroups;
 }
 
 function parseConfig(value: string) {

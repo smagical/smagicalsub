@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { normalizeSubscriptionFormat, renderSubscription, type SubscriptionFormat } from "@smagicalsub/subscription";
 import type { Env } from "../../env";
 import { listEnabledRenderableNodesByIds } from "../nodes/node.repository";
-import { listEnabledProfileRuleText } from "../profiles/profile-rule.repository";
+import { listResolvedModulesForSubscription } from "../profile-modules/profile-module.repository";
+import { listEnabledProfileRules } from "../profiles/profile-rule.repository";
 import { findActiveSubscribeToken, markSubscribeTokenUsed } from "../tokens/token.repository";
 import { generatedSubscriptionCacheKey } from "./subscribe-cache";
 
@@ -38,12 +39,22 @@ subscribeRoutes.get("/:token", async (c) => {
   const nodes = await listEnabledRenderableNodesByIds(c.env.DB, tokenRow.owner_id, tokenRow.node_ids);
   const profileName = tokenRow.profile_name ?? tokenRow.name;
   const defaultStrategy = tokenRow.profile_default_strategy ?? "Proxy";
-  const rules = tokenRow.profile_id ? await listEnabledProfileRuleText(c.env.DB, tokenRow.profile_id) : [];
+  const profileRules = tokenRow.profile_id ? await listEnabledProfileRules(c.env.DB, tokenRow.profile_id) : [];
+  const modules = isModuleAwareFormat(format)
+    ? await listResolvedModulesForSubscription({
+        db: c.env.DB,
+        format,
+        moduleBindings: tokenRow.module_bindings,
+        ownerId: tokenRow.owner_id,
+        profileId: tokenRow.profile_id
+      })
+    : [];
   const body = renderSubscription({
     format,
     profileName,
     defaultStrategy,
-    rules,
+    modules,
+    profileRules,
     nodes
   });
 
@@ -75,6 +86,10 @@ function recordSubscriptionAccess(db: D1Database, tokenId: string, request: Subs
       )
       .run()
   ]);
+}
+
+function isModuleAwareFormat(format: SubscriptionFormat): format is "clash" | "sing-box" | "xray" {
+  return format === "clash" || format === "sing-box" || format === "xray";
 }
 
 function subscriptionResponse(body: string, format: SubscriptionFormat) {

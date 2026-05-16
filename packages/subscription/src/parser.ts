@@ -12,12 +12,29 @@ export type { ParsedNode } from "./parsers/types";
 // 单条节点解析失败时直接丢弃，避免一条脏数据阻断整次源刷新。
 export function parseSubscription(content: string): ParsedNode[] {
   const normalized = tryDecodeBase64(content);
-  return normalized
+
+  return parseSubscriptionLines(normalized);
+}
+
+function parseSubscriptionLines(content: string): ParsedNode[] {
+  return content
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .map(parseNodeUri)
-    .filter((node): node is ParsedNode => node !== null);
+    .flatMap(parseSubscriptionLine);
+}
+
+function parseSubscriptionLine(line: string): ParsedNode[] {
+  const node = parseNodeUri(line);
+
+  if (node) {
+    return [node];
+  }
+
+  const decoded = tryDecodeBase64(line);
+
+  // 部分订阅源会把单行节点列表再包一层 base64，整段解析失败时逐行兜底。
+  return decoded !== line ? parseSubscriptionLines(decoded) : [];
 }
 
 export function parseNodeUri(uri: string): ParsedNode | null {

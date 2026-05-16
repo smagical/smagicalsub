@@ -1,6 +1,7 @@
 import type { RenderSubscriptionBaseInput, RenderableNode } from "./types";
 import { toSingBoxOutbound } from "./sing-box-outbound";
-import { createPolicyContext, policyUsesBlock, renderSingBoxRouteRules } from "./rules";
+import { createPolicyContext, renderSingBoxProfileRules } from "./rules";
+import { mergeConfig, moduleOverridesFor } from "./modules";
 import { defaultGroupName, renderGroupName, uniqueStrings } from "./utils";
 
 export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string {
@@ -12,10 +13,10 @@ export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string 
   const outboundTags = outbounds.map((outbound) => String(outbound.tag));
   const grouped = buildSingBoxSelectors(input.nodes, outboundTags);
   const policyContext = createPolicyContext(input.nodes, outboundTags, primarySelector);
-  const routeRules = renderSingBoxRouteRules(input.rules ?? [], policyContext);
-  const needsBlockOutbound = policyUsesBlock(input.rules ?? []);
+  const routeRules = renderSingBoxProfileRules(input.profileRules, policyContext);
 
-  const config = {
+  const config = mergeConfig(
+    {
     log: {
       level: "info"
     },
@@ -35,13 +36,14 @@ export function renderSingBoxConfig(input: RenderSubscriptionBaseInput): string 
         type: "direct",
         tag: "direct"
       },
-      ...(needsBlockOutbound ? [{ type: "block", tag: "block" }] : [])
     ],
     route: {
       rules: routeRules,
       final: primarySelector
     }
-  };
+    },
+    moduleOverridesFor(input.modules, "sing-box")
+  );
 
   return `${JSON.stringify(config, null, 2)}\n`;
 }

@@ -1,7 +1,7 @@
 import type { SubscribeTokenDto } from "@smagicalsub/shared";
 import { Button } from "@/components/ui/button";
 import type { ComponentProps, ReactNode } from "react";
-import { Check, Copy, ExternalLink, Pencil, Power, RotateCcw, Trash2, X } from "lucide-react";
+import { Copy, ExternalLink, Pencil, Power, RotateCcw, Trash2 } from "lucide-react";
 import { ActionGroup } from "../../shared/ActionGroup";
 import { ConfirmButton } from "../../shared/ConfirmButton";
 
@@ -32,20 +32,11 @@ export function TokenActions({
   onStartEdit,
   onToggleEnabled
 }: TokenActionsProps) {
-  if (editing) {
-    return (
-      <ActionGroup className="gap-1">
-        {actionButton("保存", "info", pending, () => onSaveEdit(token), <Check />)}
-        {actionButton("取消", "outline", pending, onCancelEdit, <X />)}
-      </ActionGroup>
-    );
-  }
-
   return (
-    <ActionGroup className="gap-1">
+    <ActionGroup className="flex-nowrap gap-1">
       {actionButton("复制订阅", "info", pending, () => onCopy(token), <Copy />)}
       {actionButton("打开订阅", "ghost", pending, () => onOpen(token), <ExternalLink />)}
-      {actionButton("编辑令牌", "outline", pending, () => onStartEdit(token), <Pencil />)}
+      {actionButton(editing ? "正在编辑" : "编辑令牌", editing ? "secondary" : "outline", pending, () => onStartEdit(token), <Pencil />)}
       {actionButton(token.enabled ? "停用令牌" : "启用令牌", token.enabled ? "warning" : "success", pending, () => onToggleEnabled(token), <Power />)}
       <ConfirmButton
         aria-label="重置令牌"

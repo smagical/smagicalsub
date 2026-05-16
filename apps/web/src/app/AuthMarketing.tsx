@@ -4,13 +4,13 @@ import { Cloud, DatabaseZap, Layers3, RadioTower, Route, Sparkles, UsersRound, t
 import { BrandHeader } from "../shared/BrandHeader";
 
 const capabilities = [
-  { icon: Layers3, label: "多格式输出", text: "Clash、v2rayN、Sing-box、Base64 和明文订阅统一生成。" },
+  { icon: Layers3, label: "多格式输出", text: "Clash、Base64、Sing-box、Xray 和明文订阅统一生成。" },
   { icon: Route, label: "节点分组", text: "订阅源解析节点与手动节点共用分组，方便按用途整理。" },
   { icon: Sparkles, label: "规则配置档", text: "不同令牌可绑定独立规则、策略和输出名称。" },
   { icon: UsersRound, label: "多用户隔离", text: "普通用户只管理自己的节点、配置档、令牌和访问日志。" }
 ];
 
-const formats = ["Clash", "v2rayN", "Sing-box", "Base64", "Plain"];
+const formats = ["Clash", "Base64", "Sing-box", "Xray", "Plain"];
 const metrics = [
   { label: "Worker API", value: "/api/*" },
   { label: "订阅出口", value: "/sub/*" },

@@ -1,7 +1,7 @@
 import { parseNodeUri } from "@smagicalsub/subscription";
 import type { CreateNodeInput, UpdateNodeInput } from "@smagicalsub/shared";
 import { ownerWhere, type OwnerScope } from "../../lib/auth-scope";
-import { toNodeDto, toRenderableNode } from "./node.mapper";
+import { normalizeGroups, toNodeDto, toRenderableNode } from "./node.mapper";
 import type { NodeRow, RenderableNodeRow } from "./node.types";
 
 export async function listNodes(db: D1Database, scope?: OwnerScope) {
@@ -84,7 +84,7 @@ export async function createManualNode(db: D1Database, input: CreateNodeInput, o
       parsed.protocol,
       parsed.server ?? null,
       parsed.port ?? null,
-      JSON.stringify(input.groups),
+      JSON.stringify(normalizeGroups(input.groups)),
       // 保留原始 URI，保证 v2rayN base64 和明文订阅可以无损输出。
       JSON.stringify({ ...parsed.config, __rawUri: parsed.rawUri }),
       input.enabled ? 1 : 0
@@ -108,6 +108,7 @@ export async function updateNode(db: D1Database, id: string, input: UpdateNodeIn
   }
 
   const nextConfig = parsed?.config ?? input.config ?? current.config;
+  const nextGroups = input.groups === undefined ? current.groups : normalizeGroups(input.groups);
   const nextRawUri = input.uri ?? current.uri;
 
   await db
@@ -128,7 +129,7 @@ export async function updateNode(db: D1Database, id: string, input: UpdateNodeIn
       parsed?.protocol ?? current.protocol,
       parsed?.server ?? current.server,
       parsed?.port ?? current.port,
-      JSON.stringify(input.groups ?? current.groups),
+      JSON.stringify(nextGroups),
       JSON.stringify({ ...nextConfig, ...(nextRawUri ? { __rawUri: nextRawUri } : {}) }),
       input.enabled === undefined ? current.enabled : input.enabled ? 1 : 0,
       id

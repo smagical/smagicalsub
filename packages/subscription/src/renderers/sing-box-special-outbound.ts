@@ -15,11 +15,12 @@ export function toSpecialSingBoxOutbound(
         tag,
         server,
         server_port: serverPort,
-        local_address: stringValue(parsed.ip),
+        local_address: stringList(parsed.ip, parsed.ipv6),
         private_key: stringValue(parsed["private-key"]),
         peer_public_key: stringValue(parsed["public-key"]),
         pre_shared_key: stringValue(parsed["pre-shared-key"]),
-        reserved: stringValue(parsed.reserved),
+        reserved: reservedBytes(parsed.reserved),
+        network: stringValue(parsed.network),
         mtu: numberValue(parsed.mtu)
       });
     case "anytls":
@@ -52,4 +53,28 @@ export function toSpecialSingBoxOutbound(
     default:
       return null;
   }
+}
+
+function stringList(...values: unknown[]) {
+  const items = values.flatMap((value) => {
+    if (Array.isArray(value)) {
+      return value.map(String);
+    }
+
+    if (typeof value === "string") {
+      return value.split(",");
+    }
+
+    return [];
+  }).map((item) => item.trim()).filter(Boolean);
+
+  return items.length > 0 ? items : undefined;
+}
+
+function reservedBytes(value: unknown) {
+  const values = stringList(value)
+    ?.map((item) => Number(item))
+    .filter((item) => Number.isInteger(item) && item >= 0 && item <= 255);
+
+  return values && values.length > 0 ? values : undefined;
 }

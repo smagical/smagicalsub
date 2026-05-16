@@ -85,17 +85,30 @@ export const updateProfileSchema = z
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
+export const profileRuleFormatSchema = z.enum(["common", "clash", "sing-box", "xray"]);
+const jsonObjectSchema = z.record(z.unknown());
+
 export const createProfileRuleSchema = z.object({
-  rule: z.string().trim().min(1).max(300),
+  format: profileRuleFormatSchema.default("common"),
+  rule: z.string().trim().min(1).max(4000),
+  content: jsonObjectSchema.default({}),
   position: z.number().int().min(0).max(9999).optional(),
   enabled: z.boolean().default(true)
 });
 
 export type CreateProfileRuleInput = z.infer<typeof createProfileRuleSchema>;
 
+export const fetchRemoteProfileConfigSchema = z.object({
+  url: z.string().trim().url().max(1000)
+});
+
+export type FetchRemoteProfileConfigInput = z.infer<typeof fetchRemoteProfileConfigSchema>;
+
 export const updateProfileRuleSchema = z
   .object({
-    rule: z.string().trim().min(1).max(300).optional(),
+    format: profileRuleFormatSchema.optional(),
+    rule: z.string().trim().min(1).max(4000).optional(),
+    content: jsonObjectSchema.optional(),
     position: z.number().int().min(0).max(9999).optional(),
     enabled: z.boolean().optional()
   })
@@ -103,11 +116,51 @@ export const updateProfileRuleSchema = z
 
 export type UpdateProfileRuleInput = z.infer<typeof updateProfileRuleSchema>;
 
+export const profileModuleFormatSchema = profileRuleFormatSchema;
+export const profileModuleTypeSchema = z.enum([
+  "advanced-override",
+  "dns",
+  "inbound",
+  "tun",
+  "policy-group",
+  "rule-provider",
+  "proxy-provider",
+  "observatory"
+]);
+
+export const createProfileModuleSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  profile_id: z.string().trim().min(1).nullable().optional(),
+  format: profileModuleFormatSchema,
+  type: profileModuleTypeSchema.default("advanced-override"),
+  content: jsonObjectSchema.default({}),
+  enabled: z.boolean().default(true),
+  is_default: z.boolean().default(false)
+});
+
+export type CreateProfileModuleInput = z.infer<typeof createProfileModuleSchema>;
+
+export const updateProfileModuleSchema = createProfileModuleSchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  "At least one field must be provided"
+);
+
+export type UpdateProfileModuleInput = z.infer<typeof updateProfileModuleSchema>;
+
+export const tokenModuleBindingSchema = z.object({
+  format: profileModuleFormatSchema,
+  type: profileModuleTypeSchema.default("advanced-override"),
+  module_id: z.string().trim().min(1)
+});
+
+export type TokenModuleBindingInput = z.infer<typeof tokenModuleBindingSchema>;
+
 export const createSubscribeTokenSchema = z.object({
   name: z.string().trim().min(1).max(80),
   profile_id: z.string().trim().min(1).nullable().optional(),
   custom_path: z.string().trim().min(3).max(80).regex(/^[a-zA-Z0-9_-]+$/).nullable().optional(),
   node_ids: z.array(z.string().trim().min(1)).max(500).default([]),
+  module_bindings: z.array(tokenModuleBindingSchema).max(24).default([]),
   enabled: z.boolean().default(true),
   expires_at: z.string().trim().max(32).nullable().optional()
 });
@@ -120,6 +173,7 @@ export const updateSubscribeTokenSchema = z
     profile_id: z.string().trim().min(1).nullable().optional(),
     custom_path: z.string().trim().min(3).max(80).regex(/^[a-zA-Z0-9_-]+$/).nullable().optional(),
     node_ids: z.array(z.string().trim().min(1)).max(500).optional(),
+    module_bindings: z.array(tokenModuleBindingSchema).max(24).optional(),
     enabled: z.boolean().optional(),
     expires_at: z.string().trim().max(32).nullable().optional()
   })

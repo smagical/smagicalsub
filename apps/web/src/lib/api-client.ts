@@ -85,6 +85,11 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const payload = await readApiPayload<T>(response);
 
   if (!payload.ok) {
+    if (response.status === 401 || payload.error.code === "UNAUTHORIZED") {
+      clearAuthToken();
+      dispatchAuthExpired();
+    }
+
     throw new Error(payload.error.message);
   }
 
@@ -116,4 +121,12 @@ function browserStorage() {
   } catch {
     return null;
   }
+}
+
+function dispatchAuthExpired() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(new Event("smagicalsub:auth-expired"));
 }

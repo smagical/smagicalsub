@@ -11,6 +11,7 @@ export function wireguardConfig(base: Record<string, unknown>, url: URL) {
     "pre-shared-key": stringParam(params, "pre-shared-key", "pre_shared_key", "presharedkey"),
     ip: stringParam(params, "ip", "address", "local_address"),
     ipv6: stringParam(params, "ipv6"),
+    network: stringParam(params, "network"),
     mtu: numberParam(params, "mtu"),
     reserved: stringParam(params, "reserved")
   });
