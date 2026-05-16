@@ -605,7 +605,7 @@ function ModuleCreateDialog({
           </div>
 
             <ModuleContentEditor content={form.content} disabled={pending} format={form.format} type={form.type} onChange={(content) => patch({ content })} />
-          <ConfigParameterTable content={form.content} format={form.format} type={form.type} />
+          <ConfigParameterTable content={form.content} format={form.format} onChange={(content) => patch({ content })} type={form.type} />
           <FilterField className="min-w-0" label="JSON 内容">
             <Textarea
               className="min-h-36 font-mono text-xs"
@@ -728,7 +728,7 @@ function ModuleEditDialog({
                 <Badge variant={module.enabled ? "outline" : "destructive"}>{module.enabled ? "启用" : "停用"}</Badge>
               </div>
               <ModuleContentEditor content={content} disabled={pending} format={module.format} type={module.type} onChange={onContentChange} />
-              <ConfigParameterTable content={content} format={module.format} type={module.type} />
+              <ConfigParameterTable content={content} format={module.format} onChange={onContentChange} type={module.type} />
               <FilterField className="min-w-0" label="JSON 内容">
                 <Textarea
                   className="min-h-40 font-mono text-xs"
