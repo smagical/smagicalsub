@@ -81,7 +81,8 @@ const moduleTabDefinitions: Array<{ description: string; icon: LucideIcon; label
   { description: "仅覆盖 Xray 输出。", icon: Globe2, label: "Xray", value: "xray" }
 ];
 
-const modulePageSize = 6;
+const modulePageSizeOptions = [5, 10, 20, 30, 50, 100] as const;
+const defaultModulePageSize = modulePageSizeOptions[0];
 
 const defaultDnsContent = {
   enable: true,
@@ -201,6 +202,13 @@ export function ProfileModulesPanel({ modules, pending, profiles, onCreate, onDe
     "sing-box": 1,
     xray: 1
   });
+  const [pageSizeByTab, setPageSizeByTab] = useState<Record<ModuleTabKey, number>>({
+    clash: defaultModulePageSize,
+    common: defaultModulePageSize,
+    default: defaultModulePageSize,
+    "sing-box": defaultModulePageSize,
+    xray: defaultModulePageSize
+  });
   const moduleStats = useMemo(() => ({
     common: modules.filter((module) => module.format === "common").length,
     clash: modules.filter((module) => module.format === "clash").length,
@@ -211,9 +219,10 @@ export function ProfileModulesPanel({ modules, pending, profiles, onCreate, onDe
   const activeSearch = activeTab === "default" ? "" : moduleSearchByTab[activeTab];
   const activeModules = useMemo(() => filterProfileModules(modulesForTab(modules, activeTab), activeSearch), [activeSearch, activeTab, modules]);
   const activePage = pageByTab[activeTab];
+  const activePageSize = pageSizeByTab[activeTab];
   const paginatedModules = useMemo(
-    () => activeModules.slice((activePage - 1) * modulePageSize, activePage * modulePageSize),
-    [activeModules, activePage]
+    () => activeModules.slice((activePage - 1) * activePageSize, activePage * activePageSize),
+    [activeModules, activePage, activePageSize]
   );
 
   useEffect(() => {
@@ -223,7 +232,8 @@ export function ProfileModulesPanel({ modules, pending, profiles, onCreate, onDe
 
       for (const tab of moduleTabDefinitions) {
         const tabSearch = tab.value === "default" ? "" : moduleSearchByTab[tab.value];
-        const pageCount = Math.max(1, Math.ceil(filterProfileModules(modulesForTab(modules, tab.value), tabSearch).length / modulePageSize));
+        const tabPageSize = pageSizeByTab[tab.value] ?? defaultModulePageSize;
+        const pageCount = Math.max(1, Math.ceil(filterProfileModules(modulesForTab(modules, tab.value), tabSearch).length / tabPageSize));
         const clamped = Math.min(Math.max(next[tab.value] ?? 1, 1), pageCount);
         if (clamped !== next[tab.value]) {
           next[tab.value] = clamped;
@@ -233,7 +243,7 @@ export function ProfileModulesPanel({ modules, pending, profiles, onCreate, onDe
 
       return changed ? next : current;
     });
-  }, [moduleSearchByTab, modules]);
+  }, [moduleSearchByTab, modules, pageSizeByTab]);
 
   function createModule() {
     const parsed = parseJsonObject(form.content);
@@ -283,6 +293,11 @@ export function ProfileModulesPanel({ modules, pending, profiles, onCreate, onDe
 
   function changePage(page: number) {
     setPageByTab((current) => ({ ...current, [activeTab]: page }));
+  }
+
+  function changePageSize(tab: ModuleTabKey, pageSize: number) {
+    setPageSizeByTab((current) => ({ ...current, [tab]: pageSize }));
+    setPageByTab((current) => ({ ...current, [tab]: 1 }));
   }
 
   function changeModuleSearch(tab: ModuleTabKey, value: string) {
@@ -355,8 +370,9 @@ export function ProfileModulesPanel({ modules, pending, profiles, onCreate, onDe
                   const rawTabModules = modulesForTab(modules, tab.value);
                   const tabModules = filterProfileModules(rawTabModules, tabSearch);
                   const currentPage = pageByTab[tab.value];
-                  const pageCount = Math.max(1, Math.ceil(tabModules.length / modulePageSize));
-                  const pageModules = tab.value === activeTab ? paginatedModules : tabModules.slice((currentPage - 1) * modulePageSize, currentPage * modulePageSize);
+                  const currentPageSize = pageSizeByTab[tab.value] ?? defaultModulePageSize;
+                  const pageCount = Math.max(1, Math.ceil(tabModules.length / currentPageSize));
+                  const pageModules = tab.value === activeTab ? paginatedModules : tabModules.slice((currentPage - 1) * currentPageSize, currentPage * currentPageSize);
 
                   return (
                     <TabsContent className="m-0 grid gap-2" key={tab.value} value={tab.value}>
@@ -408,8 +424,9 @@ export function ProfileModulesPanel({ modules, pending, profiles, onCreate, onDe
                             setPageByTab((current) => ({ ...current, [tab.value]: page }));
                           }}
                           pageCount={pageCount}
-                          pageSize={modulePageSize}
-                          pageSizeOptions={[modulePageSize]}
+                          pageSize={currentPageSize}
+                          pageSizeOptions={modulePageSizeOptions}
+                          onPageSizeChange={(pageSize) => changePageSize(tab.value, pageSize)}
                           className="rounded-lg bg-card/55 px-2 py-1"
                           total={tabModules.length}
                         />

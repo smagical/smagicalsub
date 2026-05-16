@@ -127,7 +127,7 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
 
   if (url.endsWith("/api/profile-modules")) {
     return ok({
-      items: []
+      items: mockProfileModules()
     });
   }
 
@@ -434,6 +434,31 @@ function mockSources() {
   });
 
   return [primarySource, backupSource, ...extraSources];
+}
+
+function mockProfileModules() {
+  return Array.from({ length: 8 }, (_, index) => {
+    const sequence = index + 1;
+    const day = String(sequence).padStart(2, "0");
+
+    return {
+      content: {
+        enable: true,
+        servers: [`https://dns${sequence}.example/dns-query`]
+      },
+      created_at: `2026-05-${day} 00:00:00`,
+      enabled: 1,
+      format: "common",
+      id: `module_default_${sequence}`,
+      is_default: 1,
+      name: `默认 DNS 模块 ${sequence}`,
+      owner_id: null,
+      profile_id: null,
+      profile_name: null,
+      type: "dns",
+      updated_at: `2026-05-${day} 08:00:00`
+    };
+  });
 }
 
 function subscriptionPreview(url: string) {

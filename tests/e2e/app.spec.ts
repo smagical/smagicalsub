@@ -29,14 +29,14 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
 
   await page.getByRole("button", { exact: true, name: "订阅源" }).click();
   await expect(page.locator('[aria-label="订阅源列表"]')).toBeVisible();
-  await expect(page.getByLabel("订阅分页每页数量")).toHaveValue("10");
+  await expectSelectValue(page.getByRole("combobox", { name: "订阅分页每页数量" }), "10");
   await expect(page.getByLabel("订阅分页跳转页码")).toBeVisible();
   await page.getByLabel("订阅分页跳转页码").fill("2");
-  await page.getByRole("button", { name: "跳转" }).click();
+  await clickPaginationJump(page.getByLabel("订阅分页跳转页码"));
   await expect(page.getByText("第 2 / 2 页")).toBeVisible();
   await expect(page.getByText("补充订阅源 9")).toBeVisible();
-  await page.getByLabel("订阅分页每页数量").selectOption("50");
-  await expect(page.getByLabel("订阅分页每页数量")).toHaveValue("50");
+  await chooseSelectOption(page.getByRole("combobox", { name: "订阅分页每页数量" }), "50");
+  await expectSelectValue(page.getByRole("combobox", { name: "订阅分页每页数量" }), "50");
   await expect(page.getByText("主力订阅源")).toBeVisible();
   await expect(page.getByText("备用订阅源")).toBeVisible();
   await expectSourceCreateFormSingleRow(page.getByPlaceholder("我的订阅").locator("xpath=ancestor::form"));
@@ -52,20 +52,20 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
   await expect(page.getByText("添加单个节点，按分组查看订阅源解析和手动维护的节点。")).toBeVisible();
   await expect(page.locator("header").getByText("控制面板", { exact: true })).toBeHidden();
   await expect(page.getByRole("button", { name: "添加节点" })).toBeVisible();
-  await expect(page.getByLabel("节点分页每页数量")).toHaveValue("10");
+  await expectSelectValue(page.getByRole("combobox", { name: "节点分页每页数量" }), "10");
   await expect(page.getByLabel("节点分页跳转页码")).toBeVisible();
   await page.getByLabel("节点分页跳转页码").fill("2");
-  await page.getByRole("button", { name: "跳转" }).click();
+  await clickPaginationJump(page.getByLabel("节点分页跳转页码"));
   await expect(page.getByText("第 2 / 2 页")).toBeVisible();
-  await page.getByLabel("节点分页每页数量").selectOption("70");
-  await expect(page.getByLabel("节点分页每页数量")).toHaveValue("70");
-  await page.getByLabel("协议筛选").selectOption("vless");
+  await chooseSelectOption(page.getByRole("combobox", { name: "节点分页每页数量" }), "70");
+  await expectSelectValue(page.getByRole("combobox", { name: "节点分页每页数量" }), "70");
+  await chooseSelectOption(page.getByRole("combobox", { name: "协议筛选" }), "vless");
   await expect(page.locator('[aria-label="节点 手动节点"]')).toBeVisible();
   await expect(page.locator('[aria-label="节点 订阅源节点"]')).toBeHidden();
   await page.locator('[aria-label="节点 手动节点"]').getByRole("button", { name: "复制分组" }).click();
   await expect(page.getByText("节点内容已复制")).toBeVisible();
   await expect(page.locator('[role="status"]').filter({ hasText: "已复制" })).toBeVisible();
-  expect(await page.evaluate(() => window.__clipboardText)).toBe("默认");
+  expect(await page.evaluate(() => window.__clipboardText)).toBe("无分组");
   await page.getByRole("button", { exact: true, name: "编辑" }).click();
   const editDialog = page.getByRole("dialog", { name: "编辑节点" });
   await expect(editDialog).toBeVisible();
@@ -118,14 +118,23 @@ test("builds profile rules from structured fields", async ({ page }) => {
   await expect(page.getByText("新建配置档")).toBeVisible();
   await expect(page.getByRole("searchbox", { name: "搜索配置档" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "配置档列表" })).toBeVisible();
-  await expect(page.getByLabel("配置档分页每页数量")).toHaveValue("10");
+  await expectSelectValue(page.getByRole("combobox", { name: "配置档分页每页数量" }), "10");
   await expect(page.getByLabel("配置档分页跳转页码")).toBeVisible();
   await page.getByLabel("配置档分页跳转页码").fill("2");
-  await page.getByRole("button", { name: "跳转" }).click();
+  await clickPaginationJump(page.getByLabel("配置档分页跳转页码"));
   await expect(page.getByText("第 2 / 2 页")).toBeVisible();
   await expect(page.getByText("扩展配置 10")).toBeVisible();
-  await page.getByLabel("配置档分页每页数量").selectOption("30");
-  await expect(page.getByLabel("配置档分页每页数量")).toHaveValue("30");
+  await chooseSelectOption(page.getByRole("combobox", { name: "配置档分页每页数量" }), "30");
+  await expectSelectValue(page.getByRole("combobox", { name: "配置档分页每页数量" }), "30");
+  await expectSelectValue(page.getByRole("combobox", { name: "默认 模块每页数量" }), "5");
+  await expect(page.getByLabel("默认 模块跳转页码")).toBeVisible();
+  await page.getByLabel("默认 模块跳转页码").fill("2");
+  await clickPaginationJump(page.getByLabel("默认 模块跳转页码"));
+  await expect(page.getByText("默认 DNS 模块 8")).toBeVisible();
+  await chooseSelectOption(page.getByRole("combobox", { name: "默认 模块每页数量" }), "20");
+  await expectSelectValue(page.getByRole("combobox", { name: "默认 模块每页数量" }), "20");
+  await expect(page.getByText("默认 DNS 模块 1")).toBeVisible();
+  await expect(page.getByText("默认 DNS 模块 8")).toBeVisible();
 
   const defaultProfileRow = page.getByRole("row").filter({ hasText: "默认配置" }).first();
 
@@ -148,17 +157,17 @@ test("builds profile rules from structured fields", async ({ page }) => {
   await expect(rulesPanel.getByText("启用规则")).toBeVisible();
   await expect(rulesPanel.getByText("停用规则")).toBeVisible();
   await expect(rulesDialog.getByText("常用模板")).toBeVisible();
-  await rulesDialog.getByLabel("规则类型").selectOption("DOMAIN-KEYWORD");
+  await chooseSelectOption(rulesDialog.getByRole("combobox", { name: "规则类型" }), "关键词");
   await rulesDialog.getByRole("textbox", { exact: true, name: "匹配值" }).fill("youtube");
   await rulesDialog.getByRole("checkbox", { name: "自定义策略" }).click();
   await rulesDialog.getByLabel("自定义策略值").fill("Media");
 
   await expect(rulesDialog.getByRole("textbox", { exact: true, name: "规则" })).toHaveValue("DOMAIN-KEYWORD,youtube,Media");
 
-  await rulesDialog.getByLabel("规则类型").selectOption("GEOIP");
+  await chooseSelectOption(rulesDialog.getByRole("combobox", { name: "规则类型" }), "地理 IP");
   await rulesDialog.getByRole("textbox", { exact: true, name: "匹配值" }).fill("CN");
   await rulesDialog.getByRole("checkbox", { name: "自定义策略" }).click();
-  await rulesDialog.locator('select[aria-label="策略"]').selectOption("DIRECT（直连）");
+  await chooseSelectOption(rulesDialog.getByRole("combobox", { name: "策略" }), "DIRECT（直连）");
 
   await expect(rulesDialog.getByRole("textbox", { exact: true, name: "规则" })).toHaveValue("GEOIP,CN,DIRECT");
 });
@@ -185,18 +194,17 @@ test("shows subscription output center for tokens", async ({ page }) => {
   await expect(outputCenter.getByText("启用节点数", { exact: true })).toBeVisible();
   await expect(outputCenter.getByText("节点分组数", { exact: true })).toBeVisible();
   await expect(outputCenter.getByText("启用规则数", { exact: true })).toBeVisible();
-  await expect(outputCenter.getByText("当前范围包含手动节点 1 个，订阅源节点 0 个。")).toBeVisible();
+  await expect(outputCenter.getByText("手动 1 / 订阅源 0")).toBeVisible();
   await expect(outputCenter.getByText("输出状态正常")).toBeVisible();
-  await page.getByLabel("输出令牌").selectOption("token_backup");
+  await chooseSelectOption(page.getByRole("combobox", { name: "输出令牌" }), "备用订阅");
   await expect(outputCenter.getByText("/sub/tok_e2e_backup?format=clash")).toBeVisible();
   await expect(outputCenter.getByText("令牌已停用，订阅请求会被拒绝")).toBeVisible();
-  await outputCenter.getByLabel("输出格式").selectOption("sing-box");
+  await chooseSelectOption(outputCenter.getByRole("combobox", { name: "输出格式" }), "sing-box JSON");
 
   await expect(outputCenter.getByText("/sub/tok_e2e_backup?format=sing-box")).toBeVisible();
-  await expect(outputCenter.getByText("Clash YAML .yaml")).toBeVisible();
-  await expect(outputCenter.getByText("sing-box JSON .json")).toBeVisible();
-  await expect(outputCenter.getByText("Xray JSON .json")).toBeVisible();
-  await expect(outputCenter.getByText("输出 sing-box JSON 配置，适合服务端或新版客户端。")).toBeVisible();
+  await expect(outputCenter.getByText("Clash YAML")).toBeVisible();
+  await expectSelectValue(outputCenter.getByRole("combobox", { name: "输出格式" }), "sing-box JSON");
+  await expect(outputCenter.getByText("Xray JSON")).toBeVisible();
   await outputCenter.getByRole("button", { name: "健康检查" }).click();
   await expect(outputCenter.getByText("HTTP 200")).toBeVisible();
   await expect(outputCenter.getByText("sing-box JSON 格式正常")).toBeVisible();
@@ -240,6 +248,19 @@ async function previewDownloadText(download: Download) {
   }
 
   return Buffer.concat(chunks).toString("utf8");
+}
+
+async function chooseSelectOption(select: Locator, optionName: string) {
+  await select.click();
+  await select.page().getByRole("option", { name: optionName, exact: true }).click();
+}
+
+async function expectSelectValue(select: Locator, value: string) {
+  await expect(select).toContainText(value);
+}
+
+async function clickPaginationJump(jumpInput: Locator) {
+  await jumpInput.locator("xpath=ancestor::form").getByRole("button", { name: "跳转" }).click();
 }
 
 async function expectSourceCreateFormSingleRow(form: Locator) {
