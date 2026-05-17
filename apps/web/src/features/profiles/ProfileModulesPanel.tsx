@@ -106,6 +106,41 @@ const defaultInboundContent = {
   udp: true
 };
 
+function defaultInboundContentForFormat(format: ProfileModuleFormat) {
+  if (format === "clash") {
+    return {
+      allowLan: defaultInboundContent.allowLan,
+      inboundType: defaultInboundContent.inboundType,
+      listen: defaultInboundContent.listen,
+      port: defaultInboundContent.port,
+      tag: defaultInboundContent.tag
+    };
+  }
+
+  if (format === "sing-box") {
+    return {
+      inboundType: defaultInboundContent.inboundType,
+      listen: defaultInboundContent.listen,
+      port: defaultInboundContent.port,
+      sniff: defaultInboundContent.sniff,
+      tag: defaultInboundContent.tag
+    };
+  }
+
+  if (format === "xray") {
+    return {
+      inboundType: defaultInboundContent.inboundType,
+      listen: defaultInboundContent.listen,
+      port: defaultInboundContent.port,
+      sniff: defaultInboundContent.sniff,
+      tag: defaultInboundContent.tag,
+      udp: defaultInboundContent.udp
+    };
+  }
+
+  return defaultInboundContent;
+}
+
 const defaultTunContent = {
   address: ["172.19.0.1/30"],
   autoRoute: true,
@@ -789,7 +824,7 @@ function ModuleContentEditor({
   }
 
   if (type === "inbound") {
-    return <InboundEditor content={content} disabled={disabled} onChange={onChange} />;
+    return <InboundEditor content={content} disabled={disabled} format={format} onChange={onChange} />;
   }
 
   if (type === "tun") {
@@ -815,8 +850,20 @@ function ModuleContentEditor({
   return null;
 }
 
-function InboundEditor({ content, disabled, onChange }: { content: string; disabled: boolean; onChange: (content: string) => void }) {
+function InboundEditor({
+  content,
+  disabled,
+  format,
+  onChange
+}: {
+  content: string;
+  disabled: boolean;
+  format: ProfileModuleFormat;
+  onChange: (content: string) => void;
+}) {
   const inbound = parseJsonObject(content) ?? defaultInboundContent;
+  const showAllowLan = format === "clash" || format === "common";
+  const showUdp = format === "xray" || format === "common";
 
   function patch(next: Record<string, unknown>) {
     onChange(JSON.stringify({ ...inbound, ...next }, null, 2));
@@ -854,8 +901,12 @@ function InboundEditor({ content, disabled, onChange }: { content: string; disab
         </FilterField>
       </div>
       <div className="flex flex-wrap gap-2">
-        <ToggleBox checked={Boolean(inbound.allowLan)} disabled={disabled} label="Clash 允许局域网" onChange={(allowLan) => patch({ allowLan })} />
-        <ToggleBox checked={Boolean(inbound.udp ?? true)} disabled={disabled} label="UDP" onChange={(udp) => patch({ udp })} />
+        {showAllowLan ? (
+          <ToggleBox checked={Boolean(inbound.allowLan)} disabled={disabled} label="Clash 允许局域网" onChange={(allowLan) => patch({ allowLan })} />
+        ) : null}
+        {showUdp ? (
+          <ToggleBox checked={Boolean(inbound.udp ?? true)} disabled={disabled} label="Xray UDP" onChange={(udp) => patch({ udp })} />
+        ) : null}
         <ToggleBox checked={Boolean(inbound.sniff ?? true)} disabled={disabled} label="嗅探" onChange={(sniff) => patch({ sniff })} />
       </div>
     </div>
@@ -1268,7 +1319,7 @@ function defaultContentForFormat(type: ProfileModuleType, format: ProfileModuleF
   }
 
   if (type === "inbound") {
-    return JSON.stringify(defaultInboundContent, null, 2);
+    return JSON.stringify(defaultInboundContentForFormat(format), null, 2);
   }
 
   if (type === "tun") {

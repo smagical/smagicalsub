@@ -6,6 +6,10 @@ import { compact, getNodeConfig, numberValue, stringValue, stripInternalFields }
 export function toSingBoxOutbound(node: RenderableNode): Record<string, unknown> | null {
   try {
     const parsed = stripInternalFields(getNodeConfig(node));
+    if (parsed.type === "wireguard") {
+      return null;
+    }
+
     const tag = node.name;
     const server = stringValue(parsed.server);
     const serverPort = numberValue(parsed.port);
@@ -15,6 +19,47 @@ export function toSingBoxOutbound(node: RenderableNode): Record<string, unknown>
     }
 
     return createOutbound(parsed, tag, server, serverPort);
+  } catch {
+    return null;
+  }
+}
+
+export function toSingBoxEndpoint(node: RenderableNode): Record<string, unknown> | null {
+  try {
+    const parsed = stripInternalFields(getNodeConfig(node));
+    if (parsed.type !== "wireguard") {
+      return null;
+    }
+
+    const server = stringValue(parsed.server);
+    const serverPort = numberValue(parsed.port);
+    const address = stringList(parsed.ip, parsed.ipv6);
+    const privateKey = stringValue(parsed["private-key"]);
+    const publicKey = stringValue(parsed["public-key"]);
+
+    if (!server || !serverPort || !address || !privateKey || !publicKey) {
+      return null;
+    }
+
+    return compact({
+      type: "wireguard",
+      tag: node.name,
+      address,
+      private_key: privateKey,
+      mtu: numberValue(parsed.mtu),
+      peers: [
+        compact({
+          address: server,
+          port: serverPort,
+          public_key: publicKey,
+          pre_shared_key: stringValue(parsed["pre-shared-key"]),
+          allowed_ips: stringList(parsed["allowed-ips"], parsed.allowed_ips) ?? ["0.0.0.0/0", "::/0"],
+          persistent_keepalive_interval: numberValue(parsed["persistent-keepalive"] ?? parsed.persistent_keepalive_interval),
+          reserved: reservedBytes(parsed.reserved)
+        })
+      ],
+      udp_timeout: stringValue(parsed.udp_timeout ?? parsed["udp-timeout"])
+    });
   } catch {
     return null;
   }
@@ -121,7 +166,6 @@ function createOutbound(parsed: Record<string, unknown>, tag: string, server: st
         password: stringValue(parsed.password),
         private_key: stringValue(parsed["private-key"])
       });
-    case "wireguard":
     case "anytls":
     case "naive":
     case "shadowtls":
@@ -129,6 +173,30 @@ function createOutbound(parsed: Record<string, unknown>, tag: string, server: st
     default:
       return null;
   }
+}
+
+function stringList(...values: unknown[]) {
+  const items = values.flatMap((value) => {
+    if (Array.isArray(value)) {
+      return value.map(String);
+    }
+
+    if (typeof value === "string" && value.trim()) {
+      return value.split(",");
+    }
+
+    return [];
+  }).map((item) => item.trim()).filter(Boolean);
+
+  return items.length > 0 ? items : undefined;
+}
+
+function reservedBytes(value: unknown) {
+  const values = stringList(value)
+    ?.map((item) => Number(item))
+    .filter((item) => Number.isInteger(item) && item >= 0 && item <= 255);
+
+  return values && values.length > 0 ? values : undefined;
 }
 
 function numberLike(value: unknown) {

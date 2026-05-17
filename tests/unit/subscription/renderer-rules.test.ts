@@ -1,9 +1,22 @@
 import YAML from "yaml";
 import { describe, expect, it } from "vitest";
-import { renderSubscription } from "@smagicalsub/subscription";
+import { renderSubscription, singBoxGeoRuleSetsForRules } from "@smagicalsub/subscription";
 import { renderableNode } from "./fixtures";
 
 describe("subscription renderer: routing rules", () => {
+  it("generates sing-box rule-set modules for common geo rules", () => {
+    expect(singBoxGeoRuleSetsForRules([
+      { content: {}, format: "common", rule: "GEOSITE,cn,DIRECT" },
+      { content: {}, format: "common", rule: "GEOIP,us,Proxy" },
+      { content: {}, format: "common", rule: "GEOIP,private,DIRECT" },
+      { content: {}, format: "common", rule: "RULE-SET,geosite-category-ads-all,REJECT" }
+    ])).toEqual([
+      expect.objectContaining({ tag: "geosite-cn", type: "remote" }),
+      expect.objectContaining({ tag: "geoip-us", type: "remote" }),
+      expect.objectContaining({ tag: "geosite-category-ads-all", type: "remote" })
+    ]);
+  });
+
   it("renders broad profile routing rules for sing-box and Xray", () => {
     const rules = [
       "DOMAIN,full.example.com,DIRECT",
@@ -28,7 +41,7 @@ describe("subscription renderer: routing rules", () => {
       defaultStrategy: "Proxy",
       rules,
       nodes: [renderableNode()]
-    })) as { route: { rules: Array<Record<string, unknown>> } };
+    })) as { route: { rule_set: Array<Record<string, unknown>>; rules: Array<Record<string, unknown>> } };
     const xray = JSON.parse(renderSubscription({
       format: "xray",
       profileName: "Default",
@@ -45,6 +58,9 @@ describe("subscription renderer: routing rules", () => {
       expect.objectContaining({ action: "route", source_port_range: ["1000:2000"], outbound: "Proxy" }),
       expect.objectContaining({ action: "reject", protocol: ["bittorrent"] }),
       expect.objectContaining({ action: "route", rule_set: ["geosite-cn"], outbound: "direct" })
+    ]));
+    expect(singBox.route.rule_set).toEqual(expect.arrayContaining([
+      expect.objectContaining({ format: "binary", tag: "geosite-cn", type: "remote" })
     ]));
     expect(xray.routing.rules).toEqual(expect.arrayContaining([
       expect.objectContaining({ domain: ["full:full.example.com"], outboundTag: "direct" }),

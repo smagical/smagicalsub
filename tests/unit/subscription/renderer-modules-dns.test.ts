@@ -51,7 +51,7 @@ describe("subscription renderer: DNS modules", () => {
       profileName: "Default",
       modules: [{ content: dnsContent, format: "sing-box", type: "dns" }],
       nodes: [renderableNode()]
-    })) as { dns: { fakeip: { enabled: boolean }; final: string; servers: Array<Record<string, unknown>>; strategy: string } };
+    })) as { dns: { fakeip?: Record<string, unknown>; final: string; rules: Array<Record<string, unknown>>; servers: Array<Record<string, unknown>>; strategy: string } };
     const xray = JSON.parse(renderSubscription({
       format: "xray",
       profileName: "Default",
@@ -65,9 +65,13 @@ describe("subscription renderer: DNS modules", () => {
       "enhanced-mode": "fake-ip",
       nameserver: ["https://dns.example/dns-query"]
     }));
-    expect(singBox.dns.servers).toEqual([expect.objectContaining({ path: "/dns-query", server: "dns.example", tag: "dns-1", type: "https" })]);
-    expect(singBox.dns.final).toBe("dns-1");
-    expect(singBox.dns.fakeip.enabled).toBe(true);
+    expect(singBox.dns.servers).toEqual([
+      expect.objectContaining({ tag: "fakeip", type: "fakeip" }),
+      expect.objectContaining({ path: "/dns-query", server: "dns.example", tag: "dns-1", type: "https" })
+    ]);
+    expect(singBox.dns.final).toBe("fakeip");
+    expect(singBox.dns.fakeip).toBeUndefined();
+    expect(singBox.dns.rules).toEqual([expect.objectContaining({ query_type: ["A", "AAAA"], server: "fakeip" })]);
     expect(singBox.dns.strategy).toBe("prefer_ipv4");
     expect(xray.dns.servers).toEqual(["https://dns.example/dns-query"]);
     expect(xray.dns.queryStrategy).toBeUndefined();
@@ -94,6 +98,29 @@ describe("subscription renderer: DNS modules", () => {
       expect.objectContaining({ tag: "dns-1", type: "fakeip" }),
       expect.objectContaining({ server: "dns.example", tag: "dns-2", type: "https" })
     ]);
+  });
+
+  it("does not migrate disabled legacy sing-box fakeip objects", () => {
+    const singBox = JSON.parse(renderSubscription({
+      format: "sing-box",
+      profileName: "Default",
+      modules: [{
+        content: {
+          fakeip: { enabled: false },
+          servers: ["https://dns.example/dns-query"]
+        },
+        format: "sing-box",
+        type: "dns"
+      }],
+      nodes: [renderableNode()]
+    })) as { dns: { servers: Array<Record<string, unknown>> } };
+
+    expect(singBox.dns.servers).toEqual([
+      expect.objectContaining({ tag: "dns-1", type: "https" })
+    ]);
+    expect(singBox.dns.servers).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "fakeip" })
+    ]));
   });
 
   it("preserves format-specific DNS server objects", () => {

@@ -292,7 +292,14 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           server: "extra7.example.com",
           source_id: null,
           uri: "wireguard://extra-7",
-          config: { type: "wireguard", server: "extra7.example.com", port: 443 },
+          config: {
+            type: "wireguard",
+            server: "extra7.example.com",
+            port: 443,
+            "private-key": "extra-private-key",
+            "public-key": "extra-public-key",
+            ip: "10.7.0.2/32"
+          },
           updated_at: "2026-05-01 09:00:00"
         },
         {

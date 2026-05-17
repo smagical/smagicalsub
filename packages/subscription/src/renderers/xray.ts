@@ -224,26 +224,38 @@ function createOutbound(parsed: Record<string, unknown>, tag: string, server: st
         })
       };
     case "wireguard":
-      return {
-        tag,
-        protocol: "wireguard",
-        settings: compact({
-          address: stringList(parsed.ip, parsed.ipv6),
-          mtu: numberValue(parsed.mtu),
-          peers: [
-            compact({
-              endpoint: `${server}:${port}`,
-              publicKey: stringValue(parsed["public-key"]),
-              preSharedKey: stringValue(parsed["pre-shared-key"])
-            })
-          ],
-          reserved: reservedBytes(parsed.reserved),
-          secretKey: stringValue(parsed["private-key"])
-        })
-      };
+      return xrayWireGuardOutbound(parsed, tag, server, port);
     default:
       return null;
   }
+}
+
+function xrayWireGuardOutbound(parsed: Record<string, unknown>, tag: string, server: string, port: number) {
+  const address = stringList(parsed.ip, parsed.ipv6);
+  const secretKey = stringValue(parsed["private-key"]);
+  const publicKey = stringValue(parsed["public-key"]);
+
+  if (!address || !secretKey || !publicKey) {
+    return null;
+  }
+
+  return {
+    tag,
+    protocol: "wireguard",
+    settings: compact({
+      address,
+      mtu: numberValue(parsed.mtu),
+      peers: [
+        compact({
+          endpoint: `${server}:${port}`,
+          publicKey,
+          preSharedKey: stringValue(parsed["pre-shared-key"])
+        })
+      ],
+      reserved: reservedBytes(parsed.reserved),
+      secretKey
+    })
+  };
 }
 
 function httpLikeOutbound(protocol: "http" | "socks", parsed: Record<string, unknown>, tag: string, server: string, port: number) {

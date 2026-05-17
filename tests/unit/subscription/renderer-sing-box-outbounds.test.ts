@@ -18,7 +18,7 @@ describe("subscription renderer: sing-box outbounds", () => {
       ],
       nodes: [renderableNode()]
     });
-    const parsed = JSON.parse(output) as { outbounds: Array<Record<string, unknown>>; route: { rules: Array<Record<string, unknown>> } };
+    const parsed = JSON.parse(output) as { outbounds: Array<Record<string, unknown>>; route: { rule_set: Array<Record<string, unknown>>; rules: Array<Record<string, unknown>> } };
 
     expect(parsed.outbounds).toEqual([
       expect.objectContaining({ type: "selector", tag: "Proxy" }),
@@ -27,14 +27,18 @@ describe("subscription renderer: sing-box outbounds", () => {
       expect.objectContaining({ type: "direct", tag: "direct" })
     ]);
     expect(parsed.route.rules).toEqual([
-      expect.objectContaining({ action: "route", geosite: ["cn"], outbound: "direct" }),
-      expect.objectContaining({ action: "reject", geosite: ["category-ads-all"] }),
+      expect.objectContaining({ action: "route", rule_set: ["geosite-cn"], outbound: "direct" }),
+      expect.objectContaining({ action: "reject", rule_set: ["geosite-category-ads-all"] }),
       expect.objectContaining({ action: "route", network: ["tcp"], outbound: "Proxy" }),
       expect.objectContaining({ action: "route", process_path: ["C:/Apps/Telegram/Telegram.exe"], outbound: "Proxy" }),
       expect.objectContaining({ action: "route", rule_set: ["geosite-cn"], outbound: "Proxy" }),
       expect.objectContaining({ action: "reject", protocol: ["bittorrent"] }),
       expect.objectContaining({ action: "route", network: ["tcp", "udp"], outbound: "Proxy" })
     ]);
+    expect(parsed.route.rule_set).toEqual(expect.arrayContaining([
+      expect.objectContaining({ format: "binary", tag: "geosite-cn", type: "remote" }),
+      expect.objectContaining({ format: "binary", tag: "geosite-category-ads-all", type: "remote" })
+    ]));
   });
 
   it("renders representative parsed URI samples to sing-box outbounds when the protocol is supported", () => {
@@ -47,7 +51,7 @@ describe("subscription renderer: sing-box outbounds", () => {
       profileName: "URI Matrix",
       nodes
     });
-    const parsed = JSON.parse(output) as { outbounds: Array<Record<string, unknown>> };
+    const parsed = JSON.parse(output) as { endpoints: Array<Record<string, unknown>>; outbounds: Array<Record<string, unknown>> };
 
     expect(parsed.outbounds.map((outbound) => outbound.type)).toEqual(expect.arrayContaining([
       "anytls",
@@ -63,17 +67,18 @@ describe("subscription renderer: sing-box outbounds", () => {
       "trojan",
       "tuic",
       "vless",
-      "vmess",
-      "wireguard"
+      "vmess"
+    ]));
+    expect(parsed.endpoints).toEqual(expect.arrayContaining([
+      expect.objectContaining({ address: ["10.0.0.2/32", "fd00::2/128"], tag: "WG", type: "wireguard" })
+    ]));
+    expect(parsed.outbounds).toEqual(expect.arrayContaining([
+      expect.objectContaining({ outbounds: ["WG"], tag: "Group: wireguard", type: "selector" })
     ]));
     expect(parsed.outbounds.find((outbound) => outbound.type === "vless")).toEqual(expect.objectContaining({
       flow: "xtls-rprx-vision",
       tls: expect.objectContaining({ reality: expect.objectContaining({ public_key: "public-key" }) }),
       transport: expect.objectContaining({ type: "grpc" })
-    }));
-    expect(parsed.outbounds.find((outbound) => outbound.type === "wireguard")).toEqual(expect.objectContaining({
-      local_address: ["10.0.0.2/32", "fd00::2/128"],
-      reserved: [1, 2, 3]
     }));
   });
 
@@ -132,7 +137,7 @@ describe("subscription renderer: sing-box outbounds", () => {
     expect(outbound.obfs).toEqual(expect.objectContaining({ password: "obfs-pass", type: "salamander" }));
   });
 
-  it("renders sing-box WireGuard address and reserved arrays", () => {
+  it("renders sing-box WireGuard as endpoint for current configs", () => {
     const parsedNode = parseNodeUri("wg://private-key@wg.example.com:51820?public-key=peer-key&pre-shared-key=psk&ip=10.0.0.2%2F32&ipv6=fd00::2%2F128&reserved=1,2,3&mtu=1420#WG");
 
     expect(parsedNode).not.toBeNull();
@@ -146,14 +151,63 @@ describe("subscription renderer: sing-box outbounds", () => {
         config_json: JSON.stringify(parsedNode?.config)
       }]
     });
-    const singBox = JSON.parse(output) as { outbounds: Array<Record<string, unknown>> };
-    const outbound = singBox.outbounds.find((item) => item.type === "wireguard") as Record<string, unknown>;
+    const singBox = JSON.parse(output) as { endpoints: Array<Record<string, unknown>>; outbounds: Array<Record<string, unknown>> };
+    const endpoint = singBox.endpoints.find((item) => item.type === "wireguard") as Record<string, unknown>;
 
-    expect(outbound).toEqual(expect.objectContaining({
-      local_address: ["10.0.0.2/32", "fd00::2/128"],
+    expect(singBox.outbounds.find((item) => item.type === "wireguard")).toBeUndefined();
+    expect(endpoint).toEqual(expect.objectContaining({
+      address: ["10.0.0.2/32", "fd00::2/128"],
       mtu: 1420,
-      peer_public_key: "peer-key",
-      reserved: [1, 2, 3]
+      private_key: "private-key",
+      tag: "WG"
     }));
+    expect(endpoint.peers).toEqual([expect.objectContaining({
+      address: "wg.example.com",
+      port: 51820,
+      public_key: "peer-key",
+      reserved: [1, 2, 3]
+    })]);
+    expect(singBox.outbounds).toEqual(expect.arrayContaining([
+      expect.objectContaining({ outbounds: ["WG"], tag: "Group: 默认", type: "selector" })
+    ]));
+  });
+
+  it("merges generated and module-provided sing-box endpoints by tag", () => {
+    const parsedNode = parseNodeUri("wg://private-key@wg.example.com:51820?public-key=peer-key&ip=10.0.0.2%2F32#WG");
+
+    expect(parsedNode).not.toBeNull();
+
+    const output = renderSubscription({
+      format: "sing-box",
+      profileName: "Default",
+      modules: [
+        {
+          content: {
+            endpoints: [
+              {
+                address: ["10.10.0.2/32"],
+                peers: [{ address: "manual-wg.example.com", port: 51820, public_key: "manual-peer" }],
+                private_key: "manual-private",
+                tag: "Manual WG",
+                type: "wireguard"
+              }
+            ]
+          },
+          format: "sing-box",
+          type: "advanced-override"
+        }
+      ],
+      nodes: [{
+        name: parsedNode?.name ?? "WG",
+        protocol: parsedNode?.protocol,
+        config_json: JSON.stringify(parsedNode?.config)
+      }]
+    });
+    const singBox = JSON.parse(output) as { endpoints: Array<Record<string, unknown>> };
+
+    expect(singBox.endpoints).toEqual(expect.arrayContaining([
+      expect.objectContaining({ tag: "WG", type: "wireguard" }),
+      expect.objectContaining({ tag: "Manual WG", type: "wireguard" })
+    ]));
   });
 });

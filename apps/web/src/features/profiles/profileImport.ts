@@ -395,6 +395,7 @@ function extractSingBoxModules(parsed: Record<string, unknown>, sourceName: stri
   const dns = objectValue(parsed.dns);
   const route = objectValue(parsed.route);
   const ruleSet = Array.isArray(route.rule_set) ? route.rule_set : [];
+  const endpoints = Array.isArray(parsed.endpoints) ? parsed.endpoints.filter(isRecord) : [];
   const routeSettings = Object.fromEntries(Object.entries(route).filter(([key]) => !singBoxRoutePassthroughKeys.has(key)));
   const advancedOverride = pickUnextractedTopLevel(parsed, singBoxExtractedTopLevelKeys);
   const policyOutbounds = (Array.isArray(parsed.outbounds) ? parsed.outbounds : [])
@@ -413,11 +414,16 @@ function extractSingBoxModules(parsed: Record<string, unknown>, sourceName: stri
       fakeip: dns.fakeip,
       fakeIp: Boolean(objectValue(dns.fakeip).enabled),
       final: dns.final,
-      independent_cache: dns.independent_cache,
       reverse_mapping: dns.reverse_mapping,
       rules: dns.rules,
       servers: dns.servers,
       strategy: dns.strategy
+    }));
+  }
+
+  if (endpoints.length > 0) {
+    modules.push(moduleDraft(`${sourceName} sing-box 端点`, "sing-box", "advanced-override", {
+      endpoints
     }));
   }
 

@@ -137,9 +137,9 @@ describe("profile import preview: representative samples", () => {
     }));
     expect(singBox.dns).toEqual(expect.objectContaining({
       final: "remote",
-      independent_cache: true,
       reverse_mapping: true
     }));
+    expect(singBox.dns).not.toHaveProperty("independent_cache");
     expect(singBox.dns.rules).toEqual(expect.arrayContaining([
       expect.objectContaining({ domain_suffix: [".lan"], server: "local" })
     ]));

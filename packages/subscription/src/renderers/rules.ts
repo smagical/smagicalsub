@@ -20,6 +20,7 @@ export type PolicyContextOptions = {
 
 export type SingBoxRouteRule = Record<string, unknown>;
 export type XrayRoutingRule = Record<string, unknown>;
+export type SingBoxRuleSet = Record<string, unknown>;
 
 export function rulesForFormat(rules: RenderProfileRule[] | undefined, format: RenderProfileRule["format"]) {
   const normalizedRules = normalizeProfileRules(rules);
@@ -151,11 +152,11 @@ function toSingBoxRouteRule(rule: ParsedRoutingRule, context: PolicyContext): Si
     case "DOMAIN-REGEX":
       return { domain_regex: [rule.target], ...action };
     case "GEOSITE":
-      return { geosite: [normalizeGeoValue(rule.target)], ...action };
+      return { rule_set: [singBoxGeoRuleSetTag("geosite", rule.target)], ...action };
     case "GEOIP":
-      return normalizeGeoValue(rule.target) === "private" ? { ip_is_private: true, ...action } : { geoip: [normalizeGeoValue(rule.target)], ...action };
+      return normalizeGeoValue(rule.target) === "private" ? { ip_is_private: true, ...action } : { rule_set: [singBoxGeoRuleSetTag("geoip", rule.target)], ...action };
     case "SRC-GEOIP":
-      return normalizeGeoValue(rule.target) === "private" ? { source_ip_is_private: true, ...action } : { source_geoip: [normalizeGeoValue(rule.target)], ...action };
+      return normalizeGeoValue(rule.target) === "private" ? { source_ip_is_private: true, ...action } : { rule_set: [singBoxGeoRuleSetTag("geoip", rule.target)], ...action };
     case "IP-CIDR":
     case "IP-CIDR6":
       return { ip_cidr: [rule.target], ...action };
@@ -184,6 +185,22 @@ function toSingBoxRouteRule(rule: ParsedRoutingRule, context: PolicyContext): Si
     default:
       return null;
   }
+}
+
+export function singBoxGeoRuleSetsForRules(rules: RenderProfileRule[] | undefined): SingBoxRuleSet[] {
+  const geoRules = rulesForFormat(rules, "sing-box")
+    .filter((rule) => rule.format === "common")
+    .map((rule) => parseRoutingRule(rule.rule))
+    .filter((rule): rule is ParsedRoutingRule => rule !== null)
+    .filter(isSingBoxGeoRuleSetRule);
+  const tags = uniqueStrings(geoRules.map(singBoxGeoRuleSetTagForRule).filter((tag): tag is string => Boolean(tag)));
+
+  return tags.map((tag) => ({
+    tag,
+    type: "remote",
+    format: "binary",
+    url: singBoxGeoRuleSetUrl(tag)
+  }));
 }
 
 function renderSingBoxCommonRule(rule: string, context: PolicyContext) {
@@ -361,6 +378,40 @@ function isBlockPolicy(policy: string) {
 
 function normalizeGeoValue(value: string) {
   return value.trim().toLowerCase();
+}
+
+function singBoxGeoRuleSetTag(kind: "geoip" | "geosite", value: string) {
+  return `${kind}-${normalizeGeoValue(value)}`;
+}
+
+function singBoxGeoRuleSetUrl(tag: string) {
+  const repository = tag.startsWith("geoip-") ? "sing-geoip" : "sing-geosite";
+  return `https://raw.githubusercontent.com/SagerNet/${repository}/rule-set/${tag}.srs`;
+}
+
+function isSingBoxGeoRuleSetRule(rule: ParsedRoutingRule) {
+  if ((rule.kind === "GEOIP" || rule.kind === "SRC-GEOIP") && normalizeGeoValue(rule.target) !== "private") {
+    return true;
+  }
+
+  if (rule.kind === "GEOSITE") {
+    return true;
+  }
+
+  const target = normalizeGeoValue(rule.target);
+  return rule.kind === "RULE-SET" && (target.startsWith("geosite-") || target.startsWith("geoip-"));
+}
+
+function singBoxGeoRuleSetTagForRule(rule: ParsedRoutingRule) {
+  if (rule.kind === "GEOSITE") {
+    return singBoxGeoRuleSetTag("geosite", rule.target);
+  }
+
+  if (rule.kind === "GEOIP" || rule.kind === "SRC-GEOIP") {
+    return normalizeGeoValue(rule.target) === "private" ? null : singBoxGeoRuleSetTag("geoip", rule.target);
+  }
+
+  return normalizeGeoValue(rule.target);
 }
 
 function portCondition(portKey: string, rangeKey: string, value: string, action: Record<string, unknown>) {

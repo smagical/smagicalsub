@@ -9,6 +9,7 @@ export { renderClashConfig } from "./renderers/clash";
 export { renderPlainSubscription, renderV2rayNSubscription } from "./renderers/plain";
 export { renderSingBoxConfig } from "./renderers/sing-box";
 export { renderXrayConfig } from "./renderers/xray";
+export { singBoxGeoRuleSetsForRules } from "./renderers/rules";
 
 // 统一格式别名入口，避免路由层散落 v2ray/base64/singbox 等兼容判断。
 export function normalizeSubscriptionFormat(value: string | null | undefined): SubscriptionFormat {
@@ -37,7 +38,8 @@ export function normalizeSubscriptionFormat(value: string | null | undefined): S
 
 // 路由层只关心目标格式，具体输出差异收敛到各 renderer 小模块内。
 export function renderSubscription(input: RenderSubscriptionInput): string {
-  const dedupedInput = { ...input, nodes: dedupeRenderableNodes(input.nodes), profileRules: normalizeProfileRules(input) };
+  const normalizedProfileRules = normalizeProfileRules(input);
+  const dedupedInput = { ...input, nodes: dedupeRenderableNodes(input.nodes), profileRules: normalizedProfileRules, rules: normalizedProfileRules.map((rule) => rule.rule) };
 
   switch (input.format) {
     case "v2rayn":

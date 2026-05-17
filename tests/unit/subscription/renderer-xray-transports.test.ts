@@ -132,4 +132,23 @@ describe("subscription renderer: Xray transports", () => {
       publicKey: "peer-key"
     }));
   });
+
+  it("skips incomplete Xray WireGuard outbounds", () => {
+    const incompleteWireGuardNode = parseNodeUri("wg://private-key@wg.example.com:51820?ip=10.0.0.2%2F32#WG");
+
+    expect(incompleteWireGuardNode).not.toBeNull();
+
+    const output = renderSubscription({
+      format: "xray",
+      profileName: "Default",
+      nodes: [{
+        name: incompleteWireGuardNode?.name ?? "WG",
+        protocol: incompleteWireGuardNode?.protocol,
+        config_json: JSON.stringify(incompleteWireGuardNode?.config)
+      }]
+    });
+    const xray = JSON.parse(output) as { outbounds: Array<Record<string, unknown>> };
+
+    expect(xray.outbounds.find((outbound) => outbound.protocol === "wireguard")).toBeUndefined();
+  });
 });

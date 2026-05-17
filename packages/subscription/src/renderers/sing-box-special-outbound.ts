@@ -1,5 +1,5 @@
 import { baseAuthOutbound, withTls } from "./sing-box-shared";
-import { compact, numberValue, stringValue } from "./utils";
+import { numberValue, stringValue } from "./utils";
 
 export function toSpecialSingBoxOutbound(
   parsed: Record<string, unknown>,
@@ -9,20 +9,6 @@ export function toSpecialSingBoxOutbound(
 ) {
   // 特殊协议字段差异大，集中在这里便于后续按官方 schema 精细补齐。
   switch (parsed.type) {
-    case "wireguard":
-      return compact({
-        type: "wireguard",
-        tag,
-        server,
-        server_port: serverPort,
-        local_address: stringList(parsed.ip, parsed.ipv6),
-        private_key: stringValue(parsed["private-key"]),
-        peer_public_key: stringValue(parsed["public-key"]),
-        pre_shared_key: stringValue(parsed["pre-shared-key"]),
-        reserved: reservedBytes(parsed.reserved),
-        network: stringValue(parsed.network),
-        mtu: numberValue(parsed.mtu)
-      });
     case "anytls":
       return withTls(
         parsed,
@@ -53,28 +39,4 @@ export function toSpecialSingBoxOutbound(
     default:
       return null;
   }
-}
-
-function stringList(...values: unknown[]) {
-  const items = values.flatMap((value) => {
-    if (Array.isArray(value)) {
-      return value.map(String);
-    }
-
-    if (typeof value === "string") {
-      return value.split(",");
-    }
-
-    return [];
-  }).map((item) => item.trim()).filter(Boolean);
-
-  return items.length > 0 ? items : undefined;
-}
-
-function reservedBytes(value: unknown) {
-  const values = stringList(value)
-    ?.map((item) => Number(item))
-    .filter((item) => Number.isInteger(item) && item >= 0 && item <= 255);
-
-  return values && values.length > 0 ? values : undefined;
 }

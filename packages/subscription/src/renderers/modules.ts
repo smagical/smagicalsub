@@ -42,6 +42,9 @@ function toDnsOverride(format: RenderConfigModule["format"], content: Record<str
   const singBoxStrategy = singBoxDnsStrategy(content.strategy);
   const xrayStrategy = xrayDnsStrategy(content.queryStrategy ?? content.strategy);
   const singBoxServers = toSingBoxDnsServers(serverSource);
+  const singBoxFakeIpServer = singBoxFakeIpServerFor(content, singBoxServers);
+  const singBoxDnsServers = singBoxFakeIpServer ? [singBoxFakeIpServer, ...singBoxServers] : singBoxServers;
+  const singBoxRules = singBoxDnsRules(content, singBoxFakeIpServer);
 
   switch (format) {
     case "clash":
@@ -69,12 +72,10 @@ function toDnsOverride(format: RenderConfigModule["format"], content: Record<str
           client_subnet: stringValue(content.client_subnet),
           disable_cache: content.disable_cache,
           disable_expire: content.disable_expire,
-          fakeip: legacySingBoxFakeIp(content, singBoxServers),
-          final: stringValue(content.final) ?? firstSingBoxDnsServerTag(singBoxServers),
-          independent_cache: content.independent_cache,
+          final: stringValue(content.final) ?? firstSingBoxDnsServerTag(singBoxDnsServers),
           reverse_mapping: content.reverse_mapping,
-          rules: Array.isArray(content.rules) ? content.rules : undefined,
-          servers: singBoxServers.length > 0 ? singBoxServers : undefined,
+          rules: singBoxRules,
+          servers: singBoxDnsServers.length > 0 ? singBoxDnsServers : undefined,
           strategy: singBoxStrategy
         })
       };
@@ -112,6 +113,7 @@ function toInboundOverride(format: RenderConfigModule["format"], content: Record
   const allowLan = booleanValue(content.allowLan, false);
   const udp = booleanValue(content.udp, true);
   const sniff = booleanValue(content.sniff, true);
+  const tag = stringValue(content.tag) ?? `${type}-in`;
 
   switch (format) {
     case "clash":
@@ -123,26 +125,17 @@ function toInboundOverride(format: RenderConfigModule["format"], content: Record
         "socks-port": type === "socks" ? port : undefined
       });
     case "sing-box":
-      return {
+      return compact({
         inbounds: [
-          compact({
-            ...content,
-            type: type === "http" ? "http" : type === "socks" ? "socks" : "mixed",
-            tag: stringValue(content.tag) ?? `${type}-in`,
-            listen,
-            listen_port: port,
-            sniff,
-            udp,
-            inboundType: undefined,
-            port: undefined
-          })
-        ]
-      };
+          singBoxInbound(content, type, tag, listen, port)
+        ],
+        route: sniff ? { rules: [singBoxSniffRule(tag)] } : undefined
+      });
     case "xray":
       return {
         inbounds: [
           compact({
-            tag: stringValue(content.tag) ?? `${type}-in`,
+            tag,
             listen,
             port,
             protocol: type === "http" ? "http" : "socks",
@@ -156,12 +149,72 @@ function toInboundOverride(format: RenderConfigModule["format"], content: Record
   }
 }
 
+function singBoxInbound(content: Record<string, unknown>, type: string, tag: string, listen: string, port: number) {
+  const native = withoutKeys(content, [
+    "allowLan",
+    "inboundType",
+    "port",
+    "protocol",
+    "settings",
+    "sniff",
+    "sniff_override_destination",
+    "sniff_timeout",
+    "sniffing",
+    "udp",
+    "udp_disable_domain_unmapping"
+  ]);
+
+  return compact({
+    ...native,
+    type: type === "http" ? "http" : type === "socks" ? "socks" : "mixed",
+    tag,
+    listen,
+    listen_port: port
+  });
+}
+
+function singBoxSniffRule(inbound: string) {
+  // sing-box 1.13 起移除旧入站 sniff 字段，嗅探需要放到 route rule action。
+  return {
+    inbound: [inbound],
+    action: "sniff"
+  };
+}
+
 function xrayInboundSettings(content: Record<string, unknown>, type: string, udp: boolean) {
   const settings = objectValue(content.settings);
   return compact({
     ...settings,
     udp: type === "http" ? settings.udp : settings.udp ?? udp
   });
+}
+
+function xrayTunSettings(content: Record<string, unknown>) {
+  const settings = objectValue(content.settings);
+  const autoSystemRoutingTable = xrayAutoSystemRoutingTable(content.autoSystemRoutingTable ?? content.autoRoute ?? settings.autoSystemRoutingTable);
+  return compact({
+    ...settings,
+    gateway: toStringArray(content.gateway ?? settings.gateway ?? content.address),
+    name: stringValue(content.name ?? content.interfaceName ?? settings.name),
+    mtu: numberValue(content.mtu ?? settings.mtu),
+    dns: toStringArray(content.dns ?? content.dnsHijack ?? content["dns-hijack"] ?? settings.dns),
+    autoSystemRoutingTable,
+    autoOutboundsInterface: stringValue(content.autoOutboundsInterface ?? content.autoDetectInterface ?? settings.autoOutboundsInterface)
+      ?? (autoSystemRoutingTable ? "auto" : undefined)
+  });
+}
+
+function xrayAutoSystemRoutingTable(value: unknown) {
+  if (value === true) {
+    return ["0.0.0.0/0", "::/0"];
+  }
+
+  if (value === false) {
+    return undefined;
+  }
+
+  const values = toStringArray(value);
+  return values.length > 0 ? values : undefined;
 }
 
 function xraySniffingSettings(content: Record<string, unknown>, sniff: boolean) {
@@ -208,7 +261,7 @@ function toTunOverride(format: RenderConfigModule["format"], content: Record<str
       return {
         inbounds: [
           compact({
-            ...content,
+            ...withoutKeys(content, singBoxTunSemanticFields),
             type: "tun",
             tag: stringValue(content.tag) ?? "tun-in",
             interface_name: stringValue(content.interface_name ?? content.interfaceName),
@@ -217,8 +270,7 @@ function toTunOverride(format: RenderConfigModule["format"], content: Record<str
             auto_route: content.auto_route ?? content.autoRoute,
             strict_route: content.strict_route ?? content.strictRoute,
             stack: stringValue(content.stack),
-            sniff: content.sniff,
-            interfaceName: undefined
+            sniff: content.sniff
           })
         ]
       };
@@ -228,11 +280,7 @@ function toTunOverride(format: RenderConfigModule["format"], content: Record<str
           compact({
             tag: stringValue(content.tag) ?? "tun-in",
             protocol: "tun",
-            settings: compact({
-              address: arrayOrValue(content.address),
-              mtu: numberValue(content.mtu),
-              stack: stringValue(content.stack)
-            }),
+            settings: xrayTunSettings(content),
             sniffing: content.sniff === false ? undefined : { enabled: true, destOverride: ["http", "tls", "quic"] }
           })
         ]
@@ -460,6 +508,7 @@ function mergeArrayValue(parentKey: string, key: string, current: unknown[], val
 function shouldMergeByTag(parentKey: string, key: string) {
   return (parentKey === "routing" && key === "balancers")
     || (parentKey === "route" && key === "rule_set")
+    || key === "endpoints"
     || key === "inbounds"
     || key === "outbounds"
     || key === "proxy-groups";
@@ -539,6 +588,17 @@ function objectValue(value: unknown) {
   return isPlainObject(value) ? value : {};
 }
 
+function withoutKeys(value: Record<string, unknown>, keys: string[]) {
+  const blocked = new Set(keys);
+  return Object.fromEntries(Object.entries(value).filter(([key]) => !blocked.has(key)));
+}
+
+const singBoxTunSemanticFields = [
+  "autoRoute",
+  "interfaceName",
+  "strictRoute"
+];
+
 function providerMap(content: Record<string, unknown>) {
   const name = stringValue(content.name);
 
@@ -612,16 +672,34 @@ function firstSingBoxDnsServerTag(servers: Array<Record<string, unknown>>) {
   return first ? stringValue(first.tag) : undefined;
 }
 
-function legacySingBoxFakeIp(content: Record<string, unknown>, servers: Array<Record<string, unknown>>) {
+function singBoxFakeIpServerFor(content: Record<string, unknown>, servers: Array<Record<string, unknown>>) {
   if (servers.some((server) => server.type === "fakeip")) {
     return undefined;
   }
 
-  if (isPlainObject(content.fakeip)) {
-    return content.fakeip;
+  const fakeip = objectValue(content.fakeip);
+  const hasFakeIpOptions = Object.keys(fakeip).some((key) => key !== "enabled");
+  const enabled = booleanValue(content.fakeIp, false) || (hasFakeIpOptions || fakeip.enabled === true) && fakeip.enabled !== false;
+
+  if (enabled) {
+    return compact({
+      ...fakeip,
+      tag: stringValue(fakeip.tag) ?? "fakeip",
+      type: "fakeip",
+      enabled: undefined
+    });
   }
 
-  return booleanValue(content.fakeIp, false) ? { enabled: true } : undefined;
+  return undefined;
+}
+
+function singBoxDnsRules(content: Record<string, unknown>, fakeIpServer: Record<string, unknown> | undefined) {
+  const rules = Array.isArray(content.rules) ? [...content.rules] : [];
+  const fakeIpTag = fakeIpServer ? stringValue(fakeIpServer.tag) : undefined;
+
+  return fakeIpTag && rules.length === 0
+    ? [{ query_type: ["A", "AAAA"], server: fakeIpTag }]
+    : rules.length > 0 ? rules : undefined;
 }
 
 function toSingBoxDnsServer(entry: string | Record<string, unknown>, fallbackTag: string): Record<string, unknown> | null {

@@ -49,6 +49,22 @@ describe("profile import preview: runtime containers", () => {
     });
 
     expect(clashPreview.modules.at(-1)?.content).toEqual({ mode: "rule" });
+    expect(singBoxPreview.modules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        content: {
+          endpoints: [{ tag: "wg-endpoint", type: "wireguard" }]
+        },
+        format: "sing-box",
+        type: "advanced-override"
+      }),
+      expect.objectContaining({
+        content: {
+          experimental: { clash_api: { external_controller: "127.0.0.1:9090" } }
+        },
+        format: "sing-box",
+        type: "advanced-override"
+      })
+    ]));
     expect(singBoxPreview.modules.at(-1)?.content).toEqual({
       experimental: { clash_api: { external_controller: "127.0.0.1:9090" } }
     });
