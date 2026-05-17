@@ -3,7 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import { defaultSiteSettings, type HealthDto } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { bootstrapAdmin, getAuthStatus, getCurrentUser, login, logout } from "../features/auth/api";
+import { bootstrapAdmin, getAuthStatus, getCurrentUser, login, logout, recoverAdminPassword } from "../features/auth/api";
 import { getSiteSettings } from "../features/settings/api";
 import { clearAuthToken, getAuthToken, getJson, setAuthToken } from "../lib/api-client";
 import { AppSections } from "./AppSections";
@@ -32,6 +32,7 @@ export function App() {
   const settings = settingsQuery.data ?? defaultSiteSettings;
   const loginMutation = useMutation({ mutationFn: login, onSuccess: handleAuthSuccess });
   const bootstrapMutation = useMutation({ mutationFn: bootstrapAdmin, onSuccess: handleAuthSuccess });
+  const recoverAdminPasswordMutation = useMutation({ mutationFn: recoverAdminPassword });
 
   useEffect(() => {
     applyTheme(theme);
@@ -93,8 +94,12 @@ export function App() {
       <LoginPanel
         error={errorMessage(loginMutation.error)}
         pending={loginMutation.isPending}
+        recoveryError={errorMessage(recoverAdminPasswordMutation.error)}
+        recoveryPending={recoverAdminPasswordMutation.isPending}
+        recoverySuccess={recoverAdminPasswordMutation.isSuccess}
         settings={settings}
         onLogin={(input) => loginMutation.mutate(input)}
+        onRecoverPassword={(input) => recoverAdminPasswordMutation.mutate(input)}
       />
     );
   } else if (authRequired && authToken && userQuery.isLoading) {

@@ -1,6 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { bootstrapAdminSchema, changePasswordSchema, failure, loginSchema, success } from "@smagicalsub/shared";
+import { bootstrapAdminSchema, changePasswordSchema, failure, loginSchema, recoverAdminPasswordSchema, success } from "@smagicalsub/shared";
 import { z } from "zod";
 import type { AppContext } from "../../env";
 import { listResponse } from "../../lib/list-response";
@@ -11,6 +11,7 @@ import {
   createSession,
   deleteOtherSessionsByToken,
   deleteSessionByToken,
+  deleteSessionsByUserId,
   deleteUserSession,
   listUserSessions
 } from "./session.repository";
@@ -73,6 +74,29 @@ publicAuthRoutes.post("/login", zValidator("json", loginSchema), async (c) => {
   await clearLoginFailures(c.env, input.email, ip);
   const session = await createSession(c.env.DB, user.id);
   return c.json(success({ ...session, user: { email: user.email, id: user.id, name: user.name, role: user.role } }));
+});
+
+publicAuthRoutes.post("/recover-admin-password", zValidator("json", recoverAdminPasswordSchema), async (c) => {
+  const input = c.req.valid("json");
+  const expectedToken = c.env.ADMIN_TOKEN?.trim();
+
+  if (!expectedToken) {
+    return c.json(failure({ code: "RECOVERY_DISABLED", message: "未配置管理员恢复令牌" }), 404);
+  }
+
+  if (input.adminToken !== expectedToken) {
+    return c.json(failure({ code: "UNAUTHORIZED", message: "管理员恢复令牌不正确" }), 401);
+  }
+
+  const user = await findUserByEmail(c.env.DB, input.email);
+  if (!user || user.role !== "admin") {
+    return c.json(failure({ code: "ADMIN_NOT_FOUND", message: "管理员账号不存在" }), 404);
+  }
+
+  await updateUserPassword(c.env.DB, user.id, input.password);
+  await deleteSessionsByUserId(c.env.DB, user.id);
+
+  return c.json(success({ ok: true }));
 });
 
 publicAuthRoutes.post("/logout", async (c) => {

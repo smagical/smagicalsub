@@ -6,6 +6,7 @@ import type {
   ListDto,
   LoginDto,
   LoginInput,
+  RecoverAdminPasswordInput,
   SessionDto
 } from "@smagicalsub/shared";
 import { deleteJson, getJson, postJson } from "../../lib/api-client";
@@ -32,6 +33,10 @@ export function logout() {
 
 export function changePassword(input: ChangePasswordInput) {
   return postJson<{ ok: boolean }>("/api/auth/password", input);
+}
+
+export function recoverAdminPassword(input: RecoverAdminPasswordInput) {
+  return postJson<{ ok: boolean }>("/api/auth/recover-admin-password", input);
 }
 
 export function listSessions() {

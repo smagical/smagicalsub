@@ -41,13 +41,57 @@ describe("auth password", () => {
     expect(await loginStatus(email, "password456")).toBe(200);
     expect(await meStatus(token)).toBe(200);
   });
+
+  it("lets the admin token recover an admin password and revokes old sessions", async () => {
+    const email = `admin-recover-${crypto.randomUUID()}@example.com`;
+    await createUser(email, "password123", "admin");
+    const token = await loginToken(email, "password123");
+    const response = await SELF.fetch("https://example.com/api/auth/recover-admin-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminToken: "secret", email, password: "password456" })
+    });
+
+    expect(response.status).toBe(200);
+    expect(await loginStatus(email, "password123")).toBe(401);
+    expect(await loginStatus(email, "password456")).toBe(200);
+    expect(await meStatus(token)).toBe(401);
+  });
+
+  it("does not recover a non-admin password", async () => {
+    const email = `user-recover-${crypto.randomUUID()}@example.com`;
+    await createUser(email, "password123", "user");
+    const response = await SELF.fetch("https://example.com/api/auth/recover-admin-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminToken: "secret", email, password: "password456" })
+    });
+
+    expect(response.status).toBe(404);
+    expect(await loginStatus(email, "password123")).toBe(200);
+    expect(await loginStatus(email, "password456")).toBe(401);
+  });
+
+  it("rejects admin password recovery with the wrong admin token", async () => {
+    const email = `wrong-recover-${crypto.randomUUID()}@example.com`;
+    await createUser(email, "password123", "admin");
+    const response = await SELF.fetch("https://example.com/api/auth/recover-admin-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminToken: "wrong-token", email, password: "password456" })
+    });
+
+    expect(response.status).toBe(401);
+    expect(await loginStatus(email, "password123")).toBe(200);
+    expect(await loginStatus(email, "password456")).toBe(401);
+  });
 });
 
-async function createUser(email: string, password: string) {
+async function createUser(email: string, password: string, role = "user") {
   const response = await SELF.fetch("https://example.com/api/users", {
     method: "POST",
     headers: { Authorization: "Bearer secret", "Content-Type": "application/json" },
-    body: JSON.stringify({ email, name: "Password User", password, role: "user" })
+    body: JSON.stringify({ email, name: "Password User", password, role })
   });
 
   expect(response.status).toBe(201);

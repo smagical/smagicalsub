@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { BootstrapAdminInput, LoginInput, SiteSettingsDto } from "@smagicalsub/shared";
-import { ArrowRight, CheckCircle2, KeyRound } from "lucide-react";
+import type { BootstrapAdminInput, LoginInput, RecoverAdminPasswordInput, SiteSettingsDto } from "@smagicalsub/shared";
+import { ArrowLeft, ArrowRight, CheckCircle2, KeyRound, RotateCcw } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { BrandHeader } from "../shared/BrandHeader";
 import { FilterField } from "../shared/FilterField";
@@ -11,33 +11,82 @@ import { AuthMarketing } from "./AuthMarketing";
 type LoginPanelProps = {
   error?: string | null;
   pending?: boolean;
+  recoveryError?: string | null;
+  recoveryPending?: boolean;
+  recoverySuccess?: boolean;
   settings: SiteSettingsDto;
   onLogin: (input: LoginInput) => void;
+  onRecoverPassword: (input: RecoverAdminPasswordInput) => void;
 };
 
-export function LoginPanel({ error, pending = false, settings, onLogin }: LoginPanelProps) {
+export function LoginPanel({
+  error,
+  pending = false,
+  recoveryError,
+  recoveryPending = false,
+  recoverySuccess = false,
+  settings,
+  onLogin,
+  onRecoverPassword
+}: LoginPanelProps) {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
+  const [recoveryForm, setRecoveryForm] = useState({ adminToken: "", email: "", password: "" });
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onLogin(form);
   }
 
+  function handleRecoverySubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onRecoverPassword(recoveryForm);
+  }
+
   return (
     <AuthCard description={settings.loginDescription} settings={settings} title={settings.loginTitle}>
-      <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-        <FilterField label="邮箱">
-          <Input autoFocus onChange={(event) => setForm({ ...form, email: event.target.value })} required type="email" value={form.email} />
-        </FilterField>
-        <FilterField label="密码">
-          <Input onChange={(event) => setForm({ ...form, password: event.target.value })} required type="password" value={form.password} />
-        </FilterField>
-        <PanelError message={error} />
-        <Button disabled={pending} size="lg" type="submit">
-          进入控制台
-          <ArrowRight data-icon="inline-end" />
-        </Button>
-      </form>
+      {recoveryOpen ? (
+        <form className="flex flex-col gap-3" onSubmit={handleRecoverySubmit}>
+          <FilterField label="管理员邮箱">
+            <Input autoFocus onChange={(event) => setRecoveryForm({ ...recoveryForm, email: event.target.value })} required type="email" value={recoveryForm.email} />
+          </FilterField>
+          <FilterField label="恢复令牌">
+            <Input onChange={(event) => setRecoveryForm({ ...recoveryForm, adminToken: event.target.value })} required value={recoveryForm.adminToken} />
+          </FilterField>
+          <FilterField label="新密码">
+            <Input minLength={8} onChange={(event) => setRecoveryForm({ ...recoveryForm, password: event.target.value })} required type="password" value={recoveryForm.password} />
+          </FilterField>
+          <PanelError message={recoveryError} />
+          {recoverySuccess ? <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">密码已重置，请使用新密码登录。</p> : null}
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button className="sm:flex-1" disabled={recoveryPending} size="lg" type="submit">
+              重置管理员密码
+              <RotateCcw data-icon="inline-end" />
+            </Button>
+            <Button className="sm:w-auto" onClick={() => setRecoveryOpen(false)} size="lg" type="button" variant="outline">
+              <ArrowLeft data-icon="inline-start" />
+              返回登录
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+          <FilterField label="邮箱">
+            <Input autoFocus onChange={(event) => setForm({ ...form, email: event.target.value })} required type="email" value={form.email} />
+          </FilterField>
+          <FilterField label="密码">
+            <Input onChange={(event) => setForm({ ...form, password: event.target.value })} required type="password" value={form.password} />
+          </FilterField>
+          <PanelError message={error} />
+          <Button disabled={pending} size="lg" type="submit">
+            进入控制台
+            <ArrowRight data-icon="inline-end" />
+          </Button>
+          <Button className="justify-start px-0 text-muted-foreground" onClick={() => setRecoveryOpen(true)} type="button" variant="link">
+            忘记管理员密码？
+          </Button>
+        </form>
+      )}
     </AuthCard>
   );
 }

@@ -18,6 +18,14 @@ export const changePasswordSchema = z.object({
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
+export const recoverAdminPasswordSchema = z.object({
+  email: z.string().trim().email().max(160),
+  adminToken: z.string().trim().min(1).max(200),
+  password: passwordSchema
+});
+
+export type RecoverAdminPasswordInput = z.infer<typeof recoverAdminPasswordSchema>;
+
 export const bootstrapAdminSchema = z.object({
   email: z.string().trim().email().max(160),
   name: z.string().trim().min(1).max(80),
