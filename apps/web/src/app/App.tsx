@@ -7,7 +7,7 @@ import { bootstrapAdmin, getAuthStatus, getCurrentUser, login, logout, recoverAd
 import { getSiteSettings } from "../features/settings/api";
 import { clearAuthToken, getAuthToken, getJson, setAuthToken } from "../lib/api-client";
 import { AppSections } from "./AppSections";
-import { BootstrapPanel, LoginPanel, StatusPanel } from "./AuthPanels";
+import { LoginPanel, StatusPanel } from "./AuthPanels";
 import { Layout } from "./Layout";
 import { SetupPage } from "./SetupPage";
 import type { SectionId } from "./navigation";
@@ -23,6 +23,8 @@ export function App() {
   const settingsQuery = useQuery({ queryKey: ["site-settings"], queryFn: getSiteSettings, retry: false });
   const authStatusQuery = useQuery({ queryKey: ["auth-status"], queryFn: getAuthStatus, retry: false });
   const userQuery = useQuery({ queryKey: ["auth-me", authToken], queryFn: getCurrentUser, enabled: Boolean(authToken), retry: false });
+  const authStatus = authStatusQuery.data;
+  const setupRedirectRequired = Boolean(authStatus?.bootstrapRequired && path !== "/setup");
   const setupQuery = useQuery({
     queryKey: ["setup-status"],
     queryFn: () => getJson<SetupStatusDto>("/api/setup/status"),
@@ -35,7 +37,6 @@ export function App() {
     retry: false
   });
   const health = healthQuery.data;
-  const authStatus = authStatusQuery.data;
   const authRequired = Boolean(authStatus?.authRequired ?? health?.authRequired);
   const settings = settingsQuery.data ?? defaultSiteSettings;
   const loginMutation = useMutation({ mutationFn: login, onSuccess: handleAuthSuccess });
@@ -64,6 +65,18 @@ export function App() {
       window.location.replace("/");
     }
   }, [path, setupQuery.data]);
+
+  useEffect(() => {
+    if (setupRedirectRequired) {
+      window.location.replace("/setup");
+    }
+  }, [setupRedirectRequired]);
+
+  useEffect(() => {
+    if (path === "/setup" && bootstrapMutation.isSuccess) {
+      window.location.replace("/");
+    }
+  }, [bootstrapMutation.isSuccess, path]);
 
   useEffect(() => {
     if (userQuery.error) {
@@ -101,6 +114,9 @@ export function App() {
   if (path === "/setup") {
     content = (
       <SetupPage
+        bootstrapError={errorMessage(bootstrapMutation.error)}
+        bootstrapPending={bootstrapMutation.isPending}
+        onBootstrap={(input) => bootstrapMutation.mutate(input)}
         error={errorMessage(setupQuery.error)}
         loading={setupQuery.isLoading || setupQuery.isFetching}
         settings={settings}
@@ -108,20 +124,12 @@ export function App() {
         onRefresh={() => void setupQuery.refetch()}
       />
     );
+  } else if (setupRedirectRequired) {
+    content = <StatusPanel title="正在进入初始化页" description="检测到首个管理员尚未创建，正在跳转到部署初始化页面。" settings={settings} />;
   } else if ((!health && healthQuery.isLoading) || authStatusQuery.isLoading) {
     content = <StatusPanel title="正在连接 Worker" description="正在读取运行状态。" settings={settings} />;
   } else if (healthQuery.error) {
     content = <StatusPanel title="连接失败" description={healthQuery.error.message} settings={settings} />;
-  } else if (authStatus?.bootstrapRequired && !authToken) {
-    content = (
-      <BootstrapPanel
-        error={errorMessage(bootstrapMutation.error)}
-        pending={bootstrapMutation.isPending}
-        requiresToken={authStatus.bootstrapRequiresToken}
-        settings={settings}
-        onBootstrap={(input) => bootstrapMutation.mutate(input)}
-      />
-    );
   } else if (authRequired && !authToken) {
     content = (
       <LoginPanel

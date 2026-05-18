@@ -81,6 +81,84 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
   await page.getByRole("button", { exact: true, name: "取消" }).click();
 });
 
+test("redirects to setup before the first admin exists", async ({ page }) => {
+  await page.route("**/api/health", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      json: {
+        ok: true,
+        data: {
+          authRequired: true,
+          env: "e2e",
+          status: "ok",
+          timestamp: new Date("2026-05-01T00:00:00.000Z").toISOString()
+        }
+      }
+    });
+  });
+
+  await page.route("**/api/auth/status", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      json: {
+        ok: true,
+        data: {
+          authRequired: true,
+          bootstrapRequired: true,
+          bootstrapRequiresToken: false
+        }
+      }
+    });
+  });
+
+  await page.route("**/api/setup/status", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      json: {
+        ok: true,
+        data: {
+          available: true,
+          bootstrapRequired: true,
+          bootstrapRequiresToken: false,
+          mode: "auto",
+          resources: { adminToken: false, adminUser: false, d1: true, kv: true, migrations: true },
+          steps: [
+            { key: "d1", label: "D1 绑定", ok: true, required: true, detail: "DB binding 可用" },
+            { key: "kv", label: "KV 绑定", ok: true, required: true, detail: "KV binding 可用" },
+            { key: "migrations", label: "D1 迁移", ok: true, required: true, detail: "核心数据表已存在" },
+            { key: "adminToken", label: "管理员恢复令牌", ok: false, required: false, detail: "可选：未配置时仍可完成初始化，但无法使用密码恢复" },
+            { key: "adminUser", label: "首个管理员", ok: false, required: true, detail: "创建首个管理员后初始化完成" }
+          ]
+        }
+      }
+    });
+  });
+
+  await page.goto("/");
+
+  await expect(page).toHaveURL(/\/setup$/);
+  await expect(page.getByText("部署初始化")).toBeVisible();
+  await expect(page.getByText("按步骤检测资源并创建首个管理员，完成后会自动进入控制台。")).toBeVisible();
+  await expect(page.getByText("初始化步骤", { exact: true })).toBeVisible();
+  await expect(page.getByText("步骤 1：D1 绑定", { exact: true })).toBeVisible();
+  await expect(page.getByText("Cloudflare 自动部署配置")).toBeHidden();
+
+  await page.getByRole("button", { name: "下一步" }).click();
+  await expect(page.getByText("步骤 2：KV 绑定", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "下一步" }).click();
+  await expect(page.getByText("步骤 3：D1 迁移", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "下一步" }).click();
+  await expect(page.getByText("步骤 4：管理员恢复令牌", { exact: true })).toBeVisible();
+  await expect(page.getByText("在 Cloudflare 页面设置恢复令牌")).toBeVisible();
+  await expect(page.getByText(/恢复令牌只用于忘记管理员密码时重置密码/)).toBeVisible();
+  await expect(page.getByText("进入 Settings，然后打开 Variables and Secrets。")).toBeVisible();
+  await expect(page.getByText("添加 Secret，变量名填写 ADMIN_TOKEN，值填写一段足够长的随机字符串。")).toBeVisible();
+  await page.getByRole("button", { name: "跳过此项" }).click();
+  await expect(page.getByText("步骤 5：首个管理员", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("名称")).toBeVisible();
+  await expect(page.getByRole("button", { name: "完成初始化" })).toBeVisible();
+});
+
 test("logs in and sends the session token with API requests", async ({ page }) => {
   let dashboardAuthorization = "";
   await mockApi(page, {

@@ -160,7 +160,7 @@ pnpm build:api
 
 点击 README 顶部的 **Deploy to Cloudflare** 按钮即可从 GitHub 仓库创建 Worker 项目。Cloudflare 会读取 `wrangler.jsonc`，在首次部署时自动创建 D1 数据库和 KV namespace，并运行 `pnpm deploy` 完成构建、部署和 D1 远程迁移。
 
-首次部署时需要在 Cloudflare 页面填写或后续补充运行时 Secret：
+首次部署时可在 Cloudflare 页面填写或后续补充运行时 Secret。`ADMIN_TOKEN` 是可选恢复令牌，不配置也可以完成首个管理员初始化；不配置时仅关闭“忘记管理员密码”的兜底恢复入口：
 
 ```text
 ADMIN_TOKEN=你的恢复令牌
@@ -195,7 +195,7 @@ PNPM_VERSION=10
 SETUP_MODE=auto
 ```
 
-`ADMIN_TOKEN` 仍需作为 Secret 配置一次：
+`ADMIN_TOKEN` 可作为 Secret 配置一次，用于管理员密码恢复和初始化保护；不配置也不影响首次创建管理员：
 
 ```text
 Worker Settings -> Variables and Secrets -> Add Secret -> ADMIN_TOKEN

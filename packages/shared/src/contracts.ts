@@ -76,6 +76,7 @@ export type SetupStatusDto = {
     key: "d1" | "kv" | "migrations" | "adminToken" | "adminUser";
     label: string;
     ok: boolean;
+    required: boolean;
     detail: string;
   }>;
   bootstrapRequired: boolean;

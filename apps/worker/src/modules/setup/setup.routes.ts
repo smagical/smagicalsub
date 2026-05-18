@@ -57,30 +57,35 @@ async function setupStatus(env: AppContext["Bindings"]): Promise<SetupStatusDto>
         key: "d1",
         label: "D1 绑定",
         ok: d1,
+        required: true,
         detail: d1 ? "DB binding 可用" : "等待 Wrangler automatic provisioning 创建并绑定 DB"
       },
       {
         key: "kv",
         label: "KV 绑定",
         ok: kv,
+        required: true,
         detail: kv ? "KV binding 可用" : "等待 Wrangler automatic provisioning 创建并绑定 KV"
       },
       {
         key: "migrations",
         label: "D1 迁移",
         ok: migrations,
+        required: true,
         detail: migrations ? "核心数据表已存在" : "等待执行 pnpm db:migrate:remote 或 pnpm deploy:cloudflare"
       },
       {
         key: "adminToken",
         label: "管理员恢复令牌",
         ok: adminToken,
-        detail: adminToken ? "ADMIN_TOKEN 已配置" : "建议在 Cloudflare Variables and Secrets 中添加 ADMIN_TOKEN"
+        required: false,
+        detail: adminToken ? "ADMIN_TOKEN 已配置" : "可选：未配置时仍可完成初始化，但无法使用密码恢复"
       },
       {
         key: "adminUser",
         label: "首个管理员",
         ok: adminUser,
+        required: true,
         detail: adminUser ? "管理员已创建" : "创建首个管理员后初始化完成"
       }
     ],

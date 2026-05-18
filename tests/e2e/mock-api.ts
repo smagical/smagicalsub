@@ -39,6 +39,29 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
     });
   }
 
+  if (url.endsWith("/api/setup/status")) {
+    return ok({
+      available: true,
+      bootstrapRequired: true,
+      bootstrapRequiresToken: false,
+      mode: "auto",
+      resources: {
+        adminToken: false,
+        adminUser: false,
+        d1: true,
+        kv: true,
+        migrations: true
+      },
+      steps: [
+        { key: "d1", label: "D1 绑定", ok: true, required: true, detail: "DB binding 可用" },
+        { key: "kv", label: "KV 绑定", ok: true, required: true, detail: "KV binding 可用" },
+        { key: "migrations", label: "D1 迁移", ok: true, required: true, detail: "核心数据表已存在" },
+        { key: "adminToken", label: "管理员恢复令牌", ok: false, required: false, detail: "可选：未配置时仍可完成初始化，但无法使用密码恢复" },
+        { key: "adminUser", label: "首个管理员", ok: false, required: true, detail: "创建首个管理员后初始化完成" }
+      ]
+    });
+  }
+
   if (url.endsWith("/api/auth/login")) {
     return ok({
       expiresAt: "2026-06-01 00:00:00",
