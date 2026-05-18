@@ -7,10 +7,10 @@
     "build": "vite build",
     "preview": "vite preview --outDir dist/client",
     "preview:worker": "vite preview",
-    "deploy": "pnpm build && wrangler deploy && wrangler d1 migrations apply DB --remote",
+    "deploy": "pnpm --workspace-root deploy",
     "typecheck": "tsc --noEmit",
-    "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:local": "pnpm --workspace-root db:migrate:local",
+    "db:migrate:remote": "pnpm --workspace-root db:migrate:remote",
     "deploy:cloudflare": "pnpm deploy"
   },
   "dependencies": {

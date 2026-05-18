@@ -11,7 +11,7 @@
     "dev": "pnpm --filter @smagicalsub/web dev",
     "build": "pnpm --filter @smagicalsub/web build",
     "build:api": "pnpm --filter @smagicalsub/worker typecheck",
-    "deploy": "pnpm --filter @smagicalsub/web deploy",
+    "deploy": "pnpm build && pnpm --filter @smagicalsub/web exec wrangler deploy --config ../../wrangler.jsonc && pnpm --filter @smagicalsub/web exec wrangler d1 migrations apply DB --remote --config ../../wrangler.jsonc",
     "deploy:cloudflare": "pnpm deploy",
     "preview": "pnpm --filter @smagicalsub/web preview",
     "preview:worker": "pnpm --filter @smagicalsub/web preview:worker",
@@ -22,8 +22,8 @@
     "test:e2e:install": "playwright install chromium",
     "typecheck": "pnpm -r --if-present typecheck",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "pnpm --filter @smagicalsub/web db:migrate:local",
-    "db:migrate:remote": "pnpm --filter @smagicalsub/web db:migrate:remote"
+    "db:migrate:local": "pnpm --filter @smagicalsub/web exec wrangler d1 migrations apply DB --local --config ../../wrangler.jsonc",
+    "db:migrate:remote": "pnpm --filter @smagicalsub/web exec wrangler d1 migrations apply DB --remote --config ../../wrangler.jsonc"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

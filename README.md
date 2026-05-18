@@ -29,7 +29,7 @@ packages/
 
 `packages/subscription` 原先命名为 `packages/clash`，但实际职责已经覆盖 Clash YAML、v2rayN Base64、明文 URI、sing-box JSON 和 Xray JSON，因此改为更贴近职责的订阅处理包。
 
-前后端通过 `apps/web/wrangler.jsonc` 同时部署到 Cloudflare Workers：静态资源由 Workers Static Assets 托管，`/api/*` 和 `/sub/*` 会先进入 `apps/worker/src/index.ts` 的 Hono 路由。
+前后端通过仓库根目录的 `wrangler.jsonc` 同时部署到 Cloudflare Workers：静态资源由 Workers Static Assets 托管，`/api/*` 和 `/sub/*` 会先进入 `apps/worker/src/index.ts` 的 Hono 路由。
 
 ## 本地开发
 
@@ -54,7 +54,7 @@ wrangler secret put ADMIN_TOKEN
 
 ## 数据库
 
-`apps/web/wrangler.jsonc` 使用 Wrangler automatic provisioning 声明 `DB` 和 `KV` binding。首次 `wrangler deploy` 时，Cloudflare 会为缺少资源 ID 的 D1 数据库与 KV namespace 自动创建资源；从 Deploy Button / Dashboard / GitHub 集成部署时，自动创建出的资源 ID 会显示在 Cloudflare 控制台中。
+根目录 `wrangler.jsonc` 使用 Wrangler automatic provisioning 声明 `DB` 和 `KV` binding。首次 `wrangler deploy` 时，Cloudflare 会为缺少资源 ID 的 D1 数据库与 KV namespace 自动创建资源；从 Deploy Button / Dashboard / GitHub 集成部署时，自动创建出的资源 ID 会显示在 Cloudflare 控制台中。
 
 迁移文件位于 `apps/web/migrations`，由 wrangler 从 `apps/web` 包按 D1 binding 名 `DB` 执行。
 
@@ -158,7 +158,7 @@ pnpm build:api
 
 ### 一键部署
 
-点击 README 顶部的 **Deploy to Cloudflare** 按钮即可从 GitHub 仓库创建 Worker 项目。Cloudflare 会读取 `wrangler.jsonc`，在首次部署时自动创建 D1 数据库和 KV namespace，并运行 `pnpm deploy` 完成构建、部署和 D1 远程迁移。
+点击 README 顶部的 **Deploy to Cloudflare** 按钮即可从 GitHub 仓库创建 Worker 项目。Cloudflare 会在仓库根目录读取 `wrangler.jsonc`，在首次部署时自动创建 D1 数据库和 KV namespace，并运行 `pnpm deploy` 完成构建、部署和 D1 远程迁移。
 
 首次部署时可在 Cloudflare 页面填写或后续补充运行时 Secret。`ADMIN_TOKEN` 是可选恢复令牌，不配置也可以完成首个管理员初始化；不配置时仅关闭“忘记管理员密码”的兜底恢复入口：
 
@@ -180,7 +180,7 @@ Build command: pnpm typecheck && pnpm test:unit && pnpm test:worker
 Deploy command: pnpm deploy
 ```
 
-`pnpm deploy` 会执行 `apps/web` 的 `deploy` 脚本：构建 Vite/Worker、执行 `wrangler deploy`，然后自动执行 `wrangler d1 migrations apply DB --remote`。
+`pnpm deploy` 会在仓库根目录构建 Vite/Worker、按根目录 `wrangler.jsonc` 执行 `wrangler deploy`，然后自动执行 `wrangler d1 migrations apply DB --remote`。
 
 建议在 Build variables 中固定运行时版本：
 
@@ -217,7 +217,7 @@ pnpm deploy
 
 部署前检查：
 
-- [apps/web/wrangler.jsonc](apps/web/wrangler.jsonc) 的 `DB` / `KV` 使用 automatic provisioning；如果你手动填写了 Cloudflare 控制台中的资源 ID，也可以继续固定绑定到已有资源。
+- [wrangler.jsonc](wrangler.jsonc) 的 `DB` / `KV` 使用 automatic provisioning；如果你手动填写了 Cloudflare 控制台中的资源 ID，也可以继续固定绑定到已有资源。
 - 按需设置 `ADMIN_TOKEN`：`wrangler secret put ADMIN_TOKEN`。
 - `pnpm deploy` 会自动执行远程 D1 迁移，确保远程 schema 与代码一致。
 - 首次打开站点后创建管理员账号；如果设置了 `ADMIN_TOKEN`，初始化表单需要填写同一个令牌。

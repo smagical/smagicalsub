@@ -1,7 +1,7 @@
 {
-  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "smagicalsub",
-  "main": "../worker/src/index.ts",
+  "main": "./apps/worker/src/index.ts",
   "compatibility_date": "2026-04-29",
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
@@ -16,7 +16,7 @@
     "crons": ["*/30 * * * *"]
   },
   "assets": {
-    "directory": "./dist",
+    "directory": "./apps/web/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*", "/sub/*"]
@@ -24,7 +24,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "smagicalsub"
+      "database_name": "smagicalsub",
+      "migrations_dir": "./apps/web/migrations"
     }
   ],
   "kv_namespaces": [
