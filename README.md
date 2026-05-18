@@ -48,15 +48,13 @@ pnpm dev
 
 部署初始化页位于 `/setup`。默认 `SETUP_MODE=auto` 时，仅在首个管理员尚未创建时显示；创建管理员成功后服务端返回 `302 /`，浏览器回到主页面。需要重新打开初始化页时，可在 Cloudflare 变量中临时设置 `SETUP_MODE=enabled`；需要完全关闭时设置 `SETUP_MODE=disabled`。
 
-```bash
-wrangler secret put ADMIN_TOKEN
-```
+`ADMIN_TOKEN` 是可选恢复令牌。推荐在 Cloudflare Dashboard 的 `Workers & Pages -> 你的 Worker -> Settings -> Variables and Secrets` 中添加 Secret，不配置也可以完成首次初始化。
 
 ## 数据库
 
 根目录 `wrangler.jsonc` 使用 Wrangler automatic provisioning 声明 `DB` 和 `KV` binding。首次 `wrangler deploy` 时，Cloudflare 会为缺少资源 ID 的 D1 数据库与 KV namespace 自动创建资源；从 Deploy Button / Dashboard / GitHub 集成部署时，自动创建出的资源 ID 会显示在 Cloudflare 控制台中。
 
-迁移文件位于 `apps/web/migrations`，由 wrangler 从 `apps/web` 包按 D1 binding 名 `DB` 执行。
+迁移文件位于 `apps/web/migrations`，根目录 `wrangler.jsonc` 通过 `migrations_dir` 指向该目录；根目录脚本会按 D1 binding 名 `DB` 执行迁移。
 
 ```bash
 pnpm db:migrate:local
@@ -160,10 +158,12 @@ pnpm build:api
 
 点击 README 顶部的 **Deploy to Cloudflare** 按钮即可从 GitHub 仓库创建 Worker 项目。Cloudflare 会在仓库根目录读取 `wrangler.jsonc`，在首次部署时自动创建 D1 数据库和 KV namespace，并运行 `pnpm deploy` 完成构建、部署和 D1 远程迁移。
 
-首次部署时可在 Cloudflare 页面填写或后续补充运行时 Secret。`ADMIN_TOKEN` 是可选恢复令牌，不配置也可以完成首个管理员初始化；不配置时仅关闭“忘记管理员密码”的兜底恢复入口：
+首次部署时可在 Cloudflare 页面填写或后续补充运行时 Secret。`ADMIN_TOKEN` 是可选恢复令牌，不配置也可以完成首个管理员初始化；不配置时仅关闭“忘记管理员密码”的兜底恢复入口。建议在 Cloudflare Dashboard 的 Variables and Secrets 页面添加 Secret：
 
 ```text
-ADMIN_TOKEN=你的恢复令牌
+Name: ADMIN_TOKEN
+Type: Secret
+Value: 你的恢复令牌
 ```
 
 部署完成后打开站点，进入 `/setup` 创建首个管理员；创建成功后会 `302` 回到主页。
@@ -192,7 +192,9 @@ PNPM_VERSION=10
 运行时变量：
 
 ```text
+APP_ENV=production
 SETUP_MODE=auto
+SUBSCRIPTION_CACHE_TTL_SECONDS=300
 ```
 
 `ADMIN_TOKEN` 可作为 Secret 配置一次，用于管理员密码恢复和初始化保护；不配置也不影响首次创建管理员：
@@ -218,6 +220,6 @@ pnpm deploy
 部署前检查：
 
 - [wrangler.jsonc](wrangler.jsonc) 的 `DB` / `KV` 使用 automatic provisioning；如果你手动填写了 Cloudflare 控制台中的资源 ID，也可以继续固定绑定到已有资源。
-- 按需设置 `ADMIN_TOKEN`：`wrangler secret put ADMIN_TOKEN`。
+- 按需设置 `ADMIN_TOKEN`：在 Cloudflare Dashboard 的 Variables and Secrets 页面添加 Secret。
 - `pnpm deploy` 会自动执行远程 D1 迁移，确保远程 schema 与代码一致。
 - 首次打开站点后创建管理员账号；如果设置了 `ADMIN_TOKEN`，初始化表单需要填写同一个令牌。
