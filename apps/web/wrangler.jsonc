@@ -8,7 +8,8 @@
     "enabled": true
   },
   "vars": {
-    "APP_ENV": "local",
+    "APP_ENV": "production",
+    "SETUP_MODE": "auto",
     "SUBSCRIPTION_CACHE_TTL_SECONDS": "300"
   },
   "triggers": {
@@ -23,14 +24,12 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "smagicalsub",
-      "database_id": "replace-with-d1-database-id"
+      "database_name": "smagicalsub"
     }
   ],
   "kv_namespaces": [
     {
-      "binding": "KV",
-      "id": "replace-with-kv-namespace-id"
+      "binding": "KV"
     }
   ]
 }

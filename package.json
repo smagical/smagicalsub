@@ -12,6 +12,7 @@
     "build": "pnpm --filter @smagicalsub/web build",
     "build:api": "pnpm --filter @smagicalsub/worker typecheck",
     "deploy": "pnpm --filter @smagicalsub/web deploy",
+    "deploy:cloudflare": "pnpm deploy",
     "preview": "pnpm --filter @smagicalsub/web preview",
     "preview:worker": "pnpm --filter @smagicalsub/web preview:worker",
     "test": "pnpm test:unit && pnpm test:worker && pnpm test:e2e",

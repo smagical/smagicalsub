@@ -5,6 +5,7 @@ export interface Env {
   KV: KVNamespace;
   ADMIN_TOKEN?: string;
   APP_ENV?: string;
+  SETUP_MODE?: "auto" | "disabled" | "enabled" | string;
   SUBSCRIPTION_CACHE_TTL_SECONDS?: string;
 }
 

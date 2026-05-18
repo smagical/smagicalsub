@@ -70,6 +70,18 @@ describe("worker runtime", () => {
   });
 
   it("bootstraps the first admin, logs in, and serves current user", async () => {
+    const setupStatusResponse = await SELF.fetch("https://example.com/api/setup/status");
+    const setupStatusPayload = (await setupStatusResponse.json()) as { data: { available: boolean; bootstrapRequired: boolean; resources: { d1: boolean; kv: boolean; migrations: boolean } } };
+
+    expect(setupStatusResponse.status).toBe(200);
+    expect(setupStatusPayload.data).toEqual(
+      expect.objectContaining({
+        available: true,
+        bootstrapRequired: true,
+        resources: expect.objectContaining({ d1: true, kv: true, migrations: true })
+      })
+    );
+
     const bootstrapResponse = await SELF.fetch("https://example.com/api/auth/bootstrap", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -94,6 +106,26 @@ describe("worker runtime", () => {
 
     expect(loginResponse.status).toBe(200);
     expect(mePayload.data.email).toBe("admin@example.com");
+  });
+
+  it("redirects setup bootstrap to the main page and closes setup after initialization", async () => {
+    const setupStatusResponse = await SELF.fetch("https://example.com/api/setup/status");
+    const setupStatusPayload = (await setupStatusResponse.json()) as { data: { available: boolean; bootstrapRequired: boolean } };
+    const bootstrapResponse = await SELF.fetch("https://example.com/api/setup/bootstrap", {
+      body: new URLSearchParams({
+        bootstrapToken: "secret",
+        email: "ignored@example.com",
+        name: "Ignored",
+        password: "password123"
+      }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      method: "POST",
+      redirect: "manual"
+    });
+
+    expect(setupStatusPayload.data).toEqual(expect.objectContaining({ available: false, bootstrapRequired: false }));
+    expect(bootstrapResponse.status).toBe(302);
+    expect(bootstrapResponse.headers.get("location")).toBe("/");
   });
 
   it("keeps the bootstrap admin protected from edits and deletion", async () => {

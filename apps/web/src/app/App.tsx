@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
-import { defaultSiteSettings, type HealthDto } from "@smagicalsub/shared";
+import { defaultSiteSettings, type HealthDto, type SetupStatusDto } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { bootstrapAdmin, getAuthStatus, getCurrentUser, login, logout, recoverAdminPassword } from "../features/auth/api";
 import { getSiteSettings } from "../features/settings/api";
@@ -9,6 +9,7 @@ import { clearAuthToken, getAuthToken, getJson, setAuthToken } from "../lib/api-
 import { AppSections } from "./AppSections";
 import { BootstrapPanel, LoginPanel, StatusPanel } from "./AuthPanels";
 import { Layout } from "./Layout";
+import { SetupPage } from "./SetupPage";
 import type { SectionId } from "./navigation";
 
 type ThemeMode = "dark" | "light";
@@ -18,9 +19,16 @@ export function App() {
   const [activeSection, setActiveSection] = useState<SectionId>("dashboard");
   const [authToken, setAuthTokenState] = useState(getAuthToken);
   const [theme, setTheme] = useState<ThemeMode>(readTheme);
+  const [path, setPath] = useState(readPath);
   const settingsQuery = useQuery({ queryKey: ["site-settings"], queryFn: getSiteSettings, retry: false });
   const authStatusQuery = useQuery({ queryKey: ["auth-status"], queryFn: getAuthStatus, retry: false });
   const userQuery = useQuery({ queryKey: ["auth-me", authToken], queryFn: getCurrentUser, enabled: Boolean(authToken), retry: false });
+  const setupQuery = useQuery({
+    queryKey: ["setup-status"],
+    queryFn: () => getJson<SetupStatusDto>("/api/setup/status"),
+    enabled: path === "/setup",
+    retry: false
+  });
   const healthQuery = useQuery({
     queryKey: ["health"],
     queryFn: () => getJson<HealthDto>("/api/health"),
@@ -41,6 +49,21 @@ export function App() {
   useEffect(() => {
     document.title = `${settings.siteName} - ${settings.siteSubtitle}`;
   }, [settings.siteName, settings.siteSubtitle]);
+
+  useEffect(() => {
+    function handlePopState() {
+      setPath(readPath());
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (path === "/setup" && setupQuery.data && !setupQuery.data.available && !setupQuery.data.bootstrapRequired) {
+      window.location.replace("/");
+    }
+  }, [path, setupQuery.data]);
 
   useEffect(() => {
     if (userQuery.error) {
@@ -75,7 +98,17 @@ export function App() {
 
   let content;
 
-  if ((!health && healthQuery.isLoading) || authStatusQuery.isLoading) {
+  if (path === "/setup") {
+    content = (
+      <SetupPage
+        error={errorMessage(setupQuery.error)}
+        loading={setupQuery.isLoading || setupQuery.isFetching}
+        settings={settings}
+        status={setupQuery.data}
+        onRefresh={() => void setupQuery.refetch()}
+      />
+    );
+  } else if ((!health && healthQuery.isLoading) || authStatusQuery.isLoading) {
     content = <StatusPanel title="正在连接 Worker" description="正在读取运行状态。" settings={settings} />;
   } else if (healthQuery.error) {
     content = <StatusPanel title="连接失败" description={healthQuery.error.message} settings={settings} />;
@@ -131,6 +164,14 @@ export function App() {
 
 function readTheme(): ThemeMode {
   return browserStorage()?.getItem("smagicalsub.theme") === "dark" ? "dark" : "light";
+}
+
+function readPath() {
+  if (typeof window === "undefined") {
+    return "/";
+  }
+
+  return window.location.pathname;
 }
 
 function applyTheme(theme: ThemeMode) {

@@ -2,6 +2,8 @@
 
 运行在 Cloudflare Workers 上的订阅管理 Web 项目，前端使用 React/Vite，后端使用 Hono Worker API，数据层使用 D1 + KV。
 
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/smagical/smagicalsub)
+
 ## 技术栈
 
 - TypeScript 全栈
@@ -44,14 +46,17 @@ pnpm dev
 
 账号安全已支持自助修改密码、登录失败限流、活跃会话自动续期，以及在设置页查看并撤销其他登录会话。会话管理只记录会话创建和过期时间，不追踪设备信息、IP 或 User-Agent。
 
+部署初始化页位于 `/setup`。默认 `SETUP_MODE=auto` 时，仅在首个管理员尚未创建时显示；创建管理员成功后服务端返回 `302 /`，浏览器回到主页面。需要重新打开初始化页时，可在 Cloudflare 变量中临时设置 `SETUP_MODE=enabled`；需要完全关闭时设置 `SETUP_MODE=disabled`。
+
 ```bash
 wrangler secret put ADMIN_TOKEN
 ```
 
 ## 数据库
 
-先在 Cloudflare 创建 D1 数据库与 KV namespace，然后把 `apps/web/wrangler.jsonc` 里的占位 ID 替换成真实值。
-迁移文件位于 `apps/web/migrations`，由 wrangler 从 `apps/web` 包执行。
+`apps/web/wrangler.jsonc` 使用 Wrangler automatic provisioning 声明 `DB` 和 `KV` binding。首次 `wrangler deploy` 时，Cloudflare 会为缺少资源 ID 的 D1 数据库与 KV namespace 自动创建资源；从 Deploy Button / Dashboard / GitHub 集成部署时，自动创建出的资源 ID 会显示在 Cloudflare 控制台中。
+
+迁移文件位于 `apps/web/migrations`，由 wrangler 从 `apps/web` 包按 D1 binding 名 `DB` 执行。
 
 ```bash
 pnpm db:migrate:local
@@ -134,8 +139,8 @@ pnpm build:api
 
 ## 后续计划
 
-- 生产部署前必须替换 `apps/web/wrangler.jsonc` 中的 D1 database id 和 KV namespace id。
-- 执行远程 D1 迁移并完成一次真实 Cloudflare Workers 部署验收。
+- 生产部署可通过 Workers Git 集成自动构建、自动创建 D1/KV、自动迁移和自动部署。
+- 首次远程部署后需要确认自动创建的 D1/KV 资源，并完成一次真实 Cloudflare Workers 部署验收。
 - 继续补齐特殊协议到 Clash/sing-box/Xray 的高保真映射；无法稳定映射的协议会继续通过明文和 v2rayN 输出保留原始 URI。
 - 继续打磨控制台视觉和移动端细节，重点是仪表盘、节点表格、配置档规则和登录页。
 - 补充生产运维能力，例如订阅访问限流、审计日志、D1/KV 备份恢复流程和部署验收清单。
@@ -151,18 +156,68 @@ pnpm build:api
 
 ## 部署
 
+### 一键部署
+
+点击 README 顶部的 **Deploy to Cloudflare** 按钮即可从 GitHub 仓库创建 Worker 项目。Cloudflare 会读取 `wrangler.jsonc`，在首次部署时自动创建 D1 数据库和 KV namespace，并运行 `pnpm deploy` 完成构建、部署和 D1 远程迁移。
+
+首次部署时需要在 Cloudflare 页面填写或后续补充运行时 Secret：
+
+```text
+ADMIN_TOKEN=你的恢复令牌
+```
+
+部署完成后打开站点，进入 `/setup` 创建首个管理员；创建成功后会 `302` 回到主页。
+
+### GitHub 自动部署
+
+Cloudflare Workers Git 集成可直接连接本仓库，推送 `dev` 分支后自动构建、自动 provision D1/KV、自动迁移并部署。建议在 Cloudflare Dashboard 中配置：
+
+```text
+Repository: smagical/smagicalsub
+Production branch: dev
+Root directory: /
+Build command: pnpm typecheck && pnpm test:unit && pnpm test:worker
+Deploy command: pnpm deploy
+```
+
+`pnpm deploy` 会执行 `apps/web` 的 `deploy` 脚本：构建 Vite/Worker、执行 `wrangler deploy`，然后自动执行 `wrangler d1 migrations apply DB --remote`。
+
+建议在 Build variables 中固定运行时版本：
+
+```text
+NODE_VERSION=22
+PNPM_VERSION=10
+```
+
+运行时变量：
+
+```text
+SETUP_MODE=auto
+```
+
+`ADMIN_TOKEN` 仍需作为 Secret 配置一次：
+
+```text
+Worker Settings -> Variables and Secrets -> Add Secret -> ADMIN_TOKEN
+```
+
+`SETUP_MODE` 可选值：
+
+- `auto`：默认，仅首装缺管理员时开放 `/setup`。
+- `enabled`：强制开放 `/setup`，用于需要重新查看部署检测或重新初始化入口的场景。
+- `disabled`：强制关闭 `/setup`。
+
+### 手动部署
+
 ```bash
 pnpm typecheck
 pnpm test
-pnpm build
-pnpm db:migrate:remote
 pnpm deploy
 ```
 
 部署前检查：
 
-- 在 Cloudflare 创建 D1 数据库和 KV namespace。
-- 将 [apps/web/wrangler.jsonc](apps/web/wrangler.jsonc) 中的 `database_id` 和 `kv_namespaces.id` 替换为真实资源 ID。
+- [apps/web/wrangler.jsonc](apps/web/wrangler.jsonc) 的 `DB` / `KV` 使用 automatic provisioning；如果你手动填写了 Cloudflare 控制台中的资源 ID，也可以继续固定绑定到已有资源。
 - 按需设置 `ADMIN_TOKEN`：`wrangler secret put ADMIN_TOKEN`。
-- 执行 `pnpm db:migrate:remote` 后再部署，确保远程 D1 schema 与代码一致。
+- `pnpm deploy` 会自动执行远程 D1 迁移，确保远程 schema 与代码一致。
 - 首次打开站点后创建管理员账号；如果设置了 `ADMIN_TOKEN`，初始化表单需要填写同一个令牌。

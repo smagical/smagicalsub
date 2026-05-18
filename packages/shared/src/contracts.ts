@@ -62,6 +62,26 @@ export type AuthStatusDto = {
   bootstrapRequiresToken: boolean;
 };
 
+export type SetupStatusDto = {
+  available: boolean;
+  mode: "auto" | "disabled" | "enabled";
+  resources: {
+    d1: boolean;
+    kv: boolean;
+    migrations: boolean;
+    adminToken: boolean;
+    adminUser: boolean;
+  };
+  steps: Array<{
+    key: "d1" | "kv" | "migrations" | "adminToken" | "adminUser";
+    label: string;
+    ok: boolean;
+    detail: string;
+  }>;
+  bootstrapRequired: boolean;
+  bootstrapRequiresToken: boolean;
+};
+
 export type LoginDto = {
   token: string;
   expiresAt: string;

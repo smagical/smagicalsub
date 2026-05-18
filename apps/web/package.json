@@ -7,10 +7,11 @@
     "build": "vite build",
     "preview": "vite preview --outDir dist/client",
     "preview:worker": "vite preview",
-    "deploy": "pnpm build && wrangler deploy",
+    "deploy": "pnpm build && wrangler deploy && wrangler d1 migrations apply DB --remote",
     "typecheck": "tsc --noEmit",
-    "db:migrate:local": "wrangler d1 migrations apply smagicalsub --local",
-    "db:migrate:remote": "wrangler d1 migrations apply smagicalsub --remote"
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "deploy:cloudflare": "pnpm deploy"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
