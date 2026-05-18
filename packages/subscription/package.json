@@ -1,0 +1,18 @@
+{
+  "name": "@smagicalsub/subscription",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "pnpm -w exec vitest run --configLoader runner --config vitest.unit.config.mjs tests/unit/subscription",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

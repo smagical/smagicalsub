@@ -1,0 +1,40 @@
+{
+  "name": "smagicalsub",
+  "private": true,
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smagical/smagicalsub.git"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "pnpm --filter @smagicalsub/web dev",
+    "build": "pnpm --filter @smagicalsub/web build",
+    "build:api": "pnpm --filter @smagicalsub/worker typecheck",
+    "deploy": "pnpm --filter @smagicalsub/web deploy",
+    "deploy:cloudflare": "pnpm deploy",
+    "preview": "pnpm --filter @smagicalsub/web preview",
+    "preview:worker": "pnpm --filter @smagicalsub/web preview:worker",
+    "test": "pnpm test:unit && pnpm test:worker && pnpm test:e2e",
+    "test:unit": "vitest run --configLoader runner --config vitest.unit.config.mjs",
+    "test:worker": "pnpm --filter @smagicalsub/worker test",
+    "test:e2e": "pnpm build && playwright test",
+    "test:e2e:install": "playwright install chromium",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "pnpm --filter @smagicalsub/web db:migrate:local",
+    "db:migrate:remote": "pnpm --filter @smagicalsub/web db:migrate:remote"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@smagicalsub/subscription": "workspace:^",
+    "drizzle-kit": "^0.31.7",
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.5",
+    "yaml": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  }
+}
