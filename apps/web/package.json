@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate:local": "pnpm --workspace-root db:migrate:local",
     "db:migrate:remote": "pnpm --workspace-root db:migrate:remote",
-    "deploy:cloudflare": "pnpm deploy"
+    "deploy:cloudflare": "pnpm --workspace-root deploy"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
