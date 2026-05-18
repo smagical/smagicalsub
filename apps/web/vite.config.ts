@@ -5,7 +5,7 @@ import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [tailwindcss(), react(), cloudflare()],
+  plugins: [tailwindcss(), react(), cloudflare({ configPath: "../../wrangler.jsonc" })],
   build: {
     rollupOptions: {
       output: {
