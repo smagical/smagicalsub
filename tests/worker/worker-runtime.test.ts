@@ -22,6 +22,102 @@ beforeAll(async () => {
       expires_at TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS subscription_sources (
+      id TEXT PRIMARY KEY NOT NULL,
+      owner_id TEXT,
+      name TEXT NOT NULL,
+      url TEXT NOT NULL,
+      groups TEXT NOT NULL DEFAULT '[]',
+      enabled INTEGER NOT NULL DEFAULT 1,
+      refresh_interval_minutes INTEGER NOT NULL DEFAULT 0,
+      next_refresh_at TEXT,
+      last_status TEXT,
+      last_error TEXT,
+      last_fetched_at TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS nodes (
+      id TEXT PRIMARY KEY NOT NULL,
+      owner_id TEXT,
+      source_id TEXT,
+      name TEXT NOT NULL,
+      protocol TEXT NOT NULL,
+      server TEXT,
+      port INTEGER,
+      tags TEXT NOT NULL DEFAULT '[]',
+      config_json TEXT NOT NULL,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS profiles (
+      id TEXT PRIMARY KEY NOT NULL,
+      owner_id TEXT,
+      name TEXT NOT NULL,
+      description TEXT,
+      default_strategy TEXT NOT NULL DEFAULT 'Proxy',
+      enabled INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS profile_rules (
+      id TEXT PRIMARY KEY NOT NULL,
+      profile_id TEXT NOT NULL,
+      position INTEGER NOT NULL,
+      format TEXT NOT NULL DEFAULT 'common',
+      rule TEXT NOT NULL,
+      content_json TEXT NOT NULL DEFAULT '{}',
+      enabled INTEGER NOT NULL DEFAULT 1
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS profile_modules (
+      id TEXT PRIMARY KEY NOT NULL,
+      owner_id TEXT,
+      profile_id TEXT,
+      name TEXT NOT NULL,
+      format TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'advanced-override',
+      content_json TEXT NOT NULL DEFAULT '{}',
+      enabled INTEGER NOT NULL DEFAULT 1,
+      is_default INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS subscribe_tokens (
+      id TEXT PRIMARY KEY NOT NULL,
+      owner_id TEXT,
+      profile_id TEXT,
+      token TEXT NOT NULL UNIQUE,
+      custom_path TEXT,
+      node_ids_json TEXT NOT NULL DEFAULT '[]',
+      name TEXT NOT NULL,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      expires_at TEXT,
+      last_used_at TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS subscribe_token_modules (
+      token_id TEXT NOT NULL,
+      module_id TEXT NOT NULL,
+      format TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'advanced-override',
+      PRIMARY KEY (token_id, format, type)
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS refresh_jobs (
+      id TEXT PRIMARY KEY NOT NULL,
+      source_id TEXT,
+      status TEXT NOT NULL,
+      message TEXT,
+      started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      finished_at TEXT
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS access_logs (
+      id TEXT PRIMARY KEY NOT NULL,
+      token_id TEXT,
+      path TEXT NOT NULL,
+      ip TEXT,
+      user_agent TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`)
   ]);
 });
@@ -67,6 +163,44 @@ describe("worker runtime", () => {
 
     expect(response.status).toBe(200);
     expect(payload.data).toEqual(expect.objectContaining({ siteName: "自定义订阅台", titleImageUrl: "https://example.com/logo.png" }));
+  });
+
+  it("keeps setup open but blocks bootstrap when any core table is missing", async () => {
+    await testEnv.DB.prepare("DROP TABLE sessions").run();
+
+    try {
+      const setupStatusResponse = await SELF.fetch("https://example.com/api/setup/status");
+      const setupStatusPayload = (await setupStatusResponse.json()) as {
+        data: { available: boolean; bootstrapRequired: boolean; resources: { migrations: boolean }; steps: Array<{ key: string; ok: boolean }> };
+      };
+      const authStatusResponse = await SELF.fetch("https://example.com/api/auth/status");
+      const authStatusPayload = (await authStatusResponse.json()) as { data: { bootstrapRequired: boolean } };
+      const bootstrapResponse = await SELF.fetch("https://example.com/api/auth/bootstrap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bootstrapToken: "secret", email: "blocked@example.com", name: "Blocked", password: "password123" })
+      });
+      const bootstrapPayload = (await bootstrapResponse.json()) as { error: { code: string } };
+      const migrationsStep = setupStatusPayload.data.steps.find((step) => step.key === "migrations");
+
+      expect(setupStatusResponse.status).toBe(200);
+      expect(setupStatusPayload.data).toEqual(expect.objectContaining({ available: true, bootstrapRequired: true }));
+      expect(setupStatusPayload.data.resources.migrations).toBe(false);
+      expect(migrationsStep?.ok).toBe(false);
+      expect(authStatusResponse.status).toBe(200);
+      expect(authStatusPayload.data.bootstrapRequired).toBe(true);
+      expect(bootstrapResponse.status).toBe(409);
+      expect(bootstrapPayload.error.code).toBe("SETUP_NOT_READY");
+    } finally {
+      await testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS sessions (
+        id TEXT PRIMARY KEY NOT NULL,
+        user_id TEXT NOT NULL,
+        token_hash TEXT NOT NULL UNIQUE,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )`).run();
+    }
   });
 
   it("bootstraps the first admin, logs in, and serves current user", async () => {
