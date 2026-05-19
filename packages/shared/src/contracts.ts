@@ -4,6 +4,9 @@ export type ListDto<T> = {
 
 export type HealthDto = {
   authRequired: boolean;
+  bootstrapRequired: boolean;
+  migrationsReady: boolean;
+  setupAvailable: boolean;
   status: string;
   env: string;
   timestamp: string;

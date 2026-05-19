@@ -125,7 +125,7 @@ beforeAll(async () => {
 describe("worker runtime", () => {
   it("serves health from the Workers runtime", async () => {
     const response = await SELF.fetch("https://example.com/api/health");
-    const payload = (await response.json()) as { ok: boolean; data: { authRequired: boolean; env: string; status: string } };
+    const payload = (await response.json()) as { ok: boolean; data: { authRequired: boolean; env: string; migrationsReady: boolean; setupAvailable: boolean; status: string } };
 
     expect(response.status).toBe(200);
     expect(payload).toEqual({
@@ -133,6 +133,8 @@ describe("worker runtime", () => {
       data: expect.objectContaining({
         authRequired: true,
         env: "test",
+        migrationsReady: true,
+        setupAvailable: true,
         status: "ok"
       })
     });
@@ -173,6 +175,8 @@ describe("worker runtime", () => {
       const setupStatusPayload = (await setupStatusResponse.json()) as {
         data: { available: boolean; bootstrapRequired: boolean; resources: { migrations: boolean }; steps: Array<{ key: string; ok: boolean }> };
       };
+      const healthResponse = await SELF.fetch("https://example.com/api/health");
+      const healthPayload = (await healthResponse.json()) as { data: { migrationsReady: boolean; setupAvailable: boolean } };
       const authStatusResponse = await SELF.fetch("https://example.com/api/auth/status");
       const authStatusPayload = (await authStatusResponse.json()) as { data: { bootstrapRequired: boolean } };
       const bootstrapResponse = await SELF.fetch("https://example.com/api/auth/bootstrap", {
@@ -187,6 +191,8 @@ describe("worker runtime", () => {
       expect(setupStatusPayload.data).toEqual(expect.objectContaining({ available: true, bootstrapRequired: true }));
       expect(setupStatusPayload.data.resources.migrations).toBe(false);
       expect(migrationsStep?.ok).toBe(false);
+      expect(healthResponse.status).toBe(200);
+      expect(healthPayload.data).toEqual(expect.objectContaining({ migrationsReady: false, setupAvailable: true }));
       expect(authStatusResponse.status).toBe(200);
       expect(authStatusPayload.data.bootstrapRequired).toBe(true);
       expect(bootstrapResponse.status).toBe(409);
