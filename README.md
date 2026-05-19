@@ -156,7 +156,7 @@ pnpm build:api
 
 ### 一键部署
 
-点击 README 顶部的 **Deploy to Cloudflare** 按钮即可从 GitHub 仓库创建 Worker 项目。Cloudflare 会在仓库根目录读取 `wrangler.jsonc`，在首次部署时自动创建 D1 数据库和 KV namespace，并运行 `pnpm deploy` 完成构建、部署和 D1 远程迁移。
+点击 README 顶部的 **Deploy to Cloudflare** 按钮即可从 GitHub 仓库创建 Worker 项目。Cloudflare 会在仓库根目录读取 `wrangler.jsonc`，在首次部署时自动创建 D1 数据库和 KV namespace，并运行 `pnpm run deploy` 完成构建、部署和 D1 远程迁移。
 
 首次部署时可在 Cloudflare 页面填写或后续补充运行时 Secret。`ADMIN_TOKEN` 是可选恢复令牌，不配置也可以完成首个管理员初始化；不配置时仅关闭“忘记管理员密码”的兜底恢复入口。建议在 Cloudflare Dashboard 的 Variables and Secrets 页面添加 Secret：
 
@@ -177,10 +177,10 @@ Repository: smagical/smagicalsub
 Production branch: dev
 Root directory: /
 Build command: pnpm typecheck && pnpm test:unit && pnpm test:worker
-Deploy command: pnpm deploy
+Deploy command: pnpm run deploy
 ```
 
-`pnpm deploy` 会在仓库根目录构建 Vite/Worker、按根目录 `wrangler.jsonc` 执行 `wrangler deploy`，然后自动执行 `wrangler d1 migrations apply DB --remote`。
+`pnpm run deploy` 会在仓库根目录构建 Vite/Worker、按根目录 `wrangler.jsonc` 执行 `wrangler deploy`，然后自动执行 `wrangler d1 migrations apply DB --remote`。这里必须使用 `pnpm run deploy`，不要写成 `pnpm deploy`，后者会触发 pnpm 自带的 workspace deploy 命令。
 
 建议在 Build variables 中固定运行时版本：
 
@@ -214,12 +214,12 @@ Worker Settings -> Variables and Secrets -> Add Secret -> ADMIN_TOKEN
 ```bash
 pnpm typecheck
 pnpm test
-pnpm deploy
+pnpm run deploy
 ```
 
 部署前检查：
 
 - [wrangler.jsonc](wrangler.jsonc) 的 `DB` / `KV` 使用 automatic provisioning；如果你手动填写了 Cloudflare 控制台中的资源 ID，也可以继续固定绑定到已有资源。
 - 按需设置 `ADMIN_TOKEN`：在 Cloudflare Dashboard 的 Variables and Secrets 页面添加 Secret。
-- `pnpm deploy` 会自动执行远程 D1 迁移，确保远程 schema 与代码一致。
+- `pnpm run deploy` 会自动执行远程 D1 迁移，确保远程 schema 与代码一致。
 - 首次打开站点后创建管理员账号；如果设置了 `ADMIN_TOKEN`，初始化表单需要填写同一个令牌。

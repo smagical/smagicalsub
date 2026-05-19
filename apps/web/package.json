@@ -7,11 +7,11 @@
     "build": "vite build",
     "preview": "vite preview --outDir dist/client",
     "preview:worker": "vite preview",
-    "deploy": "pnpm --workspace-root deploy",
+    "deploy": "pnpm --workspace-root run deploy",
     "typecheck": "tsc --noEmit",
-    "db:migrate:local": "pnpm --workspace-root db:migrate:local",
-    "db:migrate:remote": "pnpm --workspace-root db:migrate:remote",
-    "deploy:cloudflare": "pnpm --workspace-root deploy"
+    "db:migrate:local": "pnpm --workspace-root run db:migrate:local",
+    "db:migrate:remote": "pnpm --workspace-root run db:migrate:remote",
+    "deploy:cloudflare": "pnpm --workspace-root run deploy"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
