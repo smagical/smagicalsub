@@ -136,7 +136,13 @@ export function SetupPage({ bootstrapError, bootstrapPending = false, error, loa
                         <Input onChange={(event) => setForm({ ...form, bootstrapToken: event.target.value })} required value={form.bootstrapToken} />
                       </FilterField>
                     ) : null}
-                    <p className="text-sm text-muted-foreground">创建首个管理员后，系统会自动写入登录态并返回主页。</p>
+                    {status.bootstrapRequiresToken ? (
+                      <p className="text-sm text-muted-foreground">
+                        你已在 Cloudflare 配置 ADMIN_TOKEN，首次创建管理员时需要输入同一个令牌，用来防止公开部署后被他人抢先初始化。
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">未配置 ADMIN_TOKEN，可以直接创建首个管理员；创建后系统会自动写入登录态并返回主页。</p>
+                    )}
                     {bootstrapError ? <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{bootstrapError}</p> : null}
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <Button onClick={goBack} size="lg" type="button" variant="outline">

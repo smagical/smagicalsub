@@ -40,7 +40,7 @@ pnpm dev
 
 ## 认证与权限
 
-管理 API 支持邮箱密码登录和 session token。首次启动时会进入管理员初始化流程；如果配置了 `ADMIN_TOKEN`，初始化首个管理员时必须提交该令牌。
+管理 API 支持邮箱密码登录和 session token。首次启动时会进入管理员初始化流程；如果配置了 `ADMIN_TOKEN`，初始化首个管理员时必须提交同一个令牌，避免公开部署后被他人抢先初始化。
 
 `ADMIN_TOKEN` 仍保留为管理员兜底入口和初始化保护令牌；普通用户通过登录接口获取 session token，前端会以 `Authorization: Bearer <token>` 发送。普通用户只能访问自己的订阅源、节点、配置档、令牌、访问日志和订阅输出，管理员可查看和维护全部资源。
 
@@ -48,7 +48,7 @@ pnpm dev
 
 部署初始化页位于 `/setup`。默认 `SETUP_MODE=auto` 时，仅在首个管理员尚未创建时显示；创建管理员成功后服务端返回 `302 /`，浏览器回到主页面。需要重新打开初始化页时，可在 Cloudflare 变量中临时设置 `SETUP_MODE=enabled`；需要完全关闭时设置 `SETUP_MODE=disabled`。
 
-`ADMIN_TOKEN` 是可选恢复令牌。推荐在 Cloudflare Dashboard 的 `Workers & Pages -> 你的 Worker -> Settings -> Variables and Secrets` 中添加 Secret，不配置也可以完成首次初始化。
+`ADMIN_TOKEN` 是可选的恢复和初始化保护令牌。推荐在 Cloudflare Dashboard 的 `Workers & Pages -> 你的 Worker -> Settings -> Variables and Secrets` 中添加 Secret；不配置也可以完成首次初始化，但不会启用忘记密码时的兜底恢复入口。
 
 ## 数据库
 
@@ -158,7 +158,7 @@ pnpm build:api
 
 点击 README 顶部的 **Deploy to Cloudflare** 按钮即可从 GitHub 仓库创建 Worker 项目。Cloudflare 会在仓库根目录读取 `wrangler.jsonc`，在首次部署时自动创建 D1 数据库和 KV namespace，并运行 `pnpm run deploy` 完成构建、部署和 D1 远程迁移。
 
-首次部署时可在 Cloudflare 页面填写或后续补充运行时 Secret。`ADMIN_TOKEN` 是可选恢复令牌，不配置也可以完成首个管理员初始化；不配置时仅关闭“忘记管理员密码”的兜底恢复入口。建议在 Cloudflare Dashboard 的 Variables and Secrets 页面添加 Secret：
+首次部署时可在 Cloudflare 页面填写或后续补充运行时 Secret。`ADMIN_TOKEN` 是可选恢复令牌和初始化保护令牌，不配置也可以完成首个管理员初始化；如果配置了，创建首个管理员时需要填写同一个令牌，用来防止公开站点被他人抢先初始化。不配置时仅关闭“忘记管理员密码”的兜底恢复入口。建议在 Cloudflare Dashboard 的 Variables and Secrets 页面添加 Secret：
 
 ```text
 Name: ADMIN_TOKEN
@@ -197,7 +197,7 @@ SETUP_MODE=auto
 SUBSCRIPTION_CACHE_TTL_SECONDS=300
 ```
 
-`ADMIN_TOKEN` 可作为 Secret 配置一次，用于管理员密码恢复和初始化保护；不配置也不影响首次创建管理员：
+`ADMIN_TOKEN` 可作为 Secret 配置一次，用于管理员密码恢复和初始化保护；不配置也不影响首次创建管理员，配置后首次初始化表单需要输入同一个值：
 
 ```text
 Worker Settings -> Variables and Secrets -> Add Secret -> ADMIN_TOKEN
