@@ -24,7 +24,7 @@ export function NodesPage() {
       <Card>
         <CardHeader>
           <CardTitle>添加节点</CardTitle>
-          <CardDescription>直接粘贴单个节点链接，或按行批量导入多个节点；导入时会校验格式并自动截断超长名称。</CardDescription>
+          <CardDescription>粘贴一个或多个节点链接，系统会按行自动识别；多节点导入时显示名称会被忽略。</CardDescription>
         </CardHeader>
         <CardContent>
           <NodeForm

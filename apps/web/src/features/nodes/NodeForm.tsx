@@ -20,85 +20,68 @@ type NodeFormProps = {
 };
 
 export function NodeForm({ className, form, groups, importResult, pending, setForm, onImport, onSubmit }: NodeFormProps) {
+  const nodeItems = parseNodeInput(form.uri);
+  const isBatch = nodeItems.length > 1;
+  const canSubmit = nodeItems.length > 0;
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit({
-      uri: form.uri,
-      name: form.name.trim() ? form.name : undefined,
-      groups: form.groups,
-      enabled: form.enabled
-    });
-  }
 
-  function handleImport(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const items = form.bulkUris
-      .split(/\r?\n/)
-      .map((line, index) => ({ line: index + 1, uri: line.trim() }))
-      .filter((item) => item.uri);
-
-    if (items.length === 0) {
+    if (nodeItems.length === 0) {
       return;
     }
 
-    onImport({
-      items,
-      groups: form.groups,
-      enabled: form.enabled
-    });
+    if (nodeItems.length === 1) {
+      onSubmit({
+        uri: nodeItems[0].uri,
+        name: form.name.trim() ? form.name : undefined,
+        groups: form.groups,
+        enabled: form.enabled
+      });
+      return;
+    }
+
+    onImport({ items: nodeItems, groups: form.groups, enabled: form.enabled });
   }
 
   return (
     <div className={className}>
-      <form className="grid gap-3 lg:grid-cols-[minmax(260px,1.4fr)_minmax(160px,0.7fr)_minmax(160px,0.7fr)_auto_auto]" onSubmit={handleSubmit}>
+      <form className="grid gap-3 rounded-xl border bg-background/70 p-3" onSubmit={handleSubmit}>
         <FilterField className="min-w-0" label="节点链接">
-          <Input
-            className="truncate"
+          <Textarea
+            className="min-h-32 font-mono text-xs leading-5"
             onChange={(event) => setForm((current) => ({ ...current, uri: event.target.value }))}
-            placeholder="ss:// / vmess:// / trojan:// / vless://"
+            placeholder={"ss://...\nvmess://...\ntrojan://..."}
             required
-            type="text"
             value={form.uri}
           />
         </FilterField>
-        <FilterField className="min-w-0" label="显示名称">
-          <Input
-            className="truncate"
-            maxLength={120}
-            onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-            placeholder="留空使用节点名称"
-            type="text"
-            value={form.name}
-          />
-        </FilterField>
-        <SharedNodeOptions form={form} groups={groups} pending={pending} setForm={setForm} />
-        <Button className="self-end" disabled={pending} type="submit" variant="info">
-          添加节点
-        </Button>
-      </form>
-
-      <form className="mt-4 grid gap-3 rounded-xl border bg-background/70 p-3" onSubmit={handleImport}>
-        <div className="grid gap-1">
-          <h4 className="text-sm font-semibold">批量导入</h4>
-          <p className="text-xs leading-5 text-muted-foreground">
-            每行一个节点链接，支持 ss、ssr、vmess、vless、trojan 等已支持协议；无效链接会按行号返回，节点名称超过 120 字符会自动截断。
-          </p>
-        </div>
-        <FilterField className="min-w-0" label="节点链接列表">
-          <Textarea
-            className="min-h-32 font-mono text-xs leading-5"
-            onChange={(event) => setForm((current) => ({ ...current, bulkUris: event.target.value }))}
-            placeholder={"ss://...\nvmess://...\ntrojan://..."}
-            value={form.bulkUris}
-          />
-        </FilterField>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <p className="text-xs text-muted-foreground">
-            将使用上方分组和启用状态导入，空行会自动忽略。
-          </p>
-          <Button disabled={pending || form.bulkUris.trim().length === 0} type="submit" variant="outline">
-            批量导入
+        <div className="grid gap-3 lg:grid-cols-[minmax(160px,0.8fr)_minmax(160px,0.8fr)_auto_auto]">
+          <FilterField className="min-w-0" label="显示名称">
+            <Input
+              className="truncate"
+              disabled={pending || isBatch}
+              maxLength={120}
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              placeholder={isBatch ? "多节点导入时忽略" : "留空使用节点名称"}
+              type="text"
+              value={isBatch ? "" : form.name}
+            />
+          </FilterField>
+          <SharedNodeOptions form={form} groups={groups} pending={pending} setForm={setForm} />
+          <Button className="self-end" disabled={pending || !canSubmit} type="submit" variant="info">
+            {isBatch ? `导入 ${nodeItems.length} 个节点` : "添加节点"}
           </Button>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span>
+            {isBatch
+              ? "检测到多行节点链接，显示名称会被忽略，导入后使用节点自身名称。"
+              : "单条节点链接可填写显示名称；节点名称超过 120 字符会自动截断。"}
+          </span>
+          <span>
+            支持 ss、ssr、vmess、vless、trojan 等已支持协议；空行会自动忽略。
+          </span>
         </div>
         {importResult ? (
           <div className="grid gap-2 rounded-lg border bg-card p-2.5 text-xs">
@@ -117,6 +100,13 @@ export function NodeForm({ className, form, groups, importResult, pending, setFo
       </form>
     </div>
   );
+}
+
+function parseNodeInput(value: string): ImportNodesInput["items"] {
+  return value
+    .split(/\r?\n/)
+    .map((line, index) => ({ line: index + 1, uri: line.trim() }))
+    .filter((item) => item.uri);
 }
 
 function SharedNodeOptions({

@@ -1,6 +1,5 @@
 export type NodeFormState = {
   uri: string;
-  bulkUris: string;
   name: string;
   groups: string[];
   enabled: boolean;
@@ -20,7 +19,6 @@ export type NodeBatchFormState = {
 
 export const initialNodeFormState: NodeFormState = {
   uri: "",
-  bulkUris: "",
   name: "",
   groups: [],
   enabled: true
