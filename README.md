@@ -180,7 +180,7 @@ Build command: pnpm typecheck && pnpm test:unit && pnpm test:worker
 Deploy command: pnpm run deploy
 ```
 
-`pnpm run deploy` 会在仓库根目录构建 Vite/Worker、按根目录 `wrangler.jsonc` 执行 `wrangler deploy`，然后自动执行 `wrangler d1 migrations apply DB --remote`。这里必须使用 `pnpm run deploy`，不要写成 `pnpm deploy`，后者会触发 pnpm 自带的 workspace deploy 命令。
+`pnpm run deploy` 会在仓库根目录构建 Vite/Worker、按根目录 `wrangler.jsonc` 执行 `wrangler deploy`，然后通过 `scripts/apply-remote-d1-migrations.mjs` 自动查找 Cloudflare 创建出的 D1 `database_id` 并执行远程迁移。这里必须使用 `pnpm run deploy`，不要写成 `pnpm deploy`，后者会触发 pnpm 自带的 workspace deploy 命令。
 
 建议在 Build variables 中固定运行时版本：
 
@@ -221,5 +221,5 @@ pnpm run deploy
 
 - [wrangler.jsonc](wrangler.jsonc) 的 `DB` / `KV` 使用 automatic provisioning；如果你手动填写了 Cloudflare 控制台中的资源 ID，也可以继续固定绑定到已有资源。
 - 按需设置 `ADMIN_TOKEN`：在 Cloudflare Dashboard 的 Variables and Secrets 页面添加 Secret。
-- `pnpm run deploy` 会自动执行远程 D1 迁移，确保远程 schema 与代码一致。
+- `pnpm run deploy` 会自动解析远程 D1 `database_id` 并执行远程迁移，确保远程 schema 与代码一致。
 - 首次打开站点后创建管理员账号；如果设置了 `ADMIN_TOKEN`，初始化表单需要填写同一个令牌。
