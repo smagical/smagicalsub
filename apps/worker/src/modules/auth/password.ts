@@ -1,4 +1,4 @@
-const passwordIterations = 150_000;
+const passwordIterations = 100_000;
 const passwordHashAlgorithm = "pbkdf2-sha256";
 
 export async function hashPassword(password: string) {

@@ -65,6 +65,10 @@ export async function createUser(db: D1Database, input: CreateUserInput, protect
   return findUserById(db, id);
 }
 
+export async function deleteUserById(db: D1Database, id: string) {
+  await db.prepare(`DELETE FROM users WHERE id = ?1`).bind(id).run();
+}
+
 export async function updateUser(db: D1Database, id: string, input: UpdateUserInput) {
   await ensureUserProtectedColumn(db);
   const current = await findUserById(db, id);
