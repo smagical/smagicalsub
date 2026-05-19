@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { bootstrapAdminSchema, failure, success, type SetupStatusDto } from "@smagicalsub/shared";
 import type { AppContext } from "../../env";
 import { createSession } from "../auth/session.repository";
-import { countUsers, createUser } from "../auth/user.repository";
+import { countUsers, createUser, deleteUserById } from "../auth/user.repository";
 
 export const setupRoutes = new Hono<AppContext>();
 
@@ -43,13 +43,25 @@ setupRoutes.post("/bootstrap", zValidator("form", bootstrapAdminSchema), async (
     return c.json(failure({ code: "UNAUTHORIZED", message: "初始化令牌不正确" }), 401);
   }
 
-  const user = await createUser(c.env.DB, { ...input, role: "admin" }, true);
-  if (!user) {
-    return c.json(failure({ code: "BOOTSTRAP_FAILED", message: "管理员创建失败" }), 500);
-  }
+  let user;
 
-  await createSession(c.env.DB, user.id);
-  return c.redirect("/", 302);
+  try {
+    user = await createUser(c.env.DB, { ...input, role: "admin" }, true);
+    if (!user) {
+      return c.json(failure({ code: "BOOTSTRAP_FAILED", message: "管理员创建失败" }), 500);
+    }
+
+    await createSession(c.env.DB, user.id);
+    return c.redirect("/", 302);
+  } catch (error) {
+    console.error("setup bootstrap failed", error);
+
+    if (user?.id) {
+      await deleteUserById(c.env.DB, user.id).catch((cleanupError) => console.error("setup bootstrap cleanup failed", cleanupError));
+    }
+
+    return c.json(failure({ code: "BOOTSTRAP_FAILED", message: "管理员初始化失败，请查看 Cloudflare 部署日志" }), 500);
+  }
 });
 
 export async function setupStatus(env: AppContext["Bindings"]): Promise<SetupStatusDto> {

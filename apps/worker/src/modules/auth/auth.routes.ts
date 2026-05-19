@@ -16,7 +16,7 @@ import {
   deleteUserSession,
   listUserSessions
 } from "./session.repository";
-import { countUsers, createUser, findUserByEmail, updateUserPassword } from "./user.repository";
+import { createUser, deleteUserById, findUserByEmail, updateUserPassword } from "./user.repository";
 
 export const publicAuthRoutes = new Hono<AppContext>();
 export const authRoutes = new Hono<AppContext>();
@@ -52,14 +52,26 @@ publicAuthRoutes.post("/bootstrap", zValidator("json", bootstrapAdminSchema), as
     return c.json(failure({ code: "UNAUTHORIZED", message: "初始化令牌不正确" }), 401);
   }
 
-  const user = await createUser(c.env.DB, { ...input, role: "admin" }, true);
-  if (!user) {
-    return c.json(failure({ code: "BOOTSTRAP_FAILED", message: "管理员创建失败" }), 500);
+  let user;
+
+  try {
+    user = await createUser(c.env.DB, { ...input, role: "admin" }, true);
+    if (!user) {
+      return c.json(failure({ code: "BOOTSTRAP_FAILED", message: "管理员创建失败" }), 500);
+    }
+
+    const session = await createSession(c.env.DB, user.id);
+
+    return c.json(success({ ...session, user }), 201);
+  } catch (error) {
+    console.error("bootstrap failed", error);
+
+    if (user?.id) {
+      await deleteUserById(c.env.DB, user.id).catch((cleanupError) => console.error("bootstrap cleanup failed", cleanupError));
+    }
+
+    return c.json(failure({ code: "BOOTSTRAP_FAILED", message: bootstrapFailureMessage(error) }), 500);
   }
-
-  const session = await createSession(c.env.DB, user.id);
-
-  return c.json(success({ ...session, user }), 201);
 });
 
 publicAuthRoutes.post("/login", zValidator("json", loginSchema), async (c) => {
@@ -156,3 +168,17 @@ authRoutes.post("/password", zValidator("json", changePasswordSchema), async (c)
 
   return c.json(success({ ok: true }));
 });
+
+function bootstrapFailureMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (message.toLowerCase().includes("unique")) {
+    return "管理员邮箱已存在，请换一个邮箱或刷新初始化状态";
+  }
+
+  if (message.toLowerCase().includes("pbkdf2") || message.toLowerCase().includes("derive")) {
+    return "密码哈希失败，请稍后重试或降低密码复杂度后再试";
+  }
+
+  return "管理员初始化失败，请查看 Cloudflare 部署日志";
+}
