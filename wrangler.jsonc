@@ -5,10 +5,11 @@
   "compatibility_date": "2026-04-29",
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
-    "enabled": false
+    "enabled": true
   },
   "vars": {
     "APP_ENV": "production",
+    "APP_LOG_LEVEL": "silent",
     "SETUP_MODE": "auto",
     "SUBSCRIPTION_CACHE_TTL_SECONDS": "300"
   },
