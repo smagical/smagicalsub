@@ -9,7 +9,7 @@
   },
   "vars": {
     "APP_ENV": "production",
-    "APP_LOG_LEVEL": "silent",
+    "APP_LOG_LEVEL": "0",
     "SETUP_MODE": "auto",
     "SUBSCRIPTION_CACHE_TTL_SECONDS": "300"
   },

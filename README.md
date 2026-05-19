@@ -193,17 +193,19 @@ PNPM_VERSION=10
 
 ```text
 APP_ENV=production
-APP_LOG_LEVEL=silent
+APP_LOG_LEVEL=0
 SETUP_MODE=auto
 SUBSCRIPTION_CACHE_TTL_SECONDS=300
 ```
 
-`APP_LOG_LEVEL` 控制 Worker 应用日志输出，默认 `silent` 不输出本项目的结构化诊断日志。排查问题时可在 Cloudflare Dashboard 的 Variables and Secrets 中临时改为 `info`，测试完成后再改回 `silent`：
+`APP_LOG_LEVEL` 控制 Worker 应用日志输出，默认 `0` 不输出本项目的结构化诊断日志。排查问题时可在 Cloudflare Dashboard 的 Variables and Secrets 中临时改为 `3`，测试完成后再改回 `0`：
 
-- `silent`：默认，不输出应用结构化日志。
-- `error`：只输出错误日志。
-- `warn`：输出警告和错误日志。
-- `info`：输出完整初始化诊断日志。
+- `0`：默认，不输出应用结构化日志。
+- `1`：只输出错误日志。
+- `2`：输出警告和错误日志。
+- `3`：输出完整初始化诊断日志。
+
+旧版文字值 `silent` / `error` / `warn` / `info` 仍兼容，但建议使用数字，避免后台配置时填错。
 
 `ADMIN_TOKEN` 可作为 Secret 配置一次，用于管理员密码恢复和初始化保护；不配置也不影响首次创建管理员，配置后首次初始化表单需要输入同一个值：
 

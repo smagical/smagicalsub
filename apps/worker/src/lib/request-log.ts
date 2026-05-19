@@ -2,13 +2,19 @@ import type { Context } from "hono";
 import type { AppContext } from "../env";
 
 type LogLevel = "error" | "info" | "warn";
-type AppLogLevel = LogLevel | "silent";
+type AppLogLevel = 0 | 1 | 2 | 3;
 
-const levelWeight: Record<AppLogLevel, number> = {
-  silent: 0,
+const logLevelWeight: Record<LogLevel, AppLogLevel> = {
   error: 1,
   warn: 2,
   info: 3
+};
+
+const legacyLogLevels: Record<string, AppLogLevel> = {
+  error: 1,
+  info: 3,
+  silent: 0,
+  warn: 2
 };
 
 const requestIds = new WeakMap<Context, string>();
@@ -26,15 +32,19 @@ export function requestId(c: Context) {
 
 function appLogLevel(c: Context<AppContext>): AppLogLevel {
   const configuredLevel = c.env.APP_LOG_LEVEL?.trim().toLowerCase();
-  if (configuredLevel === "error" || configuredLevel === "warn" || configuredLevel === "info") {
-    return configuredLevel;
+  if (configuredLevel === "0" || configuredLevel === "1" || configuredLevel === "2" || configuredLevel === "3") {
+    return Number(configuredLevel) as AppLogLevel;
   }
 
-  return "silent";
+  if (configuredLevel && configuredLevel in legacyLogLevels) {
+    return legacyLogLevels[configuredLevel];
+  }
+
+  return 0;
 }
 
 export function logEvent(c: Context<AppContext>, level: LogLevel, event: string, detail: Record<string, unknown> = {}) {
-  if (levelWeight[level] > levelWeight[appLogLevel(c)]) {
+  if (logLevelWeight[level] > appLogLevel(c)) {
     return;
   }
 
