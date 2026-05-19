@@ -42,6 +42,7 @@ beforeAll(async () => {
       id TEXT PRIMARY KEY NOT NULL,
       owner_id TEXT,
       source_id TEXT,
+      manual INTEGER NOT NULL DEFAULT 0,
       name TEXT NOT NULL,
       protocol TEXT NOT NULL,
       server TEXT,
@@ -50,6 +51,12 @@ beforeAll(async () => {
       config_json TEXT NOT NULL,
       enabled INTEGER NOT NULL DEFAULT 1,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS node_sources (
+      node_id TEXT NOT NULL,
+      source_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (node_id, source_id)
     )`),
     testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS profiles (
       id TEXT PRIMARY KEY NOT NULL,
@@ -120,6 +127,15 @@ beforeAll(async () => {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`)
   ]);
+});
+
+beforeAll(async () => {
+  const columns = await testEnv.DB.prepare(`PRAGMA table_info(nodes)`).all<{ name: string }>();
+  const columnNames = new Set((columns.results ?? []).map((row) => row.name));
+
+  if (!columnNames.has("manual")) {
+    await testEnv.DB.prepare(`ALTER TABLE nodes ADD COLUMN manual INTEGER NOT NULL DEFAULT 0`).run();
+  }
 });
 
 describe("worker runtime", () => {

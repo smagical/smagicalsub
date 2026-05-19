@@ -187,7 +187,7 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
 
   if (url.endsWith("/api/nodes")) {
     return ok({
-      items: [
+      items: withNodeSourceFields([
         {
           enabled: 1,
           groups: [],
@@ -338,7 +338,7 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
           config: { type: "vmess", server: "extra8.example.com", port: 443 },
           updated_at: "2026-05-01 10:00:00"
         }
-      ]
+      ])
     });
   }
 
@@ -489,6 +489,14 @@ function mockProfileModules() {
       updated_at: `2026-05-${day} 08:00:00`
     };
   });
+}
+
+function withNodeSourceFields<T extends { source_id: string | null }>(nodes: T[]) {
+  return nodes.map((node) => ({
+    ...node,
+    manual: node.source_id ? 0 : 1,
+    source_ids: node.source_id ? [node.source_id] : []
+  }));
 }
 
 function subscriptionPreview(url: string) {

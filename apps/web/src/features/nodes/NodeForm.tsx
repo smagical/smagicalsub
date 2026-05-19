@@ -56,7 +56,7 @@ export function NodeForm({ className, form, groups, importResult, pending, setFo
             value={form.uri}
           />
         </FilterField>
-        <div className="grid gap-3 lg:grid-cols-[minmax(160px,0.8fr)_minmax(160px,0.8fr)_auto_auto]">
+        <div className="grid items-end gap-3 lg:grid-cols-[minmax(160px,0.8fr)_minmax(160px,0.8fr)_auto_auto]">
           <FilterField className="min-w-0" label="显示名称">
             <Input
               className="truncate"
@@ -85,7 +85,18 @@ export function NodeForm({ className, form, groups, importResult, pending, setFo
         </div>
         {importResult ? (
           <div className="grid gap-2 rounded-lg border bg-card p-2.5 text-xs">
-            <p className="font-medium">导入结果：成功 {importResult.created.length} 个，失败 {importResult.failed.length} 条。</p>
+            <p className="font-medium">
+              导入结果：新增 {importResult.created.length} 个，去重 {importResult.deduped.length} 个，失败 {importResult.failed.length} 条。
+            </p>
+            {importResult.deduped.length > 0 ? (
+              <div className="grid gap-1 text-muted-foreground">
+                <span className="font-medium text-foreground">已去重节点</span>
+                <p className="line-clamp-2">
+                  {importResult.deduped.slice(0, 10).map((node) => node.name).join("、")}
+                  {importResult.deduped.length > 10 ? ` 等 ${importResult.deduped.length} 个` : ""}
+                </p>
+              </div>
+            ) : null}
             {importResult.failed.length > 0 ? (
               <ul className="grid gap-1 text-muted-foreground">
                 {importResult.failed.slice(0, 8).map((item) => (
@@ -133,6 +144,7 @@ function SharedNodeOptions({
       </FilterField>
       <CheckboxField
         checked={form.enabled}
+        className="h-8 !min-h-8"
         disabled={pending}
         label="启用"
         onCheckedChange={(enabled) => setForm((current) => ({ ...current, enabled }))}

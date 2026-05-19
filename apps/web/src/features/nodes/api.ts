@@ -1,4 +1,4 @@
-import type { CreateNodeInput, ImportNodeResultDto, ImportNodesInput, ListDto, NodeBatchActionInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
+import type { CreateNodeInput, CreateNodeResultDto, ImportNodeResultDto, ImportNodesInput, ListDto, NodeBatchActionInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
 import { deleteJson, getJson, patchJson, postJson } from "../../lib/api-client";
 
 export function listNodes() {
@@ -10,7 +10,7 @@ export function listNodeGroups() {
 }
 
 export function createNode(input: CreateNodeInput) {
-  return postJson<NodeDto>("/api/nodes", input);
+  return postJson<CreateNodeResultDto>("/api/nodes", input);
 }
 
 export function importNodes(input: ImportNodesInput) {

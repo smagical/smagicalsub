@@ -116,8 +116,8 @@ export function NodesPage() {
 
 function NodeSummary({ filteredCount, nodes, selectedCount }: { filteredCount: number; nodes: NodeDto[]; selectedCount: number }) {
   const enabledCount = nodes.filter((node) => Boolean(node.enabled)).length;
-  const manualCount = nodes.filter((node) => !node.source_id).length;
-  const sourceCount = nodes.length - manualCount;
+  const manualCount = nodes.filter((node) => Boolean(node.manual)).length;
+  const sourceCount = nodes.filter((node) => node.source_ids.length > 0 || Boolean(node.source_id)).length;
   const groupCount = new Set(nodes.flatMap((node) => node.groups)).size;
   const protocolCount = new Set(nodes.map((node) => node.protocol)).size;
 

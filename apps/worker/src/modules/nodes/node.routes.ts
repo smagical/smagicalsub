@@ -39,14 +39,14 @@ nodeRoutes.get("/groups", async (c) => {
 
 nodeRoutes.post("/", zValidator("json", createNodeSchema), async (c) => {
   const scope = ownerScope(c.var.authUser);
-  const node = await createManualNode(c.env.DB, c.req.valid("json"), scope.ownerId);
+  const result = await createManualNode(c.env.DB, c.req.valid("json"), scope.ownerId);
 
-  if (!node) {
+  if (!result) {
     return c.json(failure({ code: "NODE_PARSE_FAILED", message: "节点链接解析失败" }), 400);
   }
 
   await deleteAllSubscriptionCaches(c.env, scope);
-  return c.json(success(node), 201);
+  return c.json(success(result), result.deduped ? 200 : 201);
 });
 
 nodeRoutes.post("/import", zValidator("json", importNodesSchema), async (c) => {
@@ -60,11 +60,11 @@ nodeRoutes.post("/import", zValidator("json", importNodesSchema), async (c) => {
   }));
   const result = await importManualNodes(c.env.DB, imports, scope.ownerId);
 
-  if (result.created.length > 0) {
+  if (result.created.length > 0 || result.deduped.length > 0) {
     await deleteAllSubscriptionCaches(c.env, scope);
   }
 
-  return c.json(success({ total: input.items.length, ...result }), result.created.length > 0 ? 201 : 400);
+  return c.json(success({ total: input.items.length, ...result }), result.created.length > 0 || result.deduped.length > 0 ? 201 : 400);
 });
 
 nodeRoutes.post("/batch", zValidator("json", nodeBatchActionSchema), async (c) => {
@@ -99,12 +99,16 @@ nodeRoutes.delete("/:id", zValidator("param", idParamSchema), async (c) => {
   const scope = ownerScope(c.var.authUser);
   const deleted = await deleteNode(c.env.DB, c.req.valid("param").id, scope);
 
-  if (!deleted) {
+  if (deleted.status === "not-found") {
     return c.json(failure({ code: "NODE_NOT_FOUND", message: "节点不存在" }), 404);
   }
 
+  if (deleted.status === "source-owned") {
+    return c.json(failure({ code: "NODE_SOURCE_OWNED", message: "订阅源节点不能直接删除，请删除订阅源或刷新来源" }), 409);
+  }
+
   await deleteAllSubscriptionCaches(c.env, scope);
-  return c.json(success({ id: c.req.valid("param").id }));
+  return c.json(success({ id: c.req.valid("param").id, status: deleted.status }));
 });
 
 async function deleteAllSubscriptionCaches(env: Env, scope: OwnerScope) {

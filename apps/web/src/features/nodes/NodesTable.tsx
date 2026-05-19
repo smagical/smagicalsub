@@ -22,7 +22,7 @@ import { StatusBadge } from "../../shared/StatusBadge";
 import { TagInput } from "../../shared/TagInput";
 import { NodeActions } from "./NodeActions";
 import type { NodeEditFormState } from "./types";
-import { splitNodeGroups, UNGROUPED_GROUP_LABEL } from "./utils";
+import { nodeSourceLabel, splitNodeGroups, UNGROUPED_GROUP_LABEL } from "./utils";
 
 type NodesTableProps = {
   editForm: NodeEditFormState;
@@ -123,6 +123,7 @@ function NodeCard({
   const [copyBubble, setCopyBubble] = useState<CopyBubbleState | null>(null);
   const nodeGroups = splitNodeGroups(node.groups);
   const groupLabel = nodeGroups.length > 0 ? nodeGroups.join(", ") : UNGROUPED_GROUP_LABEL;
+  const sourceLabel = nodeSourceLabel(node);
 
   const handleCopy = async (value?: string) => {
     await onCopy(node, value);
@@ -166,8 +167,8 @@ function NodeCard({
                 {node.protocol}
               </Badge>
             </InfoTile>
-            <InfoTile copyValue={node.source_id ? "订阅源" : "手动"} label="来源" onCopy={handleCopy}>
-              <SourceBadge sourceId={node.source_id} />
+            <InfoTile copyValue={sourceLabel} label="来源" onCopy={handleCopy}>
+              <SourceBadge node={node} />
             </InfoTile>
             <InfoTile copyValue={node.enabled ? "启用" : "停用"} label="状态" onCopy={handleCopy}>
               <StatusBadge enabled={node.enabled} />
@@ -465,8 +466,19 @@ function stringConfig(config: Record<string, unknown>, key: string) {
   return typeof value === "string" && value.trim() ? value : null;
 }
 
-function SourceBadge({ sourceId }: { sourceId: string | null }) {
-  if (!sourceId) {
+function SourceBadge({ node }: { node: NodeDto }) {
+  const hasManual = Boolean(node.manual);
+  const hasSource = node.source_ids.length > 0 || Boolean(node.source_id);
+
+  if (hasManual && hasSource) {
+    return (
+      <Badge className="border-primary/30 bg-primary/10 text-primary" variant="outline">
+        手动+订阅
+      </Badge>
+    );
+  }
+
+  if (hasManual) {
     return (
       <Badge className="border-chart-2/30 bg-chart-2/10 text-chart-2" variant="outline">
         手动

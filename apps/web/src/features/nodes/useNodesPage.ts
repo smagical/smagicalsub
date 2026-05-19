@@ -66,10 +66,10 @@ export function useNodesPage() {
 
   const createMutation = useMutation({
     mutationFn: createNode,
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       setForm(initialNodeFormState);
       setImportResult(null);
-      pushNotice("节点已添加");
+      pushNotice(result.deduped ? `节点已去重：${result.node.name}` : "节点已添加");
       await invalidateNodeData();
     }
   });
@@ -79,7 +79,7 @@ export function useNodesPage() {
     onSuccess: async (result) => {
       setForm(initialNodeFormState);
       setImportResult(result);
-      pushNotice(importNotice(result.created.length, result.failed.length));
+      pushNotice(importNotice(result.created.length, result.deduped.length, result.failed.length));
       await invalidateNodeData();
     }
   });
@@ -260,8 +260,18 @@ export function useNodesPage() {
   }
 }
 
-function importNotice(created: number, failed: number) {
-  return failed === 0 ? `已导入 ${created} 个节点` : `已导入 ${created} 个节点，${failed} 条失败`;
+function importNotice(created: number, deduped: number, failed: number) {
+  const parts = [`新增 ${created} 个`];
+
+  if (deduped > 0) {
+    parts.push(`去重 ${deduped} 个`);
+  }
+
+  if (failed > 0) {
+    parts.push(`${failed} 条失败`);
+  }
+
+  return parts.join("，");
 }
 
 function isFormEditInput(input: UpdateNodeInput) {

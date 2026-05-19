@@ -20,6 +20,7 @@ describe("node import", () => {
     const payload = (await response.json()) as {
       data: {
         created: Array<{ groups: string[]; name: string; protocol: string }>;
+        deduped: Array<{ name: string; protocol: string }>;
         failed: Array<{ line: number; message: string; value: string }>;
         total: number;
       };
@@ -28,6 +29,7 @@ describe("node import", () => {
     expect(response.status).toBe(201);
     expect(payload.data.total).toBe(2);
     expect(payload.data.created).toHaveLength(1);
+    expect(payload.data.deduped).toEqual([]);
     expect(payload.data.created[0]).toEqual(
       expect.objectContaining({
         groups: ["Proxy"],
@@ -50,13 +52,43 @@ describe("node import", () => {
       groups: [],
       items: [{ line: 1, uri: "bad://node" }]
     });
-    const payload = (await response.json()) as { data: { created: unknown[]; failed: Array<{ line: number }>; total: number } };
+    const payload = (await response.json()) as { data: { created: unknown[]; deduped: unknown[]; failed: Array<{ line: number }>; total: number } };
 
     expect(response.status).toBe(400);
     expect(payload.data).toEqual({
       created: [],
+      deduped: [],
       failed: [expect.objectContaining({ line: 1 })],
       total: 1
     });
+  });
+
+  it("deduplicates repeated manual imports and reports the reused node", async () => {
+    const server = `dedupe-${crypto.randomUUID()}.example.com`;
+    const ssUri = `ss://${btoa(`aes-256-gcm:pass@${server}:8388`)}#First`;
+
+    const first = await postRawJson("secret", "/api/nodes/import", {
+      enabled: true,
+      groups: ["Manual"],
+      items: [{ line: 1, uri: ssUri }]
+    });
+    const second = await postRawJson("secret", "/api/nodes/import", {
+      enabled: true,
+      groups: ["Manual"],
+      items: [{ line: 1, uri: ssUri }]
+    });
+    const secondPayload = (await second.json()) as {
+      data: {
+        created: Array<{ name: string }>;
+        deduped: Array<{ name: string }>;
+        failed: unknown[];
+      };
+    };
+
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+    expect(secondPayload.data.created).toEqual([]);
+    expect(secondPayload.data.deduped).toHaveLength(1);
+    expect(secondPayload.data.failed).toEqual([]);
   });
 });

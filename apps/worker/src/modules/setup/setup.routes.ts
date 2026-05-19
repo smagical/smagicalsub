@@ -14,6 +14,7 @@ const requiredMigrationTables = [
   "sessions",
   "subscription_sources",
   "nodes",
+  "node_sources",
   "profiles",
   "profile_rules",
   "profile_modules",
@@ -200,7 +201,14 @@ async function probeMigrations(env: AppContext["Bindings"]) {
       .all<{ name: string }>();
     const existingTables = new Set((rows.results ?? []).map((row) => row.name));
 
-    return requiredMigrationTables.every((table) => existingTables.has(table));
+    if (!requiredMigrationTables.every((table) => existingTables.has(table))) {
+      return false;
+    }
+
+    const nodeColumns = await env.DB.prepare(`PRAGMA table_info(nodes)`).all<{ name: string }>();
+    const nodeColumnNames = new Set((nodeColumns.results ?? []).map((row) => row.name));
+
+    return nodeColumnNames.has("manual");
   } catch {
     return false;
   }

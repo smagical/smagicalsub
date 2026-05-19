@@ -139,6 +139,8 @@ export type SourceRefreshAllDto = {
 export type NodeDto = {
   id: string;
   source_id: string | null;
+  source_ids: string[];
+  manual: number;
   name: string;
   protocol: string;
   server: string | null;
@@ -150,8 +152,14 @@ export type NodeDto = {
   updated_at: string;
 };
 
+export type CreateNodeResultDto = {
+  deduped: boolean;
+  node: NodeDto;
+};
+
 export type ImportNodeResultDto = {
   created: NodeDto[];
+  deduped: NodeDto[];
   failed: Array<{
     line: number;
     message: string;

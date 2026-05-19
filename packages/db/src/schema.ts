@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -39,16 +39,29 @@ export const subscriptionSources = sqliteTable("subscription_sources", {
 export const nodes = sqliteTable("nodes", {
   id: text("id").primaryKey(),
   ownerId: text("owner_id").references(() => users.id, { onDelete: "set null" }),
-  sourceId: text("source_id").references(() => subscriptionSources.id, { onDelete: "cascade" }),
+  sourceId: text("source_id").references(() => subscriptionSources.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   protocol: text("protocol").notNull(),
   server: text("server"),
   port: integer("port"),
   tags: text("tags").notNull().default("[]"),
   configJson: text("config_json").notNull(),
+  manual: integer("manual").notNull().default(0),
   enabled: integer("enabled").notNull().default(1),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`)
 });
+
+export const nodeSources = sqliteTable(
+  "node_sources",
+  {
+    nodeId: text("node_id").notNull().references(() => nodes.id, { onDelete: "cascade" }),
+    sourceId: text("source_id").notNull().references(() => subscriptionSources.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`)
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.nodeId, table.sourceId] })
+  })
+);
 
 export const profiles = sqliteTable("profiles", {
   id: text("id").primaryKey(),

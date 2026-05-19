@@ -4,10 +4,13 @@ import type { NodeRow, RenderableNodeRow } from "./node.types";
 
 export function toNodeDto(row: NodeRow): NodeDto {
   const config = parseConfig(row.config_json);
+  const sourceIds = parseSourceIds(row.source_ids || row.source_id);
 
   return {
     id: row.id,
-    source_id: row.source_id,
+    source_id: sourceIds[0] ?? null,
+    source_ids: sourceIds,
+    manual: row.manual,
     name: row.name,
     protocol: row.protocol,
     server: row.server,
@@ -72,6 +75,14 @@ function parseConfig(value: string) {
   } catch {
     return {};
   }
+}
+
+function parseSourceIds(value: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  return Array.from(new Set(value.split(",").map((item) => item.trim()).filter(Boolean)));
 }
 
 function stripInternalConfig(value: Record<string, unknown>) {

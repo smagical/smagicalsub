@@ -3,6 +3,17 @@ import { downloadCsv } from "../../lib/download-csv";
 
 export const UNGROUPED_GROUP_LABEL = "无分组";
 
+export function nodeSourceLabel(node: Pick<NodeDto, "manual" | "source_ids" | "source_id">) {
+  const hasManual = Boolean(node.manual);
+  const hasSource = node.source_ids.length > 0 || Boolean(node.source_id);
+
+  if (hasManual && hasSource) {
+    return "手动+订阅";
+  }
+
+  return hasSource ? "订阅源" : "手动";
+}
+
 export function toNodesCsvRows(nodes: NodeDto[]) {
   const header = ["名称", "协议", "服务端", "端口", "分组", "状态", "来源类型"];
   const rows = nodes.map((node) => [
@@ -12,7 +23,7 @@ export function toNodesCsvRows(nodes: NodeDto[]) {
     node.port,
     splitNodeGroups(node.groups).join(","),
     node.enabled ? "启用" : "停用",
-    node.source_id ? "订阅源" : "手动"
+    nodeSourceLabel(node)
   ]);
 
   return [header, ...rows];

@@ -7,6 +7,7 @@ const adminHeaders = { Authorization: "Bearer secret", "Content-Type": "applicat
 
 export async function ensureResourceSchema() {
   await testEnv.DB.batch(resourceSchemaStatements().map((sql) => testEnv.DB.prepare(sql)));
+  await ensureNodeSourceSchema();
 }
 
 export async function createUserAndLogin(email: string) {
@@ -78,7 +79,8 @@ function resourceSchemaStatements() {
     `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY NOT NULL, email TEXT NOT NULL UNIQUE, name TEXT, role TEXT NOT NULL DEFAULT 'user', protected INTEGER NOT NULL DEFAULT 0, password_hash TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
     `CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY NOT NULL, user_id TEXT NOT NULL, token_hash TEXT NOT NULL UNIQUE, expires_at TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE)`,
     `CREATE TABLE IF NOT EXISTS subscription_sources (id TEXT PRIMARY KEY NOT NULL, owner_id TEXT, name TEXT NOT NULL, url TEXT NOT NULL, groups TEXT NOT NULL DEFAULT '[]', enabled INTEGER NOT NULL DEFAULT 1, refresh_interval_minutes INTEGER NOT NULL DEFAULT 0, next_refresh_at TEXT, last_status TEXT, last_error TEXT, last_fetched_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-    `CREATE TABLE IF NOT EXISTS nodes (id TEXT PRIMARY KEY NOT NULL, owner_id TEXT, source_id TEXT, name TEXT NOT NULL, protocol TEXT NOT NULL, server TEXT, port INTEGER, tags TEXT NOT NULL DEFAULT '[]', config_json TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+    `CREATE TABLE IF NOT EXISTS nodes (id TEXT PRIMARY KEY NOT NULL, owner_id TEXT, source_id TEXT, manual INTEGER NOT NULL DEFAULT 0, name TEXT NOT NULL, protocol TEXT NOT NULL, server TEXT, port INTEGER, tags TEXT NOT NULL DEFAULT '[]', config_json TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+    `CREATE TABLE IF NOT EXISTS node_sources (node_id TEXT NOT NULL, source_id TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (node_id, source_id))`,
     `CREATE TABLE IF NOT EXISTS profiles (id TEXT PRIMARY KEY NOT NULL, owner_id TEXT, name TEXT NOT NULL, description TEXT, default_strategy TEXT NOT NULL DEFAULT 'Proxy', enabled INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
     `CREATE TABLE IF NOT EXISTS profile_rules (id TEXT PRIMARY KEY NOT NULL, profile_id TEXT NOT NULL, position INTEGER NOT NULL, format TEXT NOT NULL DEFAULT 'common', rule TEXT NOT NULL, content_json TEXT NOT NULL DEFAULT '{}', enabled INTEGER NOT NULL DEFAULT 1)`,
     `CREATE TABLE IF NOT EXISTS profile_modules (id TEXT PRIMARY KEY NOT NULL, owner_id TEXT, profile_id TEXT, name TEXT NOT NULL, format TEXT NOT NULL, type TEXT NOT NULL DEFAULT 'advanced-override', content_json TEXT NOT NULL DEFAULT '{}', enabled INTEGER NOT NULL DEFAULT 1, is_default INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
@@ -87,4 +89,13 @@ function resourceSchemaStatements() {
     `CREATE TABLE IF NOT EXISTS refresh_jobs (id TEXT PRIMARY KEY NOT NULL, source_id TEXT, status TEXT NOT NULL, message TEXT, started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, finished_at TEXT)`,
     `CREATE TABLE IF NOT EXISTS access_logs (id TEXT PRIMARY KEY NOT NULL, token_id TEXT, path TEXT NOT NULL, ip TEXT, user_agent TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`
   ];
+}
+
+async function ensureNodeSourceSchema() {
+  const columns = await testEnv.DB.prepare(`PRAGMA table_info(nodes)`).all<{ name: string }>();
+  const columnNames = new Set((columns.results ?? []).map((row) => row.name));
+
+  if (!columnNames.has("manual")) {
+    await testEnv.DB.prepare(`ALTER TABLE nodes ADD COLUMN manual INTEGER NOT NULL DEFAULT 0`).run();
+  }
 }
