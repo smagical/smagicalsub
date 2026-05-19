@@ -5,7 +5,7 @@ import { spawn } from "node:child_process";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const configPath = resolve(repoRoot, "wrangler.jsonc");
-const tempConfigPath = resolve(repoRoot, ".wrangler", "deploy", "wrangler.remote-d1.jsonc");
+const tempConfigPath = resolve(repoRoot, "wrangler.remote-d1.jsonc");
 
 const config = JSON.parse(await readFile(configPath, "utf8"));
 const d1 = config.d1_databases?.find((database) => database.binding === "DB");
@@ -27,7 +27,8 @@ const tempConfig = {
     database.binding === d1.binding
       ? {
           ...database,
-          database_id: remoteDatabase.uuid
+          database_id: remoteDatabase.uuid,
+          migrations_dir: resolve(repoRoot, database.migrations_dir ?? "migrations")
         }
       : database
   )
