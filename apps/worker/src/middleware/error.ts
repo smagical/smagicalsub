@@ -1,13 +1,18 @@
 import type { ErrorHandler, NotFoundHandler } from "hono";
 import { failure } from "@smagicalsub/shared";
+import { errorDetail, logEvent, requestId } from "../lib/request-log";
 
 export const onError: ErrorHandler = (error, c) => {
-  console.error(error);
+  const id = requestId(c);
+  logEvent(c, "error", "worker.unhandled_error", {
+    ...errorDetail(error),
+    requestId: id
+  });
 
   return c.json(
     failure({
       code: "INTERNAL_SERVER_ERROR",
-      message: "服务暂时不可用"
+      message: `服务暂时不可用，请在 Cloudflare 日志中搜索 requestId=${id}`
     }),
     500
   );

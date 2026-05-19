@@ -2,10 +2,12 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { bootstrapAdminSchema, failure, success, type SetupStatusDto } from "@smagicalsub/shared";
 import type { AppContext } from "../../env";
+import { errorDetail, logEvent, requestId } from "../../lib/request-log";
 import { createSession } from "../auth/session.repository";
 import { countUsers, createUser, deleteUserById } from "../auth/user.repository";
 
 export const setupRoutes = new Hono<AppContext>();
+type CreatedUser = Awaited<ReturnType<typeof createUser>>;
 
 const requiredMigrationTables = [
   "users",
@@ -26,13 +28,28 @@ setupRoutes.get("/status", async (c) => {
 });
 
 setupRoutes.post("/bootstrap", zValidator("form", bootstrapAdminSchema), async (c) => {
+  const id = requestId(c);
   const status = await setupStatus(c.env);
+  logEvent(c, "info", "setup.bootstrap.start", {
+    adminTokenConfigured: status.resources.adminToken,
+    bootstrapRequired: status.bootstrapRequired,
+    migrationsReady: status.resources.migrations,
+    requestId: id,
+    setupAvailable: status.available
+  });
 
   if (!status.available || !status.bootstrapRequired) {
+    logEvent(c, "warn", "setup.bootstrap.closed", { requestId: id });
     return c.redirect("/", 302);
   }
 
   if (!setupReadyForBootstrap(status)) {
+    logEvent(c, "warn", "setup.bootstrap.not_ready", {
+      d1: status.resources.d1,
+      kv: status.resources.kv,
+      migrations: status.resources.migrations,
+      requestId: id
+    });
     return c.json(failure({ code: "SETUP_NOT_READY", message: "D1、KV 或 D1 迁移尚未完成，请重新检测后再初始化" }), 409);
   }
 
@@ -40,27 +57,47 @@ setupRoutes.post("/bootstrap", zValidator("form", bootstrapAdminSchema), async (
   const expectedToken = c.env.ADMIN_TOKEN?.trim();
 
   if (expectedToken && input.bootstrapToken !== expectedToken) {
+    logEvent(c, "warn", "setup.bootstrap.invalid_token", { requestId: id });
     return c.json(failure({ code: "UNAUTHORIZED", message: "初始化令牌不正确" }), 401);
   }
 
-  let user;
+  let user: CreatedUser | null = null;
 
   try {
+    logEvent(c, "info", "setup.bootstrap.create_user.start", { requestId: id });
     user = await createUser(c.env.DB, { ...input, role: "admin" }, true);
     if (!user) {
-      return c.json(failure({ code: "BOOTSTRAP_FAILED", message: "管理员创建失败" }), 500);
+      logEvent(c, "error", "setup.bootstrap.create_user.empty", { requestId: id });
+      return c.json(failure({ code: "BOOTSTRAP_FAILED", message: `管理员创建失败，requestId=${id}` }), 500);
     }
 
+    logEvent(c, "info", "setup.bootstrap.create_session.start", { requestId: id, userId: user.id });
     await createSession(c.env.DB, user.id);
+    logEvent(c, "info", "setup.bootstrap.success", { requestId: id, userId: user.id });
     return c.redirect("/", 302);
   } catch (error) {
-    console.error("setup bootstrap failed", error);
+    logEvent(c, "error", "setup.bootstrap.failed", {
+      ...errorDetail(error),
+      requestId: id,
+      userCreated: Boolean(user?.id),
+      userId: user?.id
+    });
 
-    if (user?.id) {
-      await deleteUserById(c.env.DB, user.id).catch((cleanupError) => console.error("setup bootstrap cleanup failed", cleanupError));
+    const createdUser = user;
+
+    if (createdUser?.id) {
+      await deleteUserById(c.env.DB, createdUser.id)
+        .then(() => logEvent(c, "warn", "setup.bootstrap.cleanup_user.success", { requestId: id, userId: createdUser.id }))
+        .catch((cleanupError) =>
+          logEvent(c, "error", "setup.bootstrap.cleanup_user.failed", {
+            ...errorDetail(cleanupError),
+            requestId: id,
+            userId: createdUser.id
+          })
+        );
     }
 
-    return c.json(failure({ code: "BOOTSTRAP_FAILED", message: "管理员初始化失败，请查看 Cloudflare 部署日志" }), 500);
+    return c.json(failure({ code: "BOOTSTRAP_FAILED", message: `管理员初始化失败，请在 Cloudflare 日志中搜索 requestId=${id}` }), 500);
   }
 });
 
