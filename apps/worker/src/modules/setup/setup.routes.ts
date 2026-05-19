@@ -7,6 +7,20 @@ import { countUsers, createUser } from "../auth/user.repository";
 
 export const setupRoutes = new Hono<AppContext>();
 
+const requiredMigrationTables = [
+  "users",
+  "sessions",
+  "subscription_sources",
+  "nodes",
+  "profiles",
+  "profile_rules",
+  "profile_modules",
+  "subscribe_tokens",
+  "subscribe_token_modules",
+  "refresh_jobs",
+  "access_logs"
+];
+
 setupRoutes.get("/status", async (c) => {
   return c.json(success(await setupStatus(c.env)));
 });
@@ -16,6 +30,10 @@ setupRoutes.post("/bootstrap", zValidator("form", bootstrapAdminSchema), async (
 
   if (!status.available || !status.bootstrapRequired) {
     return c.redirect("/", 302);
+  }
+
+  if (!setupReadyForBootstrap(status)) {
+    return c.json(failure({ code: "SETUP_NOT_READY", message: "D1、KV 或 D1 迁移尚未完成，请重新检测后再初始化" }), 409);
   }
 
   const input = c.req.valid("form");
@@ -34,12 +52,12 @@ setupRoutes.post("/bootstrap", zValidator("form", bootstrapAdminSchema), async (
   return c.redirect("/", 302);
 });
 
-async function setupStatus(env: AppContext["Bindings"]): Promise<SetupStatusDto> {
+export async function setupStatus(env: AppContext["Bindings"]): Promise<SetupStatusDto> {
   const mode = normalizedSetupMode(env.SETUP_MODE);
   const [d1, kv, migrations, userCount] = await Promise.all([probeD1(env), probeKV(env), probeMigrations(env), safeUserCount(env)]);
   const adminUser = userCount > 0;
   const adminToken = Boolean(env.ADMIN_TOKEN?.trim());
-  const bootstrapRequired = migrations && !adminUser;
+  const bootstrapRequired = !adminUser;
   const available = mode === "enabled" || (mode === "auto" && bootstrapRequired);
 
   return {
@@ -94,6 +112,10 @@ async function setupStatus(env: AppContext["Bindings"]): Promise<SetupStatusDto>
   };
 }
 
+export function setupReadyForBootstrap(status: SetupStatusDto) {
+  return status.resources.d1 && status.resources.kv && status.resources.migrations;
+}
+
 function normalizedSetupMode(value: string | undefined): SetupStatusDto["mode"] {
   const normalized = value?.trim().toLowerCase();
   return normalized === "enabled" || normalized === "disabled" ? normalized : "auto";
@@ -119,8 +141,17 @@ async function probeKV(env: AppContext["Bindings"]) {
 
 async function probeMigrations(env: AppContext["Bindings"]) {
   try {
-    await env.DB.prepare("SELECT 1 FROM users LIMIT 1").first();
-    return true;
+    const rows = await env.DB.prepare(
+      `SELECT name
+       FROM sqlite_master
+       WHERE type = 'table'
+       AND name IN (${requiredMigrationTables.map((_, index) => `?${index + 1}`).join(", ")})`
+    )
+      .bind(...requiredMigrationTables)
+      .all<{ name: string }>();
+    const existingTables = new Set((rows.results ?? []).map((row) => row.name));
+
+    return requiredMigrationTables.every((table) => existingTables.has(table));
   } catch {
     return false;
   }

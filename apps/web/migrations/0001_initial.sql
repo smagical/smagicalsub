@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY NOT NULL,
   email TEXT NOT NULL UNIQUE,
   name TEXT,
@@ -9,7 +9,7 @@ CREATE TABLE users (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
   token_hash TEXT NOT NULL UNIQUE,
@@ -18,7 +18,7 @@ CREATE TABLE sessions (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE subscription_sources (
+CREATE TABLE IF NOT EXISTS subscription_sources (
   id TEXT PRIMARY KEY NOT NULL,
   owner_id TEXT,
   name TEXT NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE subscription_sources (
   FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE TABLE nodes (
+CREATE TABLE IF NOT EXISTS nodes (
   id TEXT PRIMARY KEY NOT NULL,
   owner_id TEXT,
   source_id TEXT,
@@ -51,7 +51,7 @@ CREATE TABLE nodes (
   FOREIGN KEY (source_id) REFERENCES subscription_sources(id) ON DELETE CASCADE
 );
 
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id TEXT PRIMARY KEY NOT NULL,
   owner_id TEXT,
   name TEXT NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE profiles (
   FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE TABLE profile_rules (
+CREATE TABLE IF NOT EXISTS profile_rules (
   id TEXT PRIMARY KEY NOT NULL,
   profile_id TEXT NOT NULL,
   position INTEGER NOT NULL,
@@ -74,7 +74,7 @@ CREATE TABLE profile_rules (
   FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
-CREATE TABLE profile_modules (
+CREATE TABLE IF NOT EXISTS profile_modules (
   id TEXT PRIMARY KEY NOT NULL,
   owner_id TEXT,
   profile_id TEXT,
@@ -90,7 +90,7 @@ CREATE TABLE profile_modules (
   FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
-CREATE TABLE subscribe_tokens (
+CREATE TABLE IF NOT EXISTS subscribe_tokens (
   id TEXT PRIMARY KEY NOT NULL,
   owner_id TEXT,
   profile_id TEXT,
@@ -106,7 +106,7 @@ CREATE TABLE subscribe_tokens (
   FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE SET NULL
 );
 
-CREATE TABLE subscribe_token_modules (
+CREATE TABLE IF NOT EXISTS subscribe_token_modules (
   token_id TEXT NOT NULL,
   module_id TEXT NOT NULL,
   format TEXT NOT NULL,
@@ -116,7 +116,7 @@ CREATE TABLE subscribe_token_modules (
   FOREIGN KEY (module_id) REFERENCES profile_modules(id) ON DELETE CASCADE
 );
 
-CREATE TABLE refresh_jobs (
+CREATE TABLE IF NOT EXISTS refresh_jobs (
   id TEXT PRIMARY KEY NOT NULL,
   source_id TEXT,
   status TEXT NOT NULL,
@@ -126,7 +126,7 @@ CREATE TABLE refresh_jobs (
   FOREIGN KEY (source_id) REFERENCES subscription_sources(id) ON DELETE SET NULL
 );
 
-CREATE TABLE access_logs (
+CREATE TABLE IF NOT EXISTS access_logs (
   id TEXT PRIMARY KEY NOT NULL,
   token_id TEXT,
   path TEXT NOT NULL,
@@ -136,17 +136,17 @@ CREATE TABLE access_logs (
   FOREIGN KEY (token_id) REFERENCES subscribe_tokens(id) ON DELETE SET NULL
 );
 
-CREATE INDEX idx_subscription_sources_owner_id ON subscription_sources(owner_id);
-CREATE INDEX idx_nodes_owner_id ON nodes(owner_id);
-CREATE INDEX idx_nodes_source_id ON nodes(source_id);
-CREATE INDEX idx_nodes_enabled ON nodes(enabled);
-CREATE INDEX idx_profile_rules_profile_id ON profile_rules(profile_id);
-CREATE INDEX idx_profile_modules_owner_id ON profile_modules(owner_id);
-CREATE INDEX idx_profile_modules_profile_id ON profile_modules(profile_id);
-CREATE INDEX idx_profile_modules_lookup ON profile_modules(format, type, enabled, is_default);
-CREATE UNIQUE INDEX idx_profile_modules_default_user ON profile_modules(owner_id, format, type) WHERE is_default = 1 AND owner_id IS NOT NULL;
-CREATE UNIQUE INDEX idx_profile_modules_default_admin ON profile_modules(format, type) WHERE is_default = 1 AND owner_id IS NULL;
-CREATE INDEX idx_subscribe_tokens_token ON subscribe_tokens(token);
-CREATE UNIQUE INDEX idx_subscribe_tokens_custom_path ON subscribe_tokens(custom_path);
-CREATE INDEX idx_subscribe_token_modules_token_id ON subscribe_token_modules(token_id);
-CREATE INDEX idx_access_logs_token_id ON access_logs(token_id);
+CREATE INDEX IF NOT EXISTS idx_subscription_sources_owner_id ON subscription_sources(owner_id);
+CREATE INDEX IF NOT EXISTS idx_nodes_owner_id ON nodes(owner_id);
+CREATE INDEX IF NOT EXISTS idx_nodes_source_id ON nodes(source_id);
+CREATE INDEX IF NOT EXISTS idx_nodes_enabled ON nodes(enabled);
+CREATE INDEX IF NOT EXISTS idx_profile_rules_profile_id ON profile_rules(profile_id);
+CREATE INDEX IF NOT EXISTS idx_profile_modules_owner_id ON profile_modules(owner_id);
+CREATE INDEX IF NOT EXISTS idx_profile_modules_profile_id ON profile_modules(profile_id);
+CREATE INDEX IF NOT EXISTS idx_profile_modules_lookup ON profile_modules(format, type, enabled, is_default);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profile_modules_default_user ON profile_modules(owner_id, format, type) WHERE is_default = 1 AND owner_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profile_modules_default_admin ON profile_modules(format, type) WHERE is_default = 1 AND owner_id IS NULL;
+CREATE INDEX IF NOT EXISTS idx_subscribe_tokens_token ON subscribe_tokens(token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_subscribe_tokens_custom_path ON subscribe_tokens(custom_path);
+CREATE INDEX IF NOT EXISTS idx_subscribe_token_modules_token_id ON subscribe_token_modules(token_id);
+CREATE INDEX IF NOT EXISTS idx_access_logs_token_id ON access_logs(token_id);

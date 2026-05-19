@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { AppContext } from "../../env";
 import { listResponse } from "../../lib/list-response";
 import { bearerTokenFromRequest } from "../../middleware/admin-auth";
+import { setupReadyForBootstrap, setupStatus } from "../setup/setup.routes";
 import { clearLoginFailures, loginRateLimitStatus, recordLoginFailure } from "./login-rate-limit";
 import { verifyPassword } from "./password";
 import {
@@ -22,20 +23,26 @@ export const authRoutes = new Hono<AppContext>();
 const idParamSchema = z.object({ id: z.string().trim().min(1) });
 
 publicAuthRoutes.get("/status", async (c) => {
-  const userCount = await countUsers(c.env.DB);
+  const status = await setupStatus(c.env);
 
   return c.json(
     success({
-      authRequired: userCount > 0 || Boolean(c.env.ADMIN_TOKEN?.trim()),
-      bootstrapRequired: userCount === 0,
-      bootstrapRequiresToken: Boolean(c.env.ADMIN_TOKEN?.trim())
+      authRequired: status.resources.adminUser || status.resources.adminToken,
+      bootstrapRequired: status.bootstrapRequired,
+      bootstrapRequiresToken: status.bootstrapRequiresToken
     })
   );
 });
 
 publicAuthRoutes.post("/bootstrap", zValidator("json", bootstrapAdminSchema), async (c) => {
-  if ((await countUsers(c.env.DB)) > 0) {
+  const status = await setupStatus(c.env);
+
+  if (!status.bootstrapRequired) {
     return c.json(failure({ code: "BOOTSTRAP_CLOSED", message: "首个管理员已经创建" }), 409);
+  }
+
+  if (!setupReadyForBootstrap(status)) {
+    return c.json(failure({ code: "SETUP_NOT_READY", message: "D1、KV 或 D1 迁移尚未完成，请重新检测后再初始化" }), 409);
   }
 
   const input = c.req.valid("json");
