@@ -11,7 +11,7 @@
     "dev": "pnpm --filter @smagicalsub/web dev",
     "build": "pnpm --filter @smagicalsub/web build",
     "build:api": "pnpm --filter @smagicalsub/worker typecheck",
-    "deploy": "pnpm run build && pnpm --filter @smagicalsub/web exec wrangler deploy --config ../../wrangler.jsonc && pnpm --filter @smagicalsub/web exec wrangler d1 migrations apply DB --remote --config ../../wrangler.jsonc",
+    "deploy": "pnpm run build && pnpm --filter @smagicalsub/web exec wrangler deploy --config ../../wrangler.jsonc && node scripts/apply-remote-d1-migrations.mjs",
     "deploy:cloudflare": "pnpm run deploy",
     "preview": "pnpm --filter @smagicalsub/web preview",
     "preview:worker": "pnpm --filter @smagicalsub/web preview:worker",
@@ -23,7 +23,7 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "pnpm --filter @smagicalsub/web exec wrangler d1 migrations apply DB --local --config ../../wrangler.jsonc",
-    "db:migrate:remote": "pnpm --filter @smagicalsub/web exec wrangler d1 migrations apply DB --remote --config ../../wrangler.jsonc"
+    "db:migrate:remote": "node scripts/apply-remote-d1-migrations.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
