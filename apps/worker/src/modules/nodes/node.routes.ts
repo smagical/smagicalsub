@@ -1,6 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { createNodeSchema, failure, nodeBatchActionSchema, success, updateNodeSchema } from "@smagicalsub/shared";
+import { createNodeSchema, failure, importNodesSchema, nodeBatchActionSchema, success, updateNodeSchema } from "@smagicalsub/shared";
 import { z } from "zod";
 import type { AppContext, Env } from "../../env";
 import { ownerScope, type OwnerScope } from "../../lib/auth-scope";
@@ -16,6 +16,7 @@ import {
 import {
   createManualNode,
   deleteNode,
+  importManualNodes,
   listNodeGroups,
   listNodes,
   updateNode
@@ -46,6 +47,24 @@ nodeRoutes.post("/", zValidator("json", createNodeSchema), async (c) => {
 
   await deleteAllSubscriptionCaches(c.env, scope);
   return c.json(success(node), 201);
+});
+
+nodeRoutes.post("/import", zValidator("json", importNodesSchema), async (c) => {
+  const input = c.req.valid("json");
+  const scope = ownerScope(c.var.authUser);
+  const imports = input.items.map((item) => ({
+    enabled: input.enabled,
+    groups: input.groups,
+    line: item.line,
+    uri: item.uri
+  }));
+  const result = await importManualNodes(c.env.DB, imports, scope.ownerId);
+
+  if (result.created.length > 0) {
+    await deleteAllSubscriptionCaches(c.env, scope);
+  }
+
+  return c.json(success({ total: input.items.length, ...result }), result.created.length > 0 ? 201 : 400);
 });
 
 nodeRoutes.post("/batch", zValidator("json", nodeBatchActionSchema), async (c) => {

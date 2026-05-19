@@ -24,10 +24,19 @@ export function NodesPage() {
       <Card>
         <CardHeader>
           <CardTitle>添加节点</CardTitle>
-          <CardDescription>直接粘贴节点链接，可补充显示名称和分组，创建后会进入下方节点列表。</CardDescription>
+          <CardDescription>直接粘贴单个节点链接，或按行批量导入多个节点；导入时会校验格式并自动截断超长名称。</CardDescription>
         </CardHeader>
         <CardContent>
-          <NodeForm className="mb-0" form={page.form} groups={page.groups} pending={page.pending} setForm={page.setForm} onSubmit={page.createNode} />
+          <NodeForm
+            className="mb-0"
+            form={page.form}
+            groups={page.groups}
+            importResult={page.importResult}
+            pending={page.pending}
+            setForm={page.setForm}
+            onImport={page.importNodeBatch}
+            onSubmit={page.createNode}
+          />
         </CardContent>
       </Card>
 

@@ -1,5 +1,6 @@
 import type { ParsedNode } from "@smagicalsub/subscription";
 import { nodeConfigKey } from "@smagicalsub/subscription";
+import { truncateNodeName } from "../nodes/node.repository";
 
 type ExistingSourceNode = {
   id: string;
@@ -39,7 +40,7 @@ export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes
           previous?.id ?? crypto.randomUUID(),
           ownerId,
           sourceId,
-          previous?.name ?? node.name,
+          truncateNodeName(previous?.name ?? node.name),
           node.protocol,
           node.server ?? null,
           node.port ?? null,

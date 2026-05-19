@@ -4,6 +4,8 @@ import { ownerWhere, type OwnerScope } from "../../lib/auth-scope";
 import { normalizeGroups, toNodeDto, toRenderableNode } from "./node.mapper";
 import type { NodeRow, RenderableNodeRow } from "./node.types";
 
+const maxNodeNameLength = 120;
+
 export async function listNodes(db: D1Database, scope?: OwnerScope) {
   const filter = scope ? ownerWhere(scope) : { params: [] as string[], sql: "" };
   const result = await db
@@ -69,7 +71,7 @@ export async function createManualNode(db: D1Database, input: CreateNodeInput, o
   }
 
   const id = crypto.randomUUID();
-  const name = input.name ?? parsed.name;
+  const name = truncateNodeName(input.name ?? parsed.name);
 
   // 手动节点和订阅源节点共用 nodes 表，source_id=NULL 表示用户手动维护。
   await db
@@ -92,6 +94,31 @@ export async function createManualNode(db: D1Database, input: CreateNodeInput, o
     .run();
 
   return findNodeById(db, id);
+}
+
+export async function importManualNodes(
+  db: D1Database,
+  inputs: Array<CreateNodeInput & { line: number }>,
+  ownerId: string | null = null
+) {
+  const created = [];
+  const failed: Array<{ line: number; message: string; value: string }> = [];
+
+  for (const input of inputs) {
+    const node = await createManualNode(db, input, ownerId);
+
+    if (node) {
+      created.push(node);
+    } else {
+      failed.push({
+        line: input.line,
+        message: "节点链接解析失败",
+        value: input.uri.slice(0, 160)
+      });
+    }
+  }
+
+  return { created, failed };
 }
 
 export async function updateNode(db: D1Database, id: string, input: UpdateNodeInput, scope?: OwnerScope) {
@@ -125,7 +152,7 @@ export async function updateNode(db: D1Database, id: string, input: UpdateNodeIn
        WHERE id = ?8`
     )
     .bind(
-      input.name ?? parsed?.name ?? current.name,
+      truncateNodeName(input.name ?? parsed?.name ?? current.name),
       parsed?.protocol ?? current.protocol,
       parsed?.server ?? current.server,
       parsed?.port ?? current.port,
@@ -170,4 +197,10 @@ export async function listEnabledRenderableNodesByIds(db: D1Database, ownerId: s
   const result = await (params.length > 0 ? statement.bind(...params) : statement).all<RenderableNodeRow>();
 
   return (result.results ?? []).map(toRenderableNode);
+}
+
+export function truncateNodeName(value: string) {
+  const normalized = value.trim();
+
+  return normalized.length > maxNodeNameLength ? normalized.slice(0, maxNodeNameLength) : normalized;
 }

@@ -40,6 +40,22 @@ export const createNodeSchema = z.object({
 
 export type CreateNodeInput = z.infer<typeof createNodeSchema>;
 
+export const importNodesSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        line: z.number().int().min(1).max(100000),
+        uri: z.string().trim().min(1)
+      })
+    )
+    .min(1)
+    .max(500),
+  groups: z.array(nodeGroupSchema).default([]),
+  enabled: z.boolean().default(true)
+});
+
+export type ImportNodesInput = z.infer<typeof importNodesSchema>;
+
 export const updateNodeSchema = z
   .object({
     uri: z.string().trim().min(1).optional(),

@@ -150,6 +150,16 @@ export type NodeDto = {
   updated_at: string;
 };
 
+export type ImportNodeResultDto = {
+  created: NodeDto[];
+  failed: Array<{
+    line: number;
+    message: string;
+    value: string;
+  }>;
+  total: number;
+};
+
 export type ProfileDto = {
   id: string;
   owner_id: string | null;
