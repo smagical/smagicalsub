@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 
 type MockOptions = {
   authRequired?: boolean;
+  migrationsReady?: boolean;
   onDashboardRequest?: (authorization: string) => void;
 };
 
@@ -26,6 +27,8 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
     return ok({
       authRequired: options.authRequired ?? false,
       env: "e2e",
+      migrationsReady: options.migrationsReady ?? true,
+      setupAvailable: false,
       status: "ok",
       timestamp: new Date("2026-05-01T00:00:00.000Z").toISOString()
     });
@@ -120,6 +123,7 @@ function apiResponse(url: string, authorization: string, options: MockOptions) {
     return ok({
       loginDescription: "使用管理员或用户账号登录控制台。",
       loginTitle: "管理员访问",
+      logLevel: "0",
       siteName: "测试订阅台",
       siteSubtitle: "多格式订阅管理",
       titleImageUrl: null
@@ -513,8 +517,8 @@ function subscriptionPreview(url: string) {
 }`;
   }
 
-  if (url.includes("format=v2rayn")) {
-    return "dmxlc3M6Ly9leGFtcGxlLmNvbQ==";
+  if (url.includes("format=base64") || url.includes("format=v2rayn")) {
+    return "dmxlc3M6Ly9leGFtcGxlLmNvbQ==".repeat(220);
   }
 
   if (url.includes("format=plain")) {

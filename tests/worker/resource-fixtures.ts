@@ -87,7 +87,8 @@ function resourceSchemaStatements() {
     `CREATE TABLE IF NOT EXISTS subscribe_tokens (id TEXT PRIMARY KEY NOT NULL, owner_id TEXT, profile_id TEXT, token TEXT NOT NULL UNIQUE, custom_path TEXT, node_ids_json TEXT NOT NULL DEFAULT '[]', name TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 1, expires_at TEXT, last_used_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
     `CREATE TABLE IF NOT EXISTS subscribe_token_modules (token_id TEXT NOT NULL, module_id TEXT NOT NULL, format TEXT NOT NULL, type TEXT NOT NULL DEFAULT 'advanced-override', PRIMARY KEY (token_id, format, type))`,
     `CREATE TABLE IF NOT EXISTS refresh_jobs (id TEXT PRIMARY KEY NOT NULL, source_id TEXT, status TEXT NOT NULL, message TEXT, started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, finished_at TEXT)`,
-    `CREATE TABLE IF NOT EXISTS access_logs (id TEXT PRIMARY KEY NOT NULL, token_id TEXT, path TEXT NOT NULL, ip TEXT, user_agent TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`
+    `CREATE TABLE IF NOT EXISTS access_logs (id TEXT PRIMARY KEY NOT NULL, token_id TEXT, path TEXT NOT NULL, ip TEXT, user_agent TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+    `CREATE TABLE IF NOT EXISTS subscription_metrics (bucket TEXT NOT NULL, owner_id TEXT NOT NULL DEFAULT '', total INTEGER NOT NULL DEFAULT 0, success INTEGER NOT NULL DEFAULT 0, cached INTEGER NOT NULL DEFAULT 0, blocked INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (bucket, owner_id))`
   ];
 }
 

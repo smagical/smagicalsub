@@ -130,6 +130,8 @@ export function App() {
     content = <StatusPanel title="正在连接 Worker" description="正在读取运行状态。" settings={settings} />;
   } else if (healthQuery.error) {
     content = <StatusPanel title="连接失败" description={healthQuery.error.message} settings={settings} />;
+  } else if (health && !health.migrationsReady) {
+    content = <StatusPanel title="D1 迁移未完成" description="当前数据库表结构不完整，控制面板统计和订阅访问记录可能无法写入。请先在 Cloudflare 部署流程或本地环境执行 D1 迁移。" settings={settings} />;
   } else if (authRequired && !authToken) {
     content = (
       <LoginPanel

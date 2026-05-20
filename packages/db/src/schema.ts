@@ -136,3 +136,19 @@ export const accessLogs = sqliteTable("access_logs", {
   userAgent: text("user_agent"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`)
 });
+
+export const subscriptionMetrics = sqliteTable(
+  "subscription_metrics",
+  {
+    bucket: text("bucket").notNull(),
+    ownerId: text("owner_id").notNull().default(""),
+    total: integer("total").notNull().default(0),
+    success: integer("success").notNull().default(0),
+    cached: integer("cached").notNull().default(0),
+    blocked: integer("blocked").notNull().default(0),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`)
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.bucket, table.ownerId] })
+  })
+);

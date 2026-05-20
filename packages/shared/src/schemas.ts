@@ -203,6 +203,7 @@ const titleImageUrlSchema = z.preprocess(
 );
 
 export const siteSettingsSchema = z.object({
+  logLevel: z.enum(["0", "1", "2", "3"]).default("0"),
   siteName: z.string().trim().min(1).max(48),
   siteSubtitle: z.string().trim().min(1).max(80),
   titleImageUrl: titleImageUrlSchema,

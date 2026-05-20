@@ -21,11 +21,25 @@ const requiredMigrationTables = [
   "subscribe_tokens",
   "subscribe_token_modules",
   "refresh_jobs",
-  "access_logs"
+  "access_logs",
+  "subscription_metrics"
 ];
 
 setupRoutes.get("/status", async (c) => {
-  return c.json(success(await setupStatus(c.env)));
+  const status = await setupStatus(c.env);
+
+  logEvent(c, "info", "setup.status", {
+    adminUser: status.resources.adminUser,
+    available: status.available,
+    bootstrapRequired: status.bootstrapRequired,
+    d1: status.resources.d1,
+    kv: status.resources.kv,
+    migrations: status.resources.migrations,
+    mode: status.mode,
+    requestId: requestId(c)
+  });
+
+  return c.json(success(status));
 });
 
 setupRoutes.post("/bootstrap", zValidator("form", bootstrapAdminSchema), async (c) => {

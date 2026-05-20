@@ -5,6 +5,7 @@ import {
   ensureSubscriptionSchema,
   fetchSubscription,
   seedSubscriptionFixture,
+  subscriptionMetricTotals,
   testEnv,
   tokenLastUsedAt,
   waitForAccessLogCount
@@ -14,7 +15,7 @@ beforeAll(async () => {
   await ensureSubscriptionSchema();
 });
 
-describe("subscription output cache and access logs", () => {
+describe("subscription output cache, metrics and access logs", () => {
   it("writes generated output to KV and serves cached output on the next request", async () => {
     const fixture = await seedSubscriptionFixture();
     const cacheKey = generatedSubscriptionCacheKey("clash", fixture.path);
@@ -49,8 +50,9 @@ describe("subscription output cache and access logs", () => {
     expect(await (await fetchSubscription(profileDisabled.path, "plain", 404)).text()).toBe("Subscription profile not available");
   });
 
-  it("records access logs and last_used_at for generated and cached responses", async () => {
+  it("records real metrics while sampling access logs and last_used_at", async () => {
     const fixture = await seedSubscriptionFixture();
+    const beforeMetrics = await subscriptionMetricTotals();
 
     expect(await accessLogCount(fixture.tokenId)).toBe(0);
     expect(await tokenLastUsedAt(fixture.tokenId)).toBeNull();
@@ -62,6 +64,10 @@ describe("subscription output cache and access logs", () => {
 
     await fetchSubscription(fixture.path, "plain");
 
-    expect(await waitForAccessLogCount(fixture.tokenId, 2)).toBe(2);
+    expect(await waitForAccessLogCount(fixture.tokenId, 1)).toBe(1);
+    const afterMetrics = await subscriptionMetricTotals();
+    expect(afterMetrics.cached - beforeMetrics.cached).toBe(1);
+    expect(afterMetrics.success - beforeMetrics.success).toBe(2);
+    expect(afterMetrics.total - beforeMetrics.total).toBe(2);
   });
 });

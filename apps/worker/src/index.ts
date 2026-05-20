@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { logger } from "hono/logger";
 import type { AppContext } from "./env";
 import { requireAuth } from "./middleware/admin-auth";
 import { onError, notFound } from "./middleware/error";
@@ -15,12 +14,12 @@ import { setupRoutes } from "./modules/setup/setup.routes";
 import { sourceRoutes } from "./modules/sources/source.routes";
 import { refreshDueSources } from "./modules/sources/source.service";
 import { subscribeRoutes } from "./modules/subscribe/subscribe.routes";
+import { cleanupSubscriptionTelemetry } from "./modules/subscribe/subscription-metrics.repository";
 import { tokenRoutes } from "./modules/tokens/token.routes";
 import { userRoutes } from "./modules/users/user.routes";
 
 const app = new Hono<AppContext>();
 
-app.use("*", logger());
 app.route("/api/health", healthRoutes);
 app.route("/api/auth", publicAuthRoutes);
 app.route("/api/site-settings", publicSettingsRoutes);
@@ -46,6 +45,6 @@ export default {
     return app.fetch(request, env, ctx);
   },
   scheduled(_controller, env, ctx) {
-    ctx.waitUntil(refreshDueSources(env));
+    ctx.waitUntil(Promise.all([refreshDueSources(env), cleanupSubscriptionTelemetry(env.DB)]));
   }
 } satisfies ExportedHandler<AppContext["Bindings"]>;

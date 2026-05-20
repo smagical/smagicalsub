@@ -25,6 +25,47 @@ export async function getDashboardTotals(db: D1Database, scope?: OwnerScope) {
   };
 }
 
+type RequestStats = NonNullable<DashboardDto["requestStats"]>;
+type MetricTotalRow = { blocked: number | null; cached: number | null; success: number | null; total: number | null };
+type MetricTrendRow = { bucket: string; value: number | null };
+
+export async function getRequestStats(db: D1Database, scope?: OwnerScope): Promise<RequestStats> {
+  const filter = metricOwnerFilter(scope);
+  const totalRow = await db
+    .prepare(
+      `SELECT COALESCE(SUM(total), 0) AS total,
+              COALESCE(SUM(success), 0) AS success,
+              COALESCE(SUM(cached), 0) AS cached,
+              COALESCE(SUM(blocked), 0) AS blocked
+       FROM subscription_metrics
+       WHERE bucket >= strftime('%Y-%m-%d %H:00:00', 'now', '-6 hours')${filter.sql}`
+    )
+    .bind(...filter.params)
+    .first<MetricTotalRow>();
+  const trendRows = await db
+    .prepare(
+      `SELECT bucket, COALESCE(SUM(total), 0) AS value
+       FROM subscription_metrics
+       WHERE bucket >= strftime('%Y-%m-%d %H:00:00', 'now', '-6 hours')${filter.sql}
+       GROUP BY bucket
+       ORDER BY bucket ASC`
+    )
+    .bind(...filter.params)
+    .all<MetricTrendRow>();
+  const trendValues = new Map((trendRows.results ?? []).map((row) => [row.bucket, row.value ?? 0]));
+
+  return {
+    blocked: totalRow?.blocked ?? 0,
+    cached: totalRow?.cached ?? 0,
+    success: totalRow?.success ?? 0,
+    total: totalRow?.total ?? 0,
+    trend: recentMetricBuckets().map((bucket) => ({
+      label: bucket.slice(11, 13),
+      value: trendValues.get(bucket) ?? 0
+    }))
+  };
+}
+
 type DashboardEvent = DashboardDto["recentEvents"][number];
 type RefreshEventRow = { id: string; source_name: string | null; status: string; time: string };
 type AccessEventRow = { id: string; token_name: string | null; path: string; time: string };
@@ -150,4 +191,28 @@ async function countOwnedTable(db: D1Database, table: string, scope?: OwnerScope
 
 function emptyFilter() {
   return { params: [] as string[], sql: "" };
+}
+
+function metricOwnerFilter(scope?: OwnerScope) {
+  if (!scope || scope.isAdmin) {
+    return emptyFilter();
+  }
+
+  return { params: [scope.ownerId ?? ""], sql: " AND owner_id = ?" };
+}
+
+function recentMetricBuckets() {
+  const buckets: string[] = [];
+  const now = new Date();
+  now.setUTCMinutes(0, 0, 0);
+
+  for (let index = 6; index >= 0; index -= 1) {
+    buckets.push(sqliteHourBucket(new Date(now.getTime() - index * 60 * 60 * 1000)));
+  }
+
+  return buckets;
+}
+
+function sqliteHourBucket(value: Date) {
+  return value.toISOString().slice(0, 13).replace("T", " ") + ":00:00";
 }

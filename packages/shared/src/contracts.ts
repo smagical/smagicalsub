@@ -38,6 +38,7 @@ export type DashboardDto = {
 };
 
 export type SiteSettingsDto = {
+  logLevel: "0" | "1" | "2" | "3";
   siteName: string;
   siteSubtitle: string;
   titleImageUrl: string | null;
@@ -100,6 +101,7 @@ export type SessionDto = {
 };
 
 export const defaultSiteSettings: SiteSettingsDto = {
+  logLevel: "0",
   siteName: "Smagical Sub",
   siteSubtitle: "多格式订阅管理",
   titleImageUrl: null,

@@ -140,6 +140,27 @@ export async function tokenLastUsedAt(tokenId: string) {
   return row?.last_used_at ?? null;
 }
 
+export async function subscriptionMetricTotals(ownerId = "") {
+  const row = await testEnv.DB
+    .prepare(
+      `SELECT COALESCE(SUM(total), 0) AS total,
+              COALESCE(SUM(success), 0) AS success,
+              COALESCE(SUM(cached), 0) AS cached,
+              COALESCE(SUM(blocked), 0) AS blocked
+       FROM subscription_metrics
+       WHERE owner_id = ?1`
+    )
+    .bind(ownerId)
+    .first<{ blocked: number; cached: number; success: number; total: number }>();
+
+  return {
+    blocked: row?.blocked ?? 0,
+    cached: row?.cached ?? 0,
+    success: row?.success ?? 0,
+    total: row?.total ?? 0
+  };
+}
+
 export async function waitForAccessLogCount(tokenId: string, expected: number) {
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const count = await accessLogCount(tokenId);
@@ -185,7 +206,8 @@ function subscriptionSchemaStatements() {
     `CREATE TABLE IF NOT EXISTS profile_modules (id TEXT PRIMARY KEY NOT NULL, owner_id TEXT, profile_id TEXT, name TEXT NOT NULL, format TEXT NOT NULL, type TEXT NOT NULL DEFAULT 'advanced-override', content_json TEXT NOT NULL DEFAULT '{}', enabled INTEGER NOT NULL DEFAULT 1, is_default INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
     `CREATE TABLE IF NOT EXISTS subscribe_tokens (id TEXT PRIMARY KEY NOT NULL, owner_id TEXT, profile_id TEXT, token TEXT NOT NULL UNIQUE, custom_path TEXT, node_ids_json TEXT NOT NULL DEFAULT '[]', name TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 1, expires_at TEXT, last_used_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
     `CREATE TABLE IF NOT EXISTS subscribe_token_modules (token_id TEXT NOT NULL, module_id TEXT NOT NULL, format TEXT NOT NULL, type TEXT NOT NULL DEFAULT 'advanced-override', PRIMARY KEY (token_id, format, type))`,
-    `CREATE TABLE IF NOT EXISTS access_logs (id TEXT PRIMARY KEY NOT NULL, token_id TEXT, path TEXT NOT NULL, ip TEXT, user_agent TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`
+    `CREATE TABLE IF NOT EXISTS access_logs (id TEXT PRIMARY KEY NOT NULL, token_id TEXT, path TEXT NOT NULL, ip TEXT, user_agent TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+    `CREATE TABLE IF NOT EXISTS subscription_metrics (bucket TEXT NOT NULL, owner_id TEXT NOT NULL DEFAULT '', total INTEGER NOT NULL DEFAULT 0, success INTEGER NOT NULL DEFAULT 0, cached INTEGER NOT NULL DEFAULT 0, blocked INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (bucket, owner_id))`
   ];
 }
 

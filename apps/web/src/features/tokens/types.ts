@@ -20,7 +20,7 @@ export type TokenEditFormState = {
   enabled: boolean;
 };
 
-export type TokenSubscriptionFormat = "clash" | "v2rayn" | "plain" | "sing-box" | "xray";
+export type TokenSubscriptionFormat = "clash" | "base64" | "plain" | "sing-box" | "xray";
 
 export const initialTokenFormState: TokenFormState = {
   name: "",
@@ -52,7 +52,7 @@ export const tokenModuleFormats: Array<{ label: string; value: ProfileModuleForm
 
 export const tokenSubscriptionFormats: Array<{ label: string; value: TokenSubscriptionFormat }> = [
   { label: "Clash YAML", value: "clash" },
-  { label: "Base64", value: "v2rayn" },
+  { label: "Base64", value: "base64" },
   { label: "明文", value: "plain" },
   { label: "sing-box JSON", value: "sing-box" },
   { label: "Xray JSON", value: "xray" }

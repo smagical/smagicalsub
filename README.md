@@ -27,7 +27,7 @@ packages/
   subscription/        节点 URI 解析、订阅解析、多格式订阅渲染
 ```
 
-`packages/subscription` 原先命名为 `packages/clash`，但实际职责已经覆盖 Clash YAML、v2rayN Base64、明文 URI、sing-box JSON 和 Xray JSON，因此改为更贴近职责的订阅处理包。
+`packages/subscription` 原先命名为 `packages/clash`，但实际职责已经覆盖 Clash YAML、Base64、明文 URI、sing-box JSON 和 Xray JSON，因此改为更贴近职责的订阅处理包。
 
 前后端通过仓库根目录的 `wrangler.jsonc` 同时部署到 Cloudflare Workers：静态资源由 Workers Static Assets 托管，`/api/*` 和 `/sub/*` 会先进入 `apps/worker/src/index.ts` 的 Hono 路由。
 
@@ -71,7 +71,7 @@ pnpm build
 pnpm build:api
 ```
 
-当前测试覆盖订阅 URI 解析、Clash/v2rayN/明文/sing-box/Xray 渲染、配置模块合并、Worker 管理员令牌提取和授权判断、Cloudflare Workers 运行时健康检查、首个管理员初始化、用户登录、多用户资源隔离，以及浏览器端控制台导航和登录流程。认证相关测试还覆盖修改密码、失败登录限流、活跃会话续期、会话列表和撤销其他会话。
+当前测试覆盖订阅 URI 解析、Clash/Base64/明文/sing-box/Xray 渲染、配置模块合并、Worker 管理员令牌提取和授权判断、Cloudflare Workers 运行时健康检查、首个管理员初始化、用户登录、多用户资源隔离，以及浏览器端控制台导航和登录流程。认证相关测试还覆盖修改密码、失败登录限流、活跃会话续期、会话列表和撤销其他会话。
 
 ## 订阅格式
 
@@ -85,13 +85,13 @@ pnpm build:api
 同时支持：
 
 ```text
-/sub/:token?format=v2rayn
+/sub/:token?format=base64
 /sub/:token?format=plain
 /sub/:token?format=sing-box
 /sub/:token?format=xray
 ```
 
-- `v2rayn`：多行节点 URI 的 base64 订阅。
+- `base64`：多行节点 URI 的 Base64 订阅。
 - `plain`：明文多行节点 URI。
 - `sing-box`：sing-box JSON 配置。
 - `xray`：Xray-core JSON 配置。
@@ -100,7 +100,7 @@ pnpm build:api
 
 订阅源和手动节点都会解析 URI。当前支持 `ss`、`ssr`、`vmess`、`vless`、`trojan`、`hysteria`、`hysteria2`/`hy2`、`tuic`、`wireguard`/`wg`、`http`/`https`、`socks`/`socks4`/`socks5`、`ssh`、`snell`、`naive`、`shadowtls`/`shadow-tls`、`anytls`、`mieru`、`juicity`、`masque`、`sudoku`、`trust-tunnel`。
 
-`plain` 和 `v2rayn` 会保留原始 URI，适合客户端自行识别完整协议能力；Clash 输出会尽量保留可映射字段。sing-box 和 Xray 输出只转换字段结构确定的协议，SSR、Snell、Mieru、Juicity、MASQUE、Sudoku、TrustTunnel 等没有稳定等价映射的类型不会强行生成 outbound。
+`plain` 和 `base64` 会保留原始 URI，适合客户端自行识别完整协议能力；Clash 输出会尽量保留可映射字段。sing-box 和 Xray 输出只转换字段结构确定的协议，SSR、Snell、Mieru、Juicity、MASQUE、Sudoku、TrustTunnel 等没有稳定等价映射的类型不会强行生成 outbound。旧链接里的 `format=v2rayn` 仍兼容，但新页面统一生成 `format=base64`。
 
 ## 节点管理
 
@@ -116,13 +116,13 @@ pnpm build:api
 
 令牌支持自定义 `/sub/:path` 访问路径、过期时间、节点范围和配置模块绑定；节点范围为空时输出当前用户可用的全部启用节点，选择节点后只输出指定节点。管理员可维护全部资源，普通用户只能选择和输出自己的节点、配置档和模块。
 
-令牌列表可以按名称、令牌、配置档搜索，并按 Clash、v2rayN Base64、明文 URI、sing-box JSON、Xray JSON 复制或打开订阅地址，同时支持编辑令牌名称、过期时间、配置档绑定、节点范围、模块绑定、重置令牌和导出当前筛选结果；CSV 中的令牌值会保持脱敏。
+令牌列表可以按名称、令牌、配置档搜索，并按 Clash、Base64、明文 URI、sing-box JSON、Xray JSON 复制或打开订阅地址，同时支持编辑令牌名称、过期时间、配置档绑定、节点范围、模块绑定、重置令牌和导出当前筛选结果；CSV 中的令牌值会保持脱敏。
 
-订阅源、配置档和访问日志也支持本地搜索筛选并导出当前筛选结果为 CSV；访问日志可复制或打开历史订阅路径，便于在规则和订阅访问记录增多后快速定位目标。
+订阅源、配置档和访问日志也支持本地搜索筛选并导出当前筛选结果为 CSV；访问日志可复制或打开历史订阅路径，便于在规则和订阅访问记录增多后快速定位目标。访问日志采用采样写入，同一令牌 5 分钟内最多保留 1 条详细日志，定时任务会清理 7 天前的日志。
 
-概览页会从刷新任务、订阅访问、订阅源和令牌记录中聚合最近事件，并提供一键批量刷新已启用订阅源的快捷入口。
+概览页会从刷新任务、订阅访问、订阅源和令牌记录中聚合最近事件，并提供一键批量刷新已启用订阅源的快捷入口。请求统计来自 `subscription_metrics` 小时聚合表，统计真实订阅请求、缓存命中和已知令牌的拦截请求，不再使用前端估算。
 
-配置档规则支持新增、编辑、上移、下移、启停和删除，并按排序升序写入 Clash、sing-box 和 Xray 订阅；如果没有 `MATCH` 规则，会自动追加 `MATCH,<默认策略>` 兜底。规则弹窗内提供默认分流、国内直连和全局代理预设模板。v2rayN 和明文仍保留原始节点 URI，不转换配置档规则。
+配置档规则支持新增、编辑、上移、下移、启停和删除，并按排序升序写入 Clash、sing-box 和 Xray 订阅；如果没有 `MATCH` 规则，会自动追加 `MATCH,<默认策略>` 兜底。规则弹窗内提供默认分流、国内直连和全局代理预设模板。Base64 和明文仍保留原始节点 URI，不转换配置档规则。
 
 配置模块支持通用、Clash、sing-box 和 Xray 四类格式，可维护 DNS、入站、TUN、策略组、规则集、代理集、观测和高级覆盖等模块。模块可设为全局默认、绑定到配置档，或在令牌中按输出格式单独覆盖；模块变更后会清理相关订阅缓存。
 
@@ -131,19 +131,20 @@ pnpm build:api
 - Cloudflare Workers 前后端同部署入口已完成，`/api/*`、`/sub/*` 走 Worker，静态页面走 Workers Static Assets。
 - 订阅源、单节点、节点分组、批量节点操作、配置档、配置档规则、令牌、访问日志和概览页已完成基础闭环。
 - 配置模块、令牌节点范围、自定义订阅路径、订阅输出预览和输出诊断已完成基础闭环。
-- Clash、v2rayN Base64、明文 URI、sing-box 和 Xray 五类订阅输出已完成；明文和 v2rayN 会保留原始 URI。
+- Clash、Base64、明文 URI、sing-box 和 Xray 五类订阅输出已完成；明文和 Base64 会保留原始 URI。
 - 前端已迁移到 Tailwind CSS v4 + shadcn/ui 组件体系，支持白天/夜晚主题，旧全局样式已收敛到 `apps/web/src/styles.css`。
 - 管理 API 已支持首个管理员初始化、邮箱密码登录、session token、多用户管理、管理员重置用户密码、普通用户资源隔离、修改密码、登录失败限流、活跃会话续期和撤销其他登录会话。
-- 设置页已支持动态站点名称、副标题、标题图片、登录文案、账号安全和会话管理。
+- 设置页已支持动态站点名称、副标题、标题图片、登录文案、应用日志级别、账号安全和会话管理。
 - `ADMIN_TOKEN` 已保留为初始化保护和管理员兜底入口，公开订阅仍使用订阅令牌保护。
 - Cloudflare Workers Git 集成、automatic provisioning、远程 D1 自动迁移和初始化引导页已完成真实部署验证。
-- Worker 结构化诊断日志已接入 `APP_LOG_LEVEL`，默认 `0` 不输出，排障时可临时改为 `3`。
+- Worker 结构化诊断日志已改为设置页控制，默认 `0` 不输出，排障时可临时改为 `3`。
+- 概览页请求统计已改为 D1 小时聚合，访问日志和 `last_used_at` 采用 5 分钟节流，减少免费额度消耗。
 - 删除配置档时会显式解绑令牌并清理规则，避免外键行为不一致导致订阅令牌引用失效配置档。
 - 已接入 Vitest、Cloudflare Workers Vitest pool 和 Playwright E2E，覆盖核心逻辑、Worker 运行时和浏览器流程。
 
 ## 后续计划
 
-- 继续补齐特殊协议到 Clash/sing-box/Xray 的高保真映射；无法稳定映射的协议会继续通过明文和 v2rayN 输出保留原始 URI。
+- 继续补齐特殊协议到 Clash/sing-box/Xray 的高保真映射；无法稳定映射的协议会继续通过明文和 Base64 输出保留原始 URI。
 - 继续打磨控制台视觉和移动端细节，重点是令牌输出中心、节点表格、配置档模块和设置页。
 - 补充生产运维能力，例如订阅访问限流、审计日志、D1/KV 备份恢复流程、staging 环境和部署验收清单。
 
@@ -172,7 +173,7 @@ Value: 你的恢复令牌
 
 部署完成后打开站点，进入 `/setup` 创建首个管理员；创建成功后会 `302` 回到主页。
 
-初始化页会依次检测 D1 绑定、KV 绑定、D1 迁移、管理员恢复令牌和首个管理员状态。检测不通过时不能进入下一步；如果创建管理员失败，页面会返回 `requestId`，可临时把 `APP_LOG_LEVEL` 改为 `3` 后在 Cloudflare Workers Logs 中搜索该 `requestId` 或 `setup.bootstrap.failed`。
+初始化页会依次检测 D1 绑定、KV 绑定、D1 迁移、管理员恢复令牌和首个管理员状态。检测不通过时不能进入下一步；初始化未完成时会自动输出初始化相关诊断日志。如果创建管理员失败，页面会返回 `requestId`，可在 Cloudflare Workers Logs 中搜索该 `requestId` 或 `setup.bootstrap.failed`。
 
 ### GitHub 自动部署
 
@@ -199,21 +200,18 @@ PNPM_VERSION=10
 
 ```text
 APP_ENV=production
-APP_LOG_LEVEL=0
 SETUP_MODE=auto
 SUBSCRIPTION_CACHE_TTL_SECONDS=300
 ```
 
-`APP_LOG_LEVEL` 控制 Worker 应用日志输出，默认 `0` 不输出本项目的结构化诊断日志。排查问题时可在 Cloudflare Dashboard 的 Variables and Secrets 中临时改为 `3`，测试完成后再改回 `0`：
+应用日志级别在控制台的 `设置 -> 应用日志级别` 中调整，保存到 KV，不再通过 Cloudflare 变量日常配置。日志只输出到 Cloudflare Workers Logs，不写入 D1；初始化未完成时会自动输出初始化相关诊断日志：
 
 - `0`：默认，不输出应用结构化日志。
 - `1`：只输出错误日志。
 - `2`：输出警告和错误日志。
 - `3`：输出完整初始化诊断日志。
 
-旧版文字值 `silent` / `error` / `warn` / `info` 仍兼容，但建议使用数字，避免后台配置时填错。
-
-`wrangler.jsonc` 保持 `observability.enabled=true`，便于需要排查时直接用变量开启应用日志；生产默认 `APP_LOG_LEVEL=0`，本项目不会主动输出结构化诊断日志。
+`wrangler.jsonc` 保持 `observability.enabled=true`，便于需要排查时在 Cloudflare Dashboard 查看 Workers Logs；生产默认日志级别为 `0`。
 
 `ADMIN_TOKEN` 可作为 Secret 配置一次，用于管理员密码恢复和初始化保护；不配置也不影响首次创建管理员，配置后首次初始化表单需要输入同一个值：
 

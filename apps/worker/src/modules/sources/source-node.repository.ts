@@ -39,7 +39,7 @@ export async function replaceSourceNodes(db: D1Database, sourceId: string, nodes
     const groups = uniqueGroups([...node.groups, ...(existing ? parseTags(existing.tags) : [])]);
     nextIds.add(nodeId);
 
-    // __rawUri 只给 v2rayN/plain 输出使用，Clash/sing-box 渲染时会过滤内部字段。
+    // __rawUri 只给 Base64/plain 输出使用，Clash/sing-box 渲染时会过滤内部字段。
     if (existing) {
       statements.push(
         db

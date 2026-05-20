@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { defaultSiteSettings, type SiteSettingsDto } from "@smagicalsub/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent } from "react";
@@ -9,6 +10,7 @@ import { PageFeedback } from "../../shared/PageFeedback";
 import { getSiteSettings, updateSiteSettings } from "./api";
 
 type SettingsFormState = {
+  logLevel: SiteSettingsDto["logLevel"];
   siteName: string;
   siteSubtitle: string;
   titleImageUrl: string;
@@ -52,6 +54,20 @@ export function SiteSettingsForm() {
         <SettingsInput label="登录标题" name="loginTitle" required value={form.loginTitle} onChange={setFormValue} />
       </div>
       <SettingsInput label="登录说明" name="loginDescription" required value={form.loginDescription} onChange={setFormValue} />
+      <FilterField className="min-w-0" label="应用日志级别">
+        <NativeSelect
+          onChange={(event) => setForm((current) => ({ ...current, logLevel: event.target.value as SiteSettingsDto["logLevel"] }))}
+          value={form.logLevel}
+        >
+          <option value="0">0 - 关闭</option>
+          <option value="1">1 - 仅错误</option>
+          <option value="2">2 - 错误和警告</option>
+          <option value="3">3 - 详细调试</option>
+        </NativeSelect>
+      </FilterField>
+      <p className="text-xs leading-5 text-muted-foreground">
+        日志只输出到 Cloudflare Workers Logs，不写入 D1；初始化未完成时会自动输出初始化相关日志。
+      </p>
       <div className="rounded-xl border bg-background/70 p-4">
         <BrandHeader settings={previewSettings} />
       </div>

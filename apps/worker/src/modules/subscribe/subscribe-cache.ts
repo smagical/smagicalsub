@@ -1,6 +1,6 @@
 import type { SubscriptionFormat } from "@smagicalsub/subscription";
 
-const cachedFormats: SubscriptionFormat[] = ["clash", "v2rayn", "plain", "sing-box", "xray"];
+const cachedFormats: SubscriptionFormat[] = ["clash", "base64", "plain", "sing-box", "xray"];
 
 export function generatedSubscriptionCacheKey(format: SubscriptionFormat, token: string) {
   return `generated_sub:${format}:${token}`;

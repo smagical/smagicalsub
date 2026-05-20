@@ -13,8 +13,8 @@ type DashboardStorageCardProps = {
 
 export function DashboardStorageCard({ health, requestStats, totals }: DashboardStorageCardProps) {
   const d1Records = totals.sources + totals.nodes + totals.profiles + totals.tokens;
-  const cacheHits = requestStats?.cached ?? Math.max(0, Math.round((requestStats?.total ?? d1Records * 4) * 0.36));
-  const requestTotal = requestStats?.total ?? Math.max(0, d1Records * 6);
+  const cacheHits = requestStats?.cached ?? 0;
+  const requestTotal = requestStats?.total ?? 0;
 
   return (
     <Card className="h-full">

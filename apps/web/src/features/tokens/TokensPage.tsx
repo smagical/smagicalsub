@@ -89,7 +89,7 @@ export function TokensPage() {
             tokens={page.paginatedTokens}
             total={page.filteredTokens.length}
             onCancelEdit={page.resetEdit}
-            onCopy={(token) => void page.handleCopy(token)}
+            onCopy={(token, format) => void page.handleCopy(token, format)}
             onDelete={page.deleteToken}
             onEditFormChange={page.setEditForm}
             onOpen={page.openSubscription}
