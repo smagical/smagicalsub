@@ -24,10 +24,19 @@ export function NodesPage() {
       <Card>
         <CardHeader>
           <CardTitle>添加节点</CardTitle>
-          <CardDescription>直接粘贴节点链接，可补充显示名称和分组，创建后会进入下方节点列表。</CardDescription>
+          <CardDescription>粘贴一个或多个节点链接，系统会按行自动识别；多节点导入时显示名称会被忽略。</CardDescription>
         </CardHeader>
         <CardContent>
-          <NodeForm className="mb-0" form={page.form} groups={page.groups} pending={page.pending} setForm={page.setForm} onSubmit={page.createNode} />
+          <NodeForm
+            className="mb-0"
+            form={page.form}
+            groups={page.groups}
+            importResult={page.importResult}
+            pending={page.pending}
+            setForm={page.setForm}
+            onImport={page.importNodeBatch}
+            onSubmit={page.createNode}
+          />
         </CardContent>
       </Card>
 
@@ -107,8 +116,8 @@ export function NodesPage() {
 
 function NodeSummary({ filteredCount, nodes, selectedCount }: { filteredCount: number; nodes: NodeDto[]; selectedCount: number }) {
   const enabledCount = nodes.filter((node) => Boolean(node.enabled)).length;
-  const manualCount = nodes.filter((node) => !node.source_id).length;
-  const sourceCount = nodes.length - manualCount;
+  const manualCount = nodes.filter((node) => Boolean(node.manual)).length;
+  const sourceCount = nodes.filter((node) => node.source_ids.length > 0 || Boolean(node.source_id)).length;
   const groupCount = new Set(nodes.flatMap((node) => node.groups)).size;
   const protocolCount = new Set(nodes.map((node) => node.protocol)).size;
 

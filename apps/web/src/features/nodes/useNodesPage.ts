@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { NodeBatchActionInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
-import { batchNodes, createNode, deleteNode, listNodeGroups, listNodes, updateNode } from "./api";
+import type { ImportNodeResultDto, ImportNodesInput, NodeBatchActionInput, NodeDto, UpdateNodeInput } from "@smagicalsub/shared";
+import { batchNodes, createNode, deleteNode, importNodes, listNodeGroups, listNodes, updateNode } from "./api";
 import { initialNodeBatchFormState, initialNodeEditFormState, initialNodeFormState } from "./types";
 import { filterNodes, nodeProtocols, splitNodeGroups, toggleSelectedId, toggleVisibleSelection } from "./utils";
 
@@ -22,6 +22,7 @@ export function useNodesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(defaultNodePageSize);
   const [notice, setNotice] = useState<{ id: number; message: string } | null>(null);
+  const [importResult, setImportResult] = useState<ImportNodeResultDto | null>(null);
   const noticeIdRef = useRef(0);
   const query = useQuery({ queryKey: ["nodes"], queryFn: listNodes, retry: false });
   const groupsQuery = useQuery({ queryKey: ["node-groups"], queryFn: listNodeGroups, retry: false });
@@ -65,9 +66,20 @@ export function useNodesPage() {
 
   const createMutation = useMutation({
     mutationFn: createNode,
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       setForm(initialNodeFormState);
-      pushNotice("节点已添加");
+      setImportResult(null);
+      pushNotice(result.deduped ? `节点已去重：${result.node.name}` : "节点已添加");
+      await invalidateNodeData();
+    }
+  });
+
+  const importMutation = useMutation({
+    mutationFn: importNodes,
+    onSuccess: async (result) => {
+      setForm(initialNodeFormState);
+      setImportResult(result);
+      pushNotice(importNotice(result.created.length, result.deduped.length, result.failed.length));
       await invalidateNodeData();
     }
   });
@@ -102,8 +114,8 @@ export function useNodesPage() {
     }
   });
 
-  const pending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending || batchMutation.isPending;
-  const error = createMutation.error ?? updateMutation.error ?? deleteMutation.error ?? batchMutation.error ?? query.error;
+  const pending = createMutation.isPending || importMutation.isPending || updateMutation.isPending || deleteMutation.isPending || batchMutation.isPending;
+  const error = createMutation.error ?? importMutation.error ?? updateMutation.error ?? deleteMutation.error ?? batchMutation.error ?? query.error;
   const emptyLabel = nodes.length === 0 ? "还没有节点" : "没有匹配的节点";
 
   const startEdit = (node: NodeDto) => {
@@ -134,6 +146,16 @@ export function useNodesPage() {
         uri: editForm.uri.trim() && editForm.uri.trim() !== (node.uri ?? "") ? editForm.uri.trim() : undefined,
         enabled: editForm.enabled,
         config: config.value
+      }
+    });
+  };
+
+  const importNodeBatch = (input: ImportNodesInput) => {
+    importMutation.mutate(input, {
+      onError: (error) => {
+        if (error instanceof Error) {
+          pushNotice(error.message);
+        }
       }
     });
   };
@@ -189,6 +211,7 @@ export function useNodesPage() {
     groupFilters,
     groups,
     includeUngrouped,
+    importResult,
     nodes,
     notice,
     pageCount,
@@ -201,6 +224,7 @@ export function useNodesPage() {
     searchQuery,
     selectedNodeIds,
     createNode: createMutation.mutate,
+    importNodeBatch,
     copyNode,
     deleteNode: (node: NodeDto) => deleteMutation.mutate(node.id),
     resetEdit,
@@ -234,6 +258,20 @@ export function useNodesPage() {
   function clearNotice() {
     setNotice(null);
   }
+}
+
+function importNotice(created: number, deduped: number, failed: number) {
+  const parts = [`新增 ${created} 个`];
+
+  if (deduped > 0) {
+    parts.push(`去重 ${deduped} 个`);
+  }
+
+  if (failed > 0) {
+    parts.push(`${failed} 条失败`);
+  }
+
+  return parts.join("，");
 }
 
 function isFormEditInput(input: UpdateNodeInput) {

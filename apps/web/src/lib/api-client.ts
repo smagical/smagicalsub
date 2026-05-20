@@ -44,11 +44,15 @@ export async function getJson<T>(url: string): Promise<T> {
   return requestJson<T>(url);
 }
 
-export async function postJson<T>(url: string, body?: unknown): Promise<T> {
-  return requestJson<T>(url, {
-    method: "POST",
-    body: body === undefined ? undefined : JSON.stringify(body)
-  });
+export async function postJson<T>(url: string, body?: unknown, options?: { allowFailureData?: boolean }): Promise<T> {
+  return requestJson<T>(
+    url,
+    {
+      method: "POST",
+      body: body === undefined ? undefined : JSON.stringify(body)
+    },
+    options
+  );
 }
 
 export async function patchJson<T>(url: string, body: unknown): Promise<T> {
@@ -64,7 +68,7 @@ export async function deleteJson<T>(url: string): Promise<T> {
   });
 }
 
-async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
+async function requestJson<T>(url: string, init?: RequestInit, options?: { allowFailureData?: boolean }): Promise<T> {
   let response: Response;
   const authToken = getAuthToken();
 
@@ -91,6 +95,10 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
     }
 
     throw new Error(payload.error.message);
+  }
+
+  if (!response.ok && !options?.allowFailureData) {
+    throw new Error(`请求失败，HTTP ${response.status}`);
   }
 
   return payload.data;

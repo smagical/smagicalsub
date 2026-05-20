@@ -1,5 +1,6 @@
 import type { CreateSubscriptionSourceInput, SourceDto, UpdateSubscriptionSourceInput } from "@smagicalsub/shared";
 import { ownerWhere, type OwnerScope } from "../../lib/auth-scope";
+import { deleteOrphanNodes } from "../nodes/node.repository";
 import type { SourceRow } from "./source.types";
 
 export async function listSources(db: D1Database, scope?: OwnerScope) {
@@ -129,11 +130,18 @@ export async function deleteSource(db: D1Database, id: string, scope?: OwnerScop
     return false;
   }
 
-  // 显式删除源节点，避免外键级联在不同 D1/SQLite 执行环境中未启用时留下孤儿节点。
+  const linkedNodes = await db
+    .prepare(`SELECT node_id FROM node_sources WHERE source_id = ?1`)
+    .bind(id)
+    .all<{ node_id: string }>();
+  const nodeIds = (linkedNodes.results ?? []).map((row) => row.node_id);
+
+  // 显式删除关系，避免外键级联在不同 D1/SQLite 执行环境中未启用时留下孤儿关系。
   await db.batch([
-    db.prepare(`DELETE FROM nodes WHERE source_id = ?1`).bind(id),
+    db.prepare(`DELETE FROM node_sources WHERE source_id = ?1`).bind(id),
     db.prepare(`DELETE FROM subscription_sources WHERE id = ?1`).bind(id)
   ]);
+  await deleteOrphanNodes(db, nodeIds);
 
   return true;
 }

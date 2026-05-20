@@ -8,7 +8,7 @@ import type { NodeDto } from "@smagicalsub/shared";
 import { Check, ChevronDown, Layers3, RadioTower, Search, Sparkles, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { TagInput } from "../../shared/TagInput";
-import { splitNodeGroups, UNGROUPED_GROUP_LABEL } from "../nodes/utils";
+import { nodeSourceLabel, splitNodeGroups, UNGROUPED_GROUP_LABEL } from "../nodes/utils";
 
 type TokenNodeSelectorProps = {
   compact?: boolean;
@@ -286,8 +286,8 @@ function NodeChoice({
           <Badge className="h-5 px-1.5 text-[11px]" variant="outline">
             {node.protocol}
           </Badge>
-          <Badge className="h-5 px-1.5 text-[11px]" variant={node.source_id ? "secondary" : "outline"}>
-            {node.source_id ? "订阅" : "手动"}
+          <Badge className="h-5 px-1.5 text-[11px]" variant={node.source_ids.length > 0 || node.source_id ? "secondary" : "outline"}>
+            {nodeSourceLabel(node).replace("源", "")}
           </Badge>
           {enabled ? <Badge className="h-5 px-1.5 text-[11px]" variant="secondary">可用</Badge> : <Badge className="h-5 px-1.5 text-[11px]" variant="destructive">停用</Badge>}
         </span>

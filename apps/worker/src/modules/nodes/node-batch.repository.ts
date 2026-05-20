@@ -1,5 +1,6 @@
 import { ownerWhere, type OwnerScope } from "../../lib/auth-scope";
 import { normalizeGroups } from "./node.mapper";
+import { deleteNode } from "./node.repository";
 import type { NodeRow } from "./node.types";
 
 export async function deleteNodes(db: D1Database, ids: string[], scope?: OwnerScope) {
@@ -7,9 +8,17 @@ export async function deleteNodes(db: D1Database, ids: string[], scope?: OwnerSc
     return 0;
   }
 
-  const filter = scope ? ownerWhere(scope) : emptyFilter();
-  const result = await db.prepare(`DELETE FROM nodes WHERE id IN (${placeholders(ids)})${filter.sql}`).bind(...ids, ...filter.params).run();
-  return result.meta.changes;
+  let affected = 0;
+
+  for (const id of ids) {
+    const result = await deleteNode(db, id, scope);
+
+    if (result.status === "deleted" || result.status === "manual-detached") {
+      affected += 1;
+    }
+  }
+
+  return affected;
 }
 
 export async function setNodesEnabled(db: D1Database, ids: string[], enabled: boolean, scope?: OwnerScope) {

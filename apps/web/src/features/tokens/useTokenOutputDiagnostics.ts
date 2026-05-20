@@ -36,10 +36,10 @@ export function useTokenOutputDiagnostics(token: SubscribeTokenDto | null, profi
       enabledNodeCount: enabledNodes.length,
       enabledRuleCount: enabledRules.length,
       groupCount: new Set(enabledNodes.flatMap((node) => node.groups)).size,
-      manualNodeCount: enabledNodes.filter((node) => !node.source_id).length,
+      manualNodeCount: enabledNodes.filter((node) => Boolean(node.manual)).length,
       profileAvailable,
       profileName: profile?.name ?? token?.profile_name ?? "未绑定",
-      sourceNodeCount: enabledNodes.filter((node) => node.source_id).length,
+      sourceNodeCount: enabledNodes.filter((node) => node.source_ids.length > 0 || Boolean(node.source_id)).length,
       warnings
     },
     diagnosticsError: nodesQuery.error ?? rulesQuery.error

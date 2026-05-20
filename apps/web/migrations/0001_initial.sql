@@ -45,9 +45,19 @@ CREATE TABLE IF NOT EXISTS nodes (
   port INTEGER,
   tags TEXT NOT NULL DEFAULT '[]',
   config_json TEXT NOT NULL,
+  manual INTEGER NOT NULL DEFAULT 0,
   enabled INTEGER NOT NULL DEFAULT 1,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (source_id) REFERENCES subscription_sources(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS node_sources (
+  node_id TEXT NOT NULL,
+  source_id TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (node_id, source_id),
+  FOREIGN KEY (node_id) REFERENCES nodes(id) ON DELETE CASCADE,
   FOREIGN KEY (source_id) REFERENCES subscription_sources(id) ON DELETE CASCADE
 );
 
@@ -139,7 +149,10 @@ CREATE TABLE IF NOT EXISTS access_logs (
 CREATE INDEX IF NOT EXISTS idx_subscription_sources_owner_id ON subscription_sources(owner_id);
 CREATE INDEX IF NOT EXISTS idx_nodes_owner_id ON nodes(owner_id);
 CREATE INDEX IF NOT EXISTS idx_nodes_source_id ON nodes(source_id);
+CREATE INDEX IF NOT EXISTS idx_nodes_manual ON nodes(manual);
 CREATE INDEX IF NOT EXISTS idx_nodes_enabled ON nodes(enabled);
+CREATE INDEX IF NOT EXISTS idx_node_sources_node_id ON node_sources(node_id);
+CREATE INDEX IF NOT EXISTS idx_node_sources_source_id ON node_sources(source_id);
 CREATE INDEX IF NOT EXISTS idx_profile_rules_profile_id ON profile_rules(profile_id);
 CREATE INDEX IF NOT EXISTS idx_profile_modules_owner_id ON profile_modules(owner_id);
 CREATE INDEX IF NOT EXISTS idx_profile_modules_profile_id ON profile_modules(profile_id);
