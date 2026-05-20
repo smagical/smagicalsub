@@ -5,18 +5,19 @@ import { nodeFromUri, renderableNode, representativeUriSamples, ssUri } from "./
 
 describe("subscription renderer: text and Clash", () => {
   it("normalizes common format aliases", () => {
-    expect(normalizeSubscriptionFormat("base64")).toBe("v2rayn");
+    expect(normalizeSubscriptionFormat("base64")).toBe("base64");
+    expect(normalizeSubscriptionFormat("v2rayn")).toBe("base64");
     expect(normalizeSubscriptionFormat("singbox")).toBe("sing-box");
     expect(normalizeSubscriptionFormat("xray-core")).toBe("xray");
     expect(normalizeSubscriptionFormat("raw")).toBe("plain");
     expect(normalizeSubscriptionFormat(undefined)).toBe("clash");
   });
 
-  it("renders plain and v2rayN subscriptions from the raw uri", () => {
+  it("renders plain and Base64 subscriptions from the raw uri", () => {
     const input = { profileName: "Default", nodes: [renderableNode()] };
 
     expect(renderSubscription({ ...input, format: "plain" })).toBe(ssUri);
-    expect(atob(renderSubscription({ ...input, format: "v2rayn" }))).toBe(`${ssUri}\n`);
+    expect(atob(renderSubscription({ ...input, format: "base64" }))).toBe(`${ssUri}\n`);
   });
 
   it("deduplicates nodes with the same endpoint and credentials", () => {

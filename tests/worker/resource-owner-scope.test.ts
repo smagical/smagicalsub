@@ -18,8 +18,8 @@ describe("resource owner scope", () => {
     });
 
     const otherSources = await getJson<{ items: Array<{ id: string }> }>(otherToken, "/api/sources");
-    const ownerDashboard = await getJson<{ totals: { sources: number } }>(ownerToken, "/api/dashboard");
-    const otherDashboard = await getJson<{ totals: { sources: number } }>(otherToken, "/api/dashboard");
+    const ownerDashboard = await getJson<{ requestStats: { total: number }; totals: { sources: number } }>(ownerToken, "/api/dashboard");
+    const otherDashboard = await getJson<{ requestStats: { total: number }; totals: { sources: number } }>(otherToken, "/api/dashboard");
     const blockedPatch = await SELF.fetch(`https://example.com/api/sources/${source.id}`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${otherToken}`, "Content-Type": "application/json" },
@@ -28,7 +28,9 @@ describe("resource owner scope", () => {
 
     expect(otherSources.items).toEqual([]);
     expect(ownerDashboard.totals.sources).toBe(1);
+    expect(ownerDashboard.requestStats.total).toBe(0);
     expect(otherDashboard.totals.sources).toBe(0);
+    expect(otherDashboard.requestStats.total).toBe(0);
     expect(blockedPatch.status).toBe(404);
   });
 

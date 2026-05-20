@@ -22,7 +22,7 @@ export async function updateSiteSettings(kv: KVNamespace, input: UpdateSiteSetti
 
 function parseStoredSettings(raw: string): SiteSettingsDto {
   try {
-    const parsed = siteSettingsSchema.safeParse(JSON.parse(raw));
+    const parsed = siteSettingsSchema.safeParse({ ...defaultSiteSettings, ...JSON.parse(raw) });
     return parsed.success ? parsed.data : defaultSiteSettings;
   } catch {
     return defaultSiteSettings;

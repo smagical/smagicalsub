@@ -37,7 +37,7 @@ type DashboardQuickActionsProps = {
 };
 
 export function DashboardQuickActions({ error, notice, pending, requestStats, totals, onNavigate, onRefresh }: DashboardQuickActionsProps) {
-  const stats = requestStats ?? fallbackRequestStats(totals);
+  const stats = requestStats ?? emptyRequestStats;
   const successRate = stats.total > 0 ? Math.round((stats.success / stats.total) * 100) : 0;
 
   return (
@@ -105,7 +105,7 @@ function RequestTrendChart({ trend }: { trend: NonNullable<DashboardDto["request
             <div className="flex h-24 w-full items-end rounded-md bg-background/70 px-1.5 py-1.5">
               <span
                 className={cn("block w-full rounded-sm", trendBarClass(index))}
-                style={{ height: `${Math.max(8, Math.round((item.value / maxValue) * 100))}%` }}
+                style={{ height: item.value > 0 ? `${Math.max(8, Math.round((item.value / maxValue) * 100))}%` : "0%" }}
                 title={`${item.label}: ${item.value}`}
               />
             </div>
@@ -149,7 +149,7 @@ function RequestDistribution({ stats }: { stats: NonNullable<DashboardDto["reque
     <div className="grid gap-2 rounded-lg border bg-muted/20 p-3">
       <div className="flex h-2 overflow-hidden rounded-full bg-background">
         {segments.map((segment) => (
-          <span className={segment.className} key={segment.label} style={{ width: `${Math.max(4, (segment.value / total) * 100)}%` }} />
+          <span className={segment.className} key={segment.label} style={{ width: segment.value > 0 ? `${Math.max(4, (segment.value / total) * 100)}%` : "0%" }} />
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
@@ -163,24 +163,13 @@ function RequestDistribution({ stats }: { stats: NonNullable<DashboardDto["reque
   );
 }
 
-function fallbackRequestStats(totals: DashboardDto["totals"]): NonNullable<DashboardDto["requestStats"]> {
-  const base = Math.max(8, totals.tokens * 6 + totals.nodes * 3 + totals.sources * 4 + totals.profiles * 2);
-  const trend = ["00", "04", "08", "12", "16", "20", "24"].map((label, index) => ({
-    label,
-    value: Math.max(1, Math.round(base * (0.32 + index * 0.09 + (index % 2) * 0.18)))
-  }));
-  const total = trend.reduce((sum, item) => sum + item.value, 0);
-  const cached = Math.round(total * 0.36);
-  const blocked = Math.max(0, totals.tokens === 0 ? 0 : Math.round(total * 0.08));
-
-  return {
-    total,
-    success: Math.max(0, total - blocked),
-    blocked,
-    cached,
-    trend
-  };
-}
+const emptyRequestStats: NonNullable<DashboardDto["requestStats"]> = {
+  blocked: 0,
+  cached: 0,
+  success: 0,
+  total: 0,
+  trend: []
+};
 
 function trendBarClass(index: number) {
   return ["bg-chart-3", "bg-primary", "bg-chart-2", "bg-chart-4"][index % 4];

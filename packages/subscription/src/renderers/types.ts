@@ -6,7 +6,7 @@ export type RenderableNode = {
   groups?: string[];
 };
 
-export type SubscriptionFormat = "clash" | "v2rayn" | "plain" | "sing-box" | "xray";
+export type SubscriptionFormat = "clash" | "base64" | "plain" | "sing-box" | "xray";
 
 export type RenderConfigModule = {
   content: Record<string, unknown>;

@@ -146,6 +146,17 @@ CREATE TABLE IF NOT EXISTS access_logs (
   FOREIGN KEY (token_id) REFERENCES subscribe_tokens(id) ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS subscription_metrics (
+  bucket TEXT NOT NULL,
+  owner_id TEXT NOT NULL DEFAULT '',
+  total INTEGER NOT NULL DEFAULT 0,
+  success INTEGER NOT NULL DEFAULT 0,
+  cached INTEGER NOT NULL DEFAULT 0,
+  blocked INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (bucket, owner_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_subscription_sources_owner_id ON subscription_sources(owner_id);
 CREATE INDEX IF NOT EXISTS idx_nodes_owner_id ON nodes(owner_id);
 CREATE INDEX IF NOT EXISTS idx_nodes_source_id ON nodes(source_id);
@@ -163,3 +174,4 @@ CREATE INDEX IF NOT EXISTS idx_subscribe_tokens_token ON subscribe_tokens(token)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_subscribe_tokens_custom_path ON subscribe_tokens(custom_path);
 CREATE INDEX IF NOT EXISTS idx_subscribe_token_modules_token_id ON subscribe_token_modules(token_id);
 CREATE INDEX IF NOT EXISTS idx_access_logs_token_id ON access_logs(token_id);
+CREATE INDEX IF NOT EXISTS idx_subscription_metrics_bucket ON subscription_metrics(bucket);

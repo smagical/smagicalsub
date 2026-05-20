@@ -19,7 +19,7 @@ describe("subscription cache helper", () => {
 
     expect(deletedKeys).toEqual([
       "generated_sub:clash:token-a",
-      "generated_sub:v2rayn:token-a",
+      "generated_sub:base64:token-a",
       "generated_sub:plain:token-a",
       "generated_sub:sing-box:token-a",
       "generated_sub:xray:token-a"

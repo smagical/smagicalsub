@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { NodeDto, ProfileDto, ProfileModuleDto, SubscribeTokenDto } from "@smagicalsub/shared";
-import type { ReactNode } from "react";
-import { CalendarClock, Check, KeyRound, Link2 } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { CalendarClock, Check, Copy, KeyRound, Link2 } from "lucide-react";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { subscriptionFormatLinks } from "./subscriptionOutput";
 import { TokenActions } from "./TokenActions";
 import { TokenEditForm } from "./TokenForm";
 import { TokenExpiresCell, TokenNodeScopeCell, TokenPathCell, TokenProfileCell } from "./TokenScopeCell";
@@ -30,7 +31,7 @@ type TokensTableProps = {
   tokens: SubscribeTokenDto[];
   total: number;
   onCancelEdit: () => void;
-  onCopy: (token: SubscribeTokenDto) => void;
+  onCopy: (token: SubscribeTokenDto, format: TokenSubscriptionFormat) => void;
   onDelete: (token: SubscribeTokenDto) => void;
   onEditFormChange: (form: TokenEditFormState) => void;
   onOpen: (token: SubscribeTokenDto) => void;
@@ -61,6 +62,16 @@ export function TokensTable({
   onToggleEnabled
 }: TokensTableProps) {
   const editingToken = tokens.find((token) => token.id === editingTokenId) ?? null;
+  const [copyToken, setCopyToken] = useState<SubscribeTokenDto | null>(null);
+
+  function copyTokenWithFormat(format: TokenSubscriptionFormat) {
+    if (!copyToken) {
+      return;
+    }
+
+    onCopy(copyToken, format);
+    setCopyToken(null);
+  }
 
   return (
     <>
@@ -123,7 +134,7 @@ export function TokensTable({
                         pending={pending}
                         token={token}
                         onCancelEdit={onCancelEdit}
-                        onCopy={onCopy}
+                        onCopy={setCopyToken}
                         onDelete={onDelete}
                         onOpen={onOpen}
                         onReset={onReset}
@@ -176,7 +187,7 @@ export function TokensTable({
                     pending={pending}
                     token={token}
                     onCancelEdit={onCancelEdit}
-                    onCopy={onCopy}
+                    onCopy={setCopyToken}
                     onDelete={onDelete}
                     onOpen={onOpen}
                     onReset={onReset}
@@ -204,7 +215,57 @@ export function TokensTable({
         onEditFormChange={onEditFormChange}
         onSaveEdit={onSaveEdit}
       />
+      <CopyFormatDialog copyFormat={copyFormat} token={copyToken} onClose={() => setCopyToken(null)} onCopy={copyTokenWithFormat} />
     </>
+  );
+}
+
+function CopyFormatDialog({
+  copyFormat,
+  token,
+  onClose,
+  onCopy
+}: {
+  copyFormat: TokenSubscriptionFormat;
+  token: SubscribeTokenDto | null;
+  onClose: () => void;
+  onCopy: (format: TokenSubscriptionFormat) => void;
+}) {
+  const links = token ? subscriptionFormatLinks(token.token, token.custom_path) : [];
+
+  return (
+    <Dialog open={Boolean(token)} onOpenChange={(open) => (!open ? onClose() : undefined)}>
+      {token ? (
+        <DialogContent className="w-[min(94vw,640px)]">
+          <DialogHeader>
+            <DialogTitle>复制订阅地址</DialogTitle>
+            <DialogDescription>选择「{token.name}」要复制的订阅格式；这里不会改变输出中心当前格式。</DialogDescription>
+          </DialogHeader>
+          <DialogBody className="gap-2">
+            {links.map((link) => (
+              <Button
+                className="h-auto min-w-0 justify-start gap-3 px-3 py-2 text-left"
+                key={link.value}
+                onClick={() => onCopy(link.value)}
+                type="button"
+                variant={link.value === copyFormat ? "info" : "outline"}
+              >
+                <Copy className="shrink-0" data-icon="inline-start" />
+                <span className="grid min-w-0 gap-1">
+                  <span className="font-medium">{link.label}</span>
+                  <span className="break-all font-mono text-[11px] font-normal text-muted-foreground">{link.path}</span>
+                </span>
+              </Button>
+            ))}
+          </DialogBody>
+          <DialogFooter>
+            <Button onClick={onClose} type="button" variant="ghost">
+              取消
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      ) : null}
+    </Dialog>
   );
 }
 

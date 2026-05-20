@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listProfiles } from "../profiles/api";
 import { listNodes } from "../nodes/api";
 import { createToken, deleteToken, listProfileModules, listTokens, resetToken as resetTokenRequest, updateToken } from "./api";
-import { initialTokenEditFormState, initialTokenFormState } from "./types";
+import { initialTokenEditFormState, initialTokenFormState, type TokenSubscriptionFormat } from "./types";
 import { useTokenOutputCenter } from "./useTokenOutputCenter";
 import { useTokenOutputDiagnostics } from "./useTokenOutputDiagnostics";
 import { copyAllSubscriptionUrls, subscriptionUrl } from "./subscriptionOutput";
@@ -93,13 +93,13 @@ export function useTokensPage() {
     diagnosticsError;
   const emptyLabel = tokens.length === 0 ? "还没有订阅令牌" : "没有匹配的订阅令牌";
 
-  async function handleCopy(token: SubscribeTokenDto) {
+  async function handleCopy(token: SubscribeTokenDto, format: TokenSubscriptionFormat = outputCenter.copyFormat) {
     if (!navigator.clipboard) {
       setNotice("当前浏览器不支持自动复制，请手动复制订阅路径");
       return;
     }
 
-    await navigator.clipboard.writeText(subscriptionUrl(token.token, outputCenter.copyFormat, token.custom_path));
+    await navigator.clipboard.writeText(subscriptionUrl(token.token, format, token.custom_path));
     setNotice("订阅地址已复制");
   }
 

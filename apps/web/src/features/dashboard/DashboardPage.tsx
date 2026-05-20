@@ -8,7 +8,26 @@ import { DashboardMetrics } from "./DashboardMetrics";
 import { DashboardQuickActions } from "./DashboardQuickActions";
 import { DashboardStorageCard } from "./DashboardStorageCard";
 
-const fallbackDashboard: DashboardDto = { totals: { sources: 0, nodes: 0, profiles: 0, tokens: 0 }, recentEvents: [] };
+const emptyRequestStats: NonNullable<DashboardDto["requestStats"]> = {
+  blocked: 0,
+  cached: 0,
+  success: 0,
+  total: 0,
+  trend: [
+    { label: "00", value: 0 },
+    { label: "00", value: 0 },
+    { label: "00", value: 0 },
+    { label: "00", value: 0 },
+    { label: "00", value: 0 },
+    { label: "00", value: 0 },
+    { label: "00", value: 0 }
+  ]
+};
+const fallbackDashboard: DashboardDto = {
+  requestStats: emptyRequestStats,
+  totals: { sources: 0, nodes: 0, profiles: 0, tokens: 0 },
+  recentEvents: []
+};
 
 type DashboardPageProps = { health?: HealthDto; onNavigate: (section: SectionId) => void };
 
@@ -17,6 +36,9 @@ export function DashboardPage({ health, onNavigate }: DashboardPageProps) {
   const dashboardQuery = useQuery({
     queryKey: ["dashboard"],
     queryFn: getDashboard,
+    refetchInterval: 15_000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     retry: false
   });
   const refreshMutation = useMutation({
@@ -31,6 +53,7 @@ export function DashboardPage({ health, onNavigate }: DashboardPageProps) {
   });
 
   const dashboard = dashboardQuery.data ?? fallbackDashboard;
+  const dashboardError = dashboardQuery.error ?? (health?.migrationsReady === false ? new Error("D1 迁移未完成，订阅请求统计暂不可用") : null);
   const refreshResult = refreshMutation.data;
   const refreshNotice = refreshResult
     ? `刷新完成：成功 ${refreshResult.success} 个，失败 ${refreshResult.failed} 个，解析 ${refreshResult.nodeCount} 个节点`
@@ -41,7 +64,7 @@ export function DashboardPage({ health, onNavigate }: DashboardPageProps) {
       <DashboardMetrics totals={dashboard.totals} />
       <section className="grid items-stretch grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] gap-3.5 max-[920px]:grid-cols-1">
         <DashboardQuickActions
-          error={refreshMutation.error}
+          error={refreshMutation.error ?? dashboardError}
           notice={refreshNotice}
           pending={refreshMutation.isPending}
           requestStats={dashboard.requestStats}

@@ -4,8 +4,9 @@ import type { Env } from "../../env";
 import { listEnabledRenderableNodesByIds } from "../nodes/node.repository";
 import { listResolvedModulesForSubscription } from "../profile-modules/profile-module.repository";
 import { listEnabledProfileRules } from "../profiles/profile-rule.repository";
-import { findActiveSubscribeToken, markSubscribeTokenUsed } from "../tokens/token.repository";
+import { findActiveSubscribeToken } from "../tokens/token.repository";
 import { generatedSubscriptionCacheKey } from "./subscribe-cache";
+import { recordSubscriptionMetric } from "./subscription-metrics.repository";
 
 export const subscribeRoutes = new Hono<{ Bindings: Env }>();
 type SubscriptionRequest = {
@@ -24,6 +25,7 @@ subscribeRoutes.get("/:token", async (c) => {
   }
 
   if (tokenRow.profile_id && (!tokenRow.profile_name || tokenRow.profile_enabled !== 1)) {
+    c.executionCtx.waitUntil(recordSubscriptionAccess(c.env.DB, tokenRow, c.req, "blocked"));
     return new Response("Subscription profile not available", { status: 404 });
   }
 
@@ -32,7 +34,7 @@ subscribeRoutes.get("/:token", async (c) => {
   const cached = await c.env.KV.get(cacheKey);
 
   if (cached) {
-    c.executionCtx.waitUntil(recordSubscriptionAccess(c.env.DB, tokenRow.id, c.req));
+    c.executionCtx.waitUntil(recordSubscriptionAccess(c.env.DB, tokenRow, c.req, "cached"));
     return subscriptionResponse(cached, format);
   }
 
@@ -64,28 +66,24 @@ subscribeRoutes.get("/:token", async (c) => {
   });
 
   // 访问日志不阻塞订阅响应，失败也不影响客户端获取订阅内容。
-  c.executionCtx.waitUntil(recordSubscriptionAccess(c.env.DB, tokenRow.id, c.req));
+  c.executionCtx.waitUntil(recordSubscriptionAccess(c.env.DB, tokenRow, c.req, "success"));
 
   return subscriptionResponse(body, format);
 });
 
-function recordSubscriptionAccess(db: D1Database, tokenId: string, request: SubscriptionRequest) {
-  return Promise.all([
-    markSubscribeTokenUsed(db, tokenId),
-    db
-      .prepare(
-        `INSERT INTO access_logs (id, token_id, path, ip, user_agent)
-         VALUES (?1, ?2, ?3, ?4, ?5)`
-      )
-      .bind(
-        crypto.randomUUID(),
-        tokenId,
-        request.path,
-        request.header("CF-Connecting-IP") ?? null,
-        request.header("User-Agent") ?? null
-      )
-      .run()
-  ]);
+function recordSubscriptionAccess(
+  db: D1Database,
+  token: { id: string; owner_id: string | null },
+  request: SubscriptionRequest,
+  outcome: "blocked" | "cached" | "success"
+) {
+  return recordSubscriptionMetric(db, {
+    ownerId: token.owner_id,
+    outcome,
+    path: request.path,
+    request,
+    tokenId: token.id
+  });
 }
 
 function isModuleAwareFormat(format: SubscriptionFormat): format is "clash" | "sing-box" | "xray" {
@@ -108,7 +106,7 @@ function contentType(format: SubscriptionFormat) {
     case "sing-box":
     case "xray":
       return "application/json; charset=utf-8";
-    case "v2rayn":
+    case "base64":
     case "plain":
       return "text/plain; charset=utf-8";
   }

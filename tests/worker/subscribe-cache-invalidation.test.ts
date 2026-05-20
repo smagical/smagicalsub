@@ -81,7 +81,7 @@ describe("subscription cache invalidation", () => {
 
   it("clears generated subscription caches when a source changes", async () => {
     const fixture = await seedSubscriptionFixture();
-    const cacheKey = generatedSubscriptionCacheKey("v2rayn", fixture.path);
+    const cacheKey = generatedSubscriptionCacheKey("base64", fixture.path);
     const source = await createSource();
 
     await testEnv.KV.put(cacheKey, "stale-source-cache");

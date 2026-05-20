@@ -136,7 +136,7 @@ export async function createManualNode(db: D1Database, input: CreateNodeInput, o
       parsed.server ?? null,
       parsed.port ?? null,
       JSON.stringify(groups),
-      // 保留原始 URI，保证 v2rayN base64 和明文订阅可以无损输出。
+      // 保留原始 URI，保证 Base64 和明文订阅可以无损输出。
       JSON.stringify({ ...parsed.config, __rawUri: parsed.rawUri }),
       input.enabled ? 1 : 0
     )

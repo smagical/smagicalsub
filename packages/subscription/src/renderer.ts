@@ -17,7 +17,7 @@ export function normalizeSubscriptionFormat(value: string | null | undefined): S
     case "v2ray":
     case "v2rayn":
     case "base64":
-      return "v2rayn";
+      return "base64";
     case "text":
     case "plain":
     case "raw":
@@ -42,7 +42,7 @@ export function renderSubscription(input: RenderSubscriptionInput): string {
   const dedupedInput = { ...input, nodes: dedupeRenderableNodes(input.nodes), profileRules: normalizedProfileRules, rules: normalizedProfileRules.map((rule) => rule.rule) };
 
   switch (input.format) {
-    case "v2rayn":
+    case "base64":
       return renderV2rayNSubscription(dedupedInput);
     case "plain":
       return renderPlainSubscription(dedupedInput);

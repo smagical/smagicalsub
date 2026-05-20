@@ -1,5 +1,5 @@
 import { env, SELF } from "cloudflare:test";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 const testEnv = env as typeof env & { DB: D1Database };
 
@@ -125,6 +125,16 @@ beforeAll(async () => {
       ip TEXT,
       user_agent TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
+    testEnv.DB.prepare(`CREATE TABLE IF NOT EXISTS subscription_metrics (
+      bucket TEXT NOT NULL,
+      owner_id TEXT NOT NULL DEFAULT '',
+      total INTEGER NOT NULL DEFAULT 0,
+      success INTEGER NOT NULL DEFAULT 0,
+      cached INTEGER NOT NULL DEFAULT 0,
+      blocked INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (bucket, owner_id)
     )`)
   ]);
 });
@@ -158,10 +168,11 @@ describe("worker runtime", () => {
 
   it("serves public site settings and protects updates", async () => {
     const publicResponse = await SELF.fetch("https://example.com/api/site-settings");
-    const publicPayload = (await publicResponse.json()) as { ok: boolean; data: { siteSubtitle: string } };
+    const publicPayload = (await publicResponse.json()) as { ok: boolean; data: { logLevel: string; siteSubtitle: string } };
 
     expect(publicResponse.status).toBe(200);
     expect(publicPayload.data.siteSubtitle).toBe("多格式订阅管理");
+    expect(publicPayload.data.logLevel).toBe("0");
 
     const blockedResponse = await SELF.fetch("https://example.com/api/site-settings", { method: "PATCH" });
 
@@ -175,12 +186,30 @@ describe("worker runtime", () => {
         Authorization: "Bearer secret",
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ siteName: "自定义订阅台", titleImageUrl: "https://example.com/logo.png" })
+      body: JSON.stringify({ logLevel: "2", siteName: "自定义订阅台", titleImageUrl: "https://example.com/logo.png" })
     });
-    const payload = (await response.json()) as { ok: boolean; data: { siteName: string; titleImageUrl: string } };
+    const payload = (await response.json()) as { ok: boolean; data: { logLevel: string; siteName: string; titleImageUrl: string } };
 
     expect(response.status).toBe(200);
-    expect(payload.data).toEqual(expect.objectContaining({ siteName: "自定义订阅台", titleImageUrl: "https://example.com/logo.png" }));
+    expect(payload.data).toEqual(expect.objectContaining({ logLevel: "2", siteName: "自定义订阅台", titleImageUrl: "https://example.com/logo.png" }));
+  });
+
+  it("writes bootstrap diagnostics before setup is complete without a saved log setting", async () => {
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+    await testEnv.DB.prepare("DELETE FROM users").run();
+
+    try {
+      await SELF.fetch("https://example.com/api/auth/bootstrap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bootstrapToken: "wrong", email: "blocked@example.com", name: "Blocked", password: "password123" })
+      });
+
+      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining("auth.bootstrap.start"));
+    } finally {
+      infoSpy.mockRestore();
+    }
   });
 
   it("keeps setup open but blocks bootstrap when any core table is missing", async () => {
@@ -332,6 +361,26 @@ describe("worker runtime", () => {
       ok: false,
       error: expect.objectContaining({ code: "UNAUTHORIZED" })
     });
+  });
+
+  it("returns real dashboard request stats from subscription metrics", async () => {
+    await testEnv.DB.prepare(
+      `INSERT INTO subscription_metrics (bucket, owner_id, total, success, cached, blocked)
+       VALUES (strftime('%Y-%m-%d %H:00:00', 'now'), '', 8, 7, 3, 1)
+       ON CONFLICT(bucket, owner_id) DO UPDATE SET
+         total = excluded.total,
+         success = excluded.success,
+         cached = excluded.cached,
+         blocked = excluded.blocked`
+    ).run();
+
+    const response = await SELF.fetch("https://example.com/api/dashboard", {
+      headers: { Authorization: "Bearer secret" }
+    });
+    const payload = (await response.json()) as { data: { requestStats: { blocked: number; cached: number; success: number; total: number } } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.requestStats).toEqual(expect.objectContaining({ blocked: 1, cached: 3, success: 7, total: 8 }));
   });
 });
 

@@ -52,6 +52,7 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
   await expect(page.getByText("添加单个节点，按分组查看订阅源解析和手动维护的节点。")).toBeVisible();
   await expect(page.locator("header").getByText("控制面板", { exact: true })).toBeHidden();
   await expect(page.getByRole("button", { name: "添加节点" })).toBeVisible();
+  await expectNodeCreateFormSingleRow(page.getByPlaceholder("留空使用节点名称").locator("xpath=ancestor::form"));
   await expectSelectValue(page.getByRole("combobox", { name: "节点分页每页数量" }), "10");
   await expect(page.getByLabel("节点分页跳转页码")).toBeVisible();
   await page.getByLabel("节点分页跳转页码").fill("2");
@@ -81,6 +82,15 @@ test("renders the dashboard and navigates between modules", async ({ page }) => 
   await page.getByRole("button", { exact: true, name: "取消" }).click();
 });
 
+test("blocks the console when D1 migrations are missing", async ({ page }) => {
+  await mockApi(page, { migrationsReady: false });
+
+  await page.goto("/");
+
+  await expect(page.getByText("D1 迁移未完成")).toBeVisible();
+  await expect(page.getByText("控制面板", { exact: true })).toBeHidden();
+});
+
 test("redirects to setup before the first admin exists", async ({ page }) => {
   await page.route("**/api/health", async (route) => {
     await route.fulfill({
@@ -90,6 +100,8 @@ test("redirects to setup before the first admin exists", async ({ page }) => {
         data: {
           authRequired: true,
           env: "e2e",
+          migrationsReady: true,
+          setupAvailable: true,
           status: "ok",
           timestamp: new Date("2026-05-01T00:00:00.000Z").toISOString()
         }
@@ -184,6 +196,8 @@ test("logs in and sends the session token with API requests", async ({ page }) =
   await expect(page.getByText("账号安全")).toBeVisible();
   await expect(page.getByRole("heading", { name: "登录会话" })).toBeVisible();
   await expect(page.getByText("当前会话")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "应用日志级别" })).toContainText("0 - 关闭");
+  await expect(page.getByText("日志只输出到 Cloudflare Workers Logs，不写入 D1")).toBeVisible();
   expect(dashboardAuthorization).toBe("Bearer sess_e2e");
 });
 
@@ -291,10 +305,17 @@ test("shows subscription output center for tokens", async ({ page }) => {
 
   const clipboardText = await page.evaluate(() => window.__clipboardText);
   expect(clipboardText).toContain("Clash YAML: http://127.0.0.1:4173/sub/tok_e2e_backup?format=clash");
-  expect(clipboardText).toContain("Base64: http://127.0.0.1:4173/sub/tok_e2e_backup?format=v2rayn");
+  expect(clipboardText).toContain("Base64: http://127.0.0.1:4173/sub/tok_e2e_backup?format=base64");
   expect(clipboardText).toContain("sing-box JSON: http://127.0.0.1:4173/sub/tok_e2e_backup?format=sing-box");
   expect(clipboardText).toContain("Xray JSON: http://127.0.0.1:4173/sub/tok_e2e_backup?format=xray");
   await expect(page.getByText("全部格式订阅地址已复制")).toBeVisible();
+
+  await page.getByRole("row", { name: /默认订阅/ }).getByRole("button", { name: "复制订阅" }).click();
+  const copyDialog = page.getByRole("dialog", { name: "复制订阅地址" });
+  await expect(copyDialog).toBeVisible();
+  await copyDialog.getByRole("button", { name: /Base64/ }).click();
+  await expect(page.getByText("订阅地址已复制", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => window.__clipboardText)).toBe("http://127.0.0.1:4173/sub/primary-sub?format=base64");
 
   await outputCenter.getByRole("button", { name: "加载预览" }).click();
 
@@ -311,6 +332,36 @@ test("shows subscription output center for tokens", async ({ page }) => {
   await expect(page.getByText("预览内容已复制")).toBeVisible();
   await outputCenter.getByRole("button", { name: "清空" }).click();
   await expect(outputCenter.getByText('"type": "selector"')).toBeHidden();
+
+  await chooseSelectOption(outputCenter.getByRole("combobox", { name: "输出格式" }), "Base64");
+  await outputCenter.getByRole("button", { name: "加载预览" }).click();
+  const previewBlock = outputCenter.locator("pre");
+  await expect(previewBlock).toBeVisible();
+  await expect(outputCenter.getByText(".txt", { exact: true })).toBeVisible();
+  const previewMetrics = await previewBlock.evaluate((element) => ({
+    clientHeight: element.clientHeight,
+    clientWidth: element.clientWidth,
+    scrollHeight: element.scrollHeight,
+    scrollWidth: element.scrollWidth
+  }));
+  expect(previewMetrics.clientHeight).toBeLessThanOrEqual(224);
+  expect(previewMetrics.scrollHeight).toBeGreaterThan(previewMetrics.clientHeight);
+  expect(previewMetrics.scrollWidth).toBeLessThanOrEqual(previewMetrics.clientWidth + 1);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileDefaultToken = page.locator("article").filter({ hasText: "默认订阅" });
+  await expect(mobileDefaultToken).toBeVisible();
+  await mobileDefaultToken.getByRole("button", { name: "复制订阅" }).click();
+  const mobileCopyDialog = page.getByRole("dialog", { name: "复制订阅地址" });
+  await expect(mobileCopyDialog).toBeVisible();
+  const mobileDialogBox = await mobileCopyDialog.boundingBox();
+  expect(mobileDialogBox?.width ?? 0).toBeLessThanOrEqual(390 * 0.94 + 1);
+  await mobileCopyDialog.getByRole("button", { name: "取消" }).click();
+  const mobilePreviewMetrics = await previewBlock.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth
+  }));
+  expect(mobilePreviewMetrics.scrollWidth).toBeLessThanOrEqual(mobilePreviewMetrics.clientWidth + 1);
 });
 
 async function previewDownloadText(download: Download) {
@@ -347,6 +398,21 @@ async function expectSourceCreateFormSingleRow(form: Locator) {
   // 新增订阅源有 6 个控件，字段增加时必须保持桌面端同一行底部对齐。
   const controls = form.locator(":scope > *");
   await expect(controls).toHaveCount(6);
+  const bottoms = await controls.evaluateAll((elements) =>
+    elements.map((element) => Math.round(element.getBoundingClientRect().bottom))
+  );
+
+  expect(Math.max(...bottoms) - Math.min(...bottoms)).toBeLessThanOrEqual(2);
+}
+
+async function expectNodeCreateFormSingleRow(form: Locator) {
+  await expect(form).toBeVisible();
+
+  // 节点导入第二行包含显示名称、分组、启用开关和提交按钮，桌面端应保持底部对齐。
+  const controlRow = form.locator(".lg\\:grid-cols-\\[minmax\\(160px\\,0\\.8fr\\)_minmax\\(160px\\,0\\.8fr\\)_auto_auto\\]");
+  await expect(controlRow).toBeVisible();
+  const controls = controlRow.locator(":scope > *");
+  await expect(controls).toHaveCount(4);
   const bottoms = await controls.evaluateAll((elements) =>
     elements.map((element) => Math.round(element.getBoundingClientRect().bottom))
   );
