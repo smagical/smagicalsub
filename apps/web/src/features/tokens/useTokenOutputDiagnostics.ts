@@ -38,7 +38,7 @@ export function useTokenOutputDiagnostics(token: SubscribeTokenDto | null, profi
       groupCount: new Set(enabledNodes.flatMap((node) => node.groups)).size,
       manualNodeCount: enabledNodes.filter((node) => Boolean(node.manual)).length,
       profileAvailable,
-      profileName: profile?.name ?? token?.profile_name ?? "未绑定",
+      profileName: profile?.name ?? token?.profile_name ?? "系统默认分流",
       sourceNodeCount: enabledNodes.filter((node) => node.source_ids.length > 0 || Boolean(node.source_id)).length,
       warnings
     },
@@ -62,7 +62,7 @@ function outputWarnings(token: SubscribeTokenDto | null, profileAvailable: boole
   }
 
   if (token?.profile_id && ruleCount === 0) {
-    warnings.push("绑定配置档没有启用规则，将只输出默认策略");
+    warnings.push("绑定配置档没有启用规则，将使用系统默认分流模板");
   }
 
   return warnings;

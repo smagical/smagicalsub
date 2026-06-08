@@ -1,12 +1,54 @@
 import YAML from "yaml";
 import { beforeAll, describe, expect, it } from "vitest";
-import { ensureSubscriptionSchema, fetchSubscription, seedSubscriptionFixture } from "./subscribe-fixtures";
+import { ensureSubscriptionSchema, fetchSubscription, seedBareSubscriptionFixture, seedSubscriptionFixture } from "./subscribe-fixtures";
 
 beforeAll(async () => {
   await ensureSubscriptionSchema();
 });
 
 describe("subscription output endpoint", () => {
+  it("uses the built-in routing template when a token has no profile", async () => {
+    const fixture = await seedBareSubscriptionFixture();
+    const clash = YAML.parse(await (await fetchSubscription(fixture.path, "clash")).text()) as {
+      "rule-providers": Record<string, Record<string, unknown>>;
+      rules: string[];
+    };
+    const singBox = await (await fetchSubscription(fixture.path, "sing-box")).json() as {
+      route: { rule_set: Array<Record<string, unknown>>; rules: Array<Record<string, unknown>> };
+    };
+    const xray = await (await fetchSubscription(fixture.path, "xray")).json() as {
+      routing: { rules: Array<Record<string, unknown>> };
+    };
+    const plain = await (await fetchSubscription(fixture.path, "plain")).text();
+
+    expect(clash["rule-providers"]).toEqual(expect.objectContaining({
+      cn: expect.objectContaining({ behavior: "classical", type: "http" }),
+      gfw: expect.objectContaining({ behavior: "classical", type: "http" })
+    }));
+    expect(clash.rules).toEqual(expect.arrayContaining([
+      "GEOIP,private,DIRECT",
+      "RULE-SET,cn,DIRECT",
+      "RULE-SET,gfw,Proxy",
+      "MATCH,Proxy"
+    ]));
+    expect(singBox.route.rule_set).toEqual(expect.arrayContaining([
+      expect.objectContaining({ tag: "geosite-category-ads-all", type: "remote" }),
+      expect.objectContaining({ tag: "geosite-cn", type: "remote" }),
+      expect.objectContaining({ tag: "geoip-cn", type: "remote" })
+    ]));
+    expect(singBox.route.rules).toEqual(expect.arrayContaining([
+      expect.objectContaining({ action: "reject", rule_set: ["geosite-category-ads-all"] }),
+      expect.objectContaining({ action: "route", rule_set: ["geosite-cn"], outbound: "direct" }),
+      expect.objectContaining({ action: "route", rule_set: ["geosite-gfw"], outbound: "Proxy" })
+    ]));
+    expect(xray.routing.rules).toEqual(expect.arrayContaining([
+      expect.objectContaining({ domain: ["geosite:category-ads-all"], outboundTag: "block" }),
+      expect.objectContaining({ domain: ["geosite:cn"], outboundTag: "direct" }),
+      expect.objectContaining({ domain: ["geosite:gfw"], balancerTag: "Proxy" })
+    ]));
+    expect(plain).toBe(fixture.ssUri);
+  });
+
   it("renders Clash, base64, plain, sing-box and Xray outputs from one token", async () => {
     const fixture = await seedSubscriptionFixture();
     const clashResponse = await fetchSubscription(fixture.path, "clash");

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { normalizeSubscriptionFormat, renderSubscription, type SubscriptionFormat } from "@smagicalsub/subscription";
+import { applyBuiltInRoutingTemplate, normalizeSubscriptionFormat, renderSubscription, type SubscriptionFormat } from "@smagicalsub/subscription";
 import type { Env } from "../../env";
 import { listEnabledRenderableNodesByIds } from "../nodes/node.repository";
 import { listResolvedModulesForSubscription } from "../profile-modules/profile-module.repository";
@@ -51,14 +51,14 @@ subscribeRoutes.get("/:token", async (c) => {
         profileId: tokenRow.profile_id
       })
     : [];
-  const body = renderSubscription({
+  const body = renderSubscription(applyBuiltInRoutingTemplate({
     format,
     profileName,
     defaultStrategy,
     modules,
     profileRules,
     nodes
-  });
+  }));
 
   const ttl = Number(c.env.SUBSCRIPTION_CACHE_TTL_SECONDS ?? 300);
   await c.env.KV.put(cacheKey, body, {

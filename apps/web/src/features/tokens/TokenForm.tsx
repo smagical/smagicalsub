@@ -69,7 +69,7 @@ export function TokenForm({ form, nodes, pending, profileModules, profiles, setF
           <div className="grid gap-1">
             <h3 className="text-base font-semibold leading-tight">创建新的订阅令牌</h3>
             <p className="max-w-xl text-xs leading-5 text-muted-foreground">
-              创建时设置配置档、订阅路径和节点范围，生成后可在令牌列表继续复制、预览和维护。
+              创建时设置配置档、订阅路径和节点范围；未绑定配置档时会使用系统内置分流模板。
             </p>
           </div>
         </div>
@@ -89,7 +89,7 @@ export function TokenForm({ form, nodes, pending, profileModules, profiles, setF
         <DialogContent className="w-[min(94vw,920px)] max-h-[92dvh] gap-3 p-4">
           <DialogHeader>
             <DialogTitle>创建订阅令牌</DialogTitle>
-            <DialogDescription>设置名称、绑定配置档、节点范围和订阅路径，保存后会生成可复制的订阅地址。</DialogDescription>
+            <DialogDescription>设置名称、绑定配置档、节点范围和订阅路径；不绑定配置档时使用系统默认分流。</DialogDescription>
           </DialogHeader>
           <form className="contents" onSubmit={handleSubmit}>
             <DialogBody className="min-h-0 gap-3">
@@ -160,7 +160,7 @@ function TokenFormFields<TForm extends TokenEditFormState | TokenFormState>({
               <KeyRound />
               令牌基础
             </div>
-            <p className="text-xs text-muted-foreground">每个令牌可绑定一个配置档，用该配置档的策略和规则生成订阅。</p>
+            <p className="text-xs text-muted-foreground">每个令牌可绑定一个配置档；未绑定时使用不可删除的系统内置分流模板。</p>
           </div>
           <Badge className={form.enabled ? "border-chart-3/30 bg-chart-3/10 text-chart-3" : "border-destructive/30 bg-destructive/10 text-destructive"} variant="outline">
             {form.enabled ? "启用中" : "已停用"}
@@ -180,7 +180,7 @@ function TokenFormFields<TForm extends TokenEditFormState | TokenFormState>({
           </FilterField>
           <FilterField className="self-start" label="绑定配置档">
             <NativeSelect disabled={pending} onChange={(event) => onFormChange({ ...form, profile_id: event.target.value })} value={form.profile_id}>
-              <option value="">不绑定</option>
+              <option value="">不绑定（系统默认分流）</option>
               {profiles.map((profile) => (
                 <option disabled={!profile.enabled} key={profile.id} value={profile.id}>
                   {profile.enabled ? profile.name : `${profile.name}（停用）`}
@@ -219,7 +219,7 @@ function TokenFormFields<TForm extends TokenEditFormState | TokenFormState>({
               <Layers3 />
               输出模块
             </div>
-            <p className="text-xs text-muted-foreground">按输出格式选择 DNS、入站、TUN、规则集等模块；留空时自动使用配置档或系统默认模块。</p>
+            <p className="text-xs text-muted-foreground">按输出格式选择 DNS、入站、TUN、规则集等模块；留空时自动使用配置档或系统默认分流模板。</p>
           </div>
           <Badge variant="outline">已选 {form.module_bindings.length}</Badge>
         </div>
@@ -438,5 +438,5 @@ function pathPreview(customPath: string) {
 }
 
 function selectedProfileLabel(profileId: string, profiles: ProfileDto[]) {
-  return profiles.find((profile) => profile.id === profileId)?.name ?? "不绑定";
+  return profiles.find((profile) => profile.id === profileId)?.name ?? "系统默认分流";
 }

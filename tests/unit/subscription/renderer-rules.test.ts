@@ -1,9 +1,40 @@
 import YAML from "yaml";
 import { describe, expect, it } from "vitest";
-import { renderSubscription, singBoxGeoRuleSetsForRules } from "@smagicalsub/subscription";
+import { applyBuiltInRoutingTemplate, renderSubscription, singBoxGeoRuleSetsForRules } from "@smagicalsub/subscription";
 import { renderableNode } from "./fixtures";
 
 describe("subscription renderer: routing rules", () => {
+  it("applies the built-in routing template only when routing is empty", () => {
+    const withTemplate = applyBuiltInRoutingTemplate({
+      format: "clash",
+      profileName: "Default",
+      nodes: [renderableNode()]
+    });
+    const withoutTemplate = applyBuiltInRoutingTemplate({
+      format: "clash",
+      profileName: "Default",
+      profileRules: [{ content: {}, format: "common", rule: "MATCH,DIRECT" }],
+      nodes: [renderableNode()]
+    });
+    const textOnly = applyBuiltInRoutingTemplate({
+      format: "plain",
+      profileName: "Default",
+      nodes: [renderableNode()]
+    });
+
+    expect(withTemplate.profileRules?.map((rule) => rule.rule)).toEqual(expect.arrayContaining([
+      "RULE-SET,gfw,Proxy",
+      "MATCH,Proxy"
+    ]));
+    expect(withTemplate.modules).toEqual([
+      expect.objectContaining({ format: "clash", type: "rule-provider" })
+    ]);
+    expect(withoutTemplate.profileRules?.map((rule) => rule.rule)).toEqual(["MATCH,DIRECT"]);
+    expect(withoutTemplate.modules).toBeUndefined();
+    expect(textOnly.profileRules).toBeUndefined();
+    expect(textOnly.modules).toBeUndefined();
+  });
+
   it("generates sing-box rule-set modules for common geo rules", () => {
     expect(singBoxGeoRuleSetsForRules([
       { content: {}, format: "common", rule: "GEOSITE,cn,DIRECT" },

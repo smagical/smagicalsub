@@ -21,6 +21,16 @@ export type SubscriptionFixture = {
   vlessUri: string;
 };
 
+export type BareSubscriptionFixture = {
+  nodeIds: {
+    ss: string;
+  };
+  path: string;
+  ssUri: string;
+  token: string;
+  tokenId: string;
+};
+
 type SeedSubscriptionOptions = {
   enabled?: boolean;
   expiresAt?: string | null;
@@ -120,6 +130,34 @@ export async function seedSubscriptionFixture(options: SeedSubscriptionOptions =
   ]);
 
   return { moduleIds, nodeIds, path, profileId, ssUri, token, tokenId, vlessUri };
+}
+
+export async function seedBareSubscriptionFixture(): Promise<BareSubscriptionFixture> {
+  const suffix = crypto.randomUUID();
+  const tokenId = `bare_token_${suffix}`;
+  const path = `bare-${suffix}`;
+  const token = `bare-raw-${suffix}`;
+  const ssUri = `ss://${btoa("aes-256-gcm:pass@bare.example.com:8388")}#Bare`;
+  const nodeIds = {
+    ss: `bare_node_ss_${suffix}`
+  };
+
+  await testEnv.DB.batch([
+    nodeInsert(nodeIds.ss, "Bare", "ss", "bare.example.com", 8388, ["Bare"], {
+      type: "ss",
+      server: "bare.example.com",
+      port: 8388,
+      cipher: "aes-256-gcm",
+      password: "pass",
+      __rawUri: ssUri
+    }),
+    testEnv.DB.prepare(
+      `INSERT INTO subscribe_tokens (id, owner_id, profile_id, token, custom_path, node_ids_json, name, enabled, expires_at)
+       VALUES (?1, NULL, NULL, ?2, ?3, ?4, 'Bare token', 1, NULL)`
+    ).bind(tokenId, token, path, JSON.stringify([nodeIds.ss]))
+  ]);
+
+  return { nodeIds, path, ssUri, token, tokenId };
 }
 
 export async function accessLogCount(tokenId: string) {

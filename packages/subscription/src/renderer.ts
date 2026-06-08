@@ -2,7 +2,7 @@ import { renderClashConfig } from "./renderers/clash";
 import { renderPlainSubscription, renderV2rayNSubscription } from "./renderers/plain";
 import { renderSingBoxConfig } from "./renderers/sing-box";
 import { renderXrayConfig } from "./renderers/xray";
-import type { RenderableNode, RenderProfileRule, RenderSubscriptionInput, SubscriptionFormat } from "./renderers/types";
+import type { RenderConfigModule, RenderableNode, RenderProfileRule, RenderSubscriptionInput, SubscriptionFormat } from "./renderers/types";
 
 export type { RenderableNode, RenderProfileRule, RenderSubscriptionBaseInput, RenderSubscriptionInput, SubscriptionFormat } from "./renderers/types";
 export { renderClashConfig } from "./renderers/clash";
@@ -55,12 +55,160 @@ export function renderSubscription(input: RenderSubscriptionInput): string {
   }
 }
 
+export function applyBuiltInRoutingTemplate(input: RenderSubscriptionInput): RenderSubscriptionInput {
+  if (!needsBuiltInRoutingTemplate(input)) {
+    return input;
+  }
+
+  return {
+    ...input,
+    modules: [...builtInRoutingModules(input.format), ...(input.modules ?? [])],
+    profileRules: [...builtInRoutingRules(input.format, input.defaultStrategy ?? "Proxy"), ...(input.profileRules ?? [])]
+  };
+}
+
 function normalizeProfileRules(input: RenderSubscriptionInput): RenderProfileRule[] {
   if (input.profileRules) {
     return input.profileRules;
   }
 
   return (input.rules ?? []).map((rule) => ({ content: {}, format: "common", rule }));
+}
+
+function needsBuiltInRoutingTemplate(input: RenderSubscriptionInput) {
+  if (!isRoutingFormat(input.format)) {
+    return false;
+  }
+
+  return !hasRoutingRules(input) && !hasRoutingModules(input);
+}
+
+function hasRoutingRules(input: RenderSubscriptionInput) {
+  if (!isRoutingFormat(input.format)) {
+    return false;
+  }
+
+  const format = input.format;
+
+  if (input.profileRules) {
+    return normalizeProfileRules(input).some((rule) => matchesRuleFormat(rule, format));
+  }
+
+  return (input.rules ?? []).some((rule) => rule.trim().length > 0);
+}
+
+function hasRoutingModules(input: RenderSubscriptionInput) {
+  if (!isRoutingFormat(input.format)) {
+    return false;
+  }
+
+  const format = input.format;
+
+  return (input.modules ?? []).some((module) =>
+    matchesModuleFormat(module, format) && isRoutingModule(module, format)
+  );
+}
+
+function isRoutingFormat(format: SubscriptionFormat): format is Exclude<SubscriptionFormat, "base64" | "plain"> {
+  return format === "clash" || format === "sing-box" || format === "xray";
+}
+
+function matchesRuleFormat(rule: RenderProfileRule, format: SubscriptionFormat) {
+  return format !== "base64" && format !== "plain" && (rule.format === "common" || rule.format === format);
+}
+
+function matchesModuleFormat(module: RenderConfigModule, format: SubscriptionFormat) {
+  return format !== "base64" && format !== "plain" && (module.format === "common" || module.format === format);
+}
+
+function isRoutingModule(module: RenderConfigModule, format: Exclude<SubscriptionFormat, "base64" | "plain">) {
+  if (module.type === "policy-group" || module.type === "rule-provider") {
+    return true;
+  }
+
+  return module.type === "advanced-override" && hasRoutingOverride(module.content, format);
+}
+
+function hasRoutingOverride(content: Record<string, unknown>, format: Exclude<SubscriptionFormat, "base64" | "plain">) {
+  switch (format) {
+    case "clash":
+      return Boolean(content.rules || content["rule-providers"] || content["proxy-groups"]);
+    case "sing-box": {
+      const route = recordValue(content.route);
+      return Boolean(route.rules || route.rule_set || content.rules || content.rule_set);
+    }
+    case "xray": {
+      const routing = recordValue(content.routing);
+      return Boolean(routing.rules || routing.balancers || content.rules || content.balancers);
+    }
+  }
+}
+
+function builtInRoutingRules(format: SubscriptionFormat, fallbackPolicy: string): RenderProfileRule[] {
+  switch (format) {
+    case "clash":
+      return [
+        builtInRule("clash", "GEOIP,private,DIRECT"),
+        builtInRule("clash", "RULE-SET,reject,REJECT"),
+        builtInRule("clash", "RULE-SET,cn,DIRECT"),
+        builtInRule("clash", "GEOIP,CN,DIRECT"),
+        builtInRule("clash", `RULE-SET,gfw,${fallbackPolicy}`),
+        builtInRule("clash", `MATCH,${fallbackPolicy}`)
+      ];
+    case "sing-box":
+    case "xray":
+      return [
+        builtInRule("common", "GEOIP,private,DIRECT"),
+        builtInRule("common", "GEOSITE,category-ads-all,REJECT"),
+        builtInRule("common", "GEOSITE,cn,DIRECT"),
+        builtInRule("common", "GEOIP,cn,DIRECT"),
+        builtInRule("common", `GEOSITE,gfw,${fallbackPolicy}`),
+        builtInRule("common", `MATCH,${fallbackPolicy}`)
+      ];
+    case "base64":
+    case "plain":
+      return [];
+  }
+}
+
+function builtInRoutingModules(format: SubscriptionFormat): RenderConfigModule[] {
+  if (format !== "clash") {
+    return [];
+  }
+
+  return [
+    {
+      content: {
+        cn: clashRuleProvider("https://cdn.jsdelivr.net/gh/ACL4SSR/ACL4SSR@master/Clash/ChinaDomain.list"),
+        gfw: clashRuleProvider("https://cdn.jsdelivr.net/gh/ACL4SSR/ACL4SSR@master/Clash/ProxyGFWlist.list"),
+        reject: clashRuleProvider("https://cdn.jsdelivr.net/gh/ACL4SSR/ACL4SSR@master/Clash/BanAD.list")
+      },
+      format: "clash",
+      type: "rule-provider"
+    }
+  ];
+}
+
+function builtInRule(format: RenderProfileRule["format"], rule: string): RenderProfileRule {
+  return {
+    content: {},
+    format,
+    rule
+  };
+}
+
+function clashRuleProvider(url: string) {
+  return {
+    behavior: "classical",
+    format: "text",
+    interval: 86400,
+    type: "http",
+    url
+  };
+}
+
+function recordValue(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
 // 输出层兜底去重，确保多个订阅源带入相同节点时不会重复生成到客户端配置。
