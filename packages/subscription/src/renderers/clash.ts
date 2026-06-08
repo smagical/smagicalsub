@@ -6,12 +6,12 @@ import { defaultGroupName, getNodeConfig, renderGroupName, stripInternalFields, 
 
 export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
   // Clash 可直接消费内部通用配置，但渲染前必须去掉 __rawUri 等内部字段。
-  const renderableNodes = input.nodes
+  const renderableNodes = ensureUniqueProxyNames(input.nodes
     .map((node) => {
       const proxy = toProxy(node);
       return proxy ? { proxy, groups: node.groups ?? [] } : null;
     })
-    .filter((node): node is { proxy: Record<string, unknown>; groups: string[] } => node !== null);
+    .filter((node): node is { proxy: Record<string, unknown>; groups: string[] } => node !== null));
   const proxies = renderableNodes.map((node) => node.proxy);
   const proxyNames = proxies.map((proxy) => String(proxy.name));
   const primaryProxyGroup = input.defaultStrategy ?? "Proxy";
@@ -88,4 +88,36 @@ function toProxy(node: RenderableNode): Record<string, unknown> | null {
   } catch {
     return null;
   }
+}
+
+function ensureUniqueProxyNames(nodes: Array<{ proxy: Record<string, unknown>; groups: string[] }>) {
+  const used = new Set<string>();
+  const nextIndexByBaseName = new Map<string, number>();
+
+  return nodes.map((node) => {
+    const baseName = String(node.proxy.name);
+    const name = uniqueProxyName(baseName, used, nextIndexByBaseName);
+
+    return name === baseName ? node : { ...node, proxy: { ...node.proxy, name } };
+  });
+}
+
+function uniqueProxyName(baseName: string, used: Set<string>, nextIndexByBaseName: Map<string, number>) {
+  if (!used.has(baseName)) {
+    used.add(baseName);
+    nextIndexByBaseName.set(baseName, 2);
+    return baseName;
+  }
+
+  let index = nextIndexByBaseName.get(baseName) ?? 2;
+  let nextName = `${baseName} ${index}`;
+
+  while (used.has(nextName)) {
+    index += 1;
+    nextName = `${baseName} ${index}`;
+  }
+
+  used.add(nextName);
+  nextIndexByBaseName.set(baseName, index + 1);
+  return nextName;
 }

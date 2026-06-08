@@ -84,6 +84,35 @@ describe("subscription renderer: text and Clash", () => {
     expect(parsed.rules).toEqual(["DOMAIN-SUFFIX,example.com,Proxy", "MATCH,Proxy"]);
   });
 
+  it("renames duplicate Clash proxy names and updates group references", () => {
+    const duplicateName = {
+      ...renderableNode(),
+      id: "node-2",
+      groups: ["backup"],
+      config_json: JSON.stringify({
+        type: "ss",
+        server: "backup.example.com",
+        port: 8388,
+        cipher: "aes-256-gcm",
+        password: "pass"
+      })
+    };
+    const output = renderSubscription({
+      format: "clash",
+      profileName: "Default",
+      defaultStrategy: "Proxy",
+      nodes: [renderableNode(), duplicateName]
+    });
+    const parsed = YAML.parse(output.replace(/^#.*\n/, "")) as { proxies: Array<{ name: string }>; "proxy-groups": Array<{ name: string; proxies: string[] }> };
+
+    expect(parsed.proxies.map((proxy) => proxy.name)).toEqual(["HK", "HK 2"]);
+    expect(parsed["proxy-groups"]).toEqual([
+      expect.objectContaining({ name: "Proxy", proxies: ["Group: backup", "Group: hk"] }),
+      expect.objectContaining({ name: "Group: backup", proxies: ["HK 2"] }),
+      expect.objectContaining({ name: "Group: hk", proxies: ["HK"] })
+    ]);
+  });
+
   it("renders representative parsed URI samples to Clash proxy entries", () => {
     const nodes = representativeUriSamples.map((sample) => nodeFromUri(sample.uri));
     const output = renderSubscription({
