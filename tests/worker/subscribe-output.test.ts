@@ -10,6 +10,7 @@ describe("subscription output endpoint", () => {
   it("uses the built-in routing template when a token has no profile", async () => {
     const fixture = await seedBareSubscriptionFixture();
     const clash = YAML.parse(await (await fetchSubscription(fixture.path, "clash")).text()) as {
+      "proxy-groups": Array<{ name: string; proxies: string[] }>;
       "rule-providers": Record<string, Record<string, unknown>>;
       rules: string[];
     };
@@ -25,6 +26,9 @@ describe("subscription output endpoint", () => {
       cn: expect.objectContaining({ behavior: "classical", type: "http" }),
       gfw: expect.objectContaining({ behavior: "classical", type: "http" })
     }));
+    expect(clash["proxy-groups"]).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "全部节点", proxies: ["Bare"] })
+    ]));
     expect(clash.rules).toEqual(expect.arrayContaining([
       "GEOIP,private,DIRECT",
       "RULE-SET,cn,DIRECT",
@@ -66,6 +70,7 @@ describe("subscription output endpoint", () => {
     const clash = YAML.parse(await clashResponse.text()) as {
       dns: Record<string, unknown>;
       proxies: Array<Record<string, unknown>>;
+      "proxy-groups": Array<{ name: string; proxies: string[] }>;
       rules: string[];
     };
     const base64Text = await base64Response.text();
@@ -86,6 +91,9 @@ describe("subscription output endpoint", () => {
       nameserver: ["https://dns.example/dns-query"]
     }));
     expect(clash.proxies.map((proxy) => proxy.name)).toEqual(["HK", "VLESS"]);
+    expect(clash["proxy-groups"]).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "全部节点", proxies: ["HK", "VLESS"] })
+    ]));
     expect(clash.rules).toEqual(expect.arrayContaining(["DOMAIN-SUFFIX,example.com,DIRECT", "MATCH,Proxy"]));
 
     expect(atob(base64Text)).toContain(`${fixture.ssUri}\n`);

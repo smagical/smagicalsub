@@ -45,7 +45,8 @@ describe("subscription renderer: text and Clash", () => {
     expect(parsed.proxies).toHaveLength(1);
     expect(parsed.proxies[0].name).toBe("HK");
     expect(parsed["proxy-groups"]).toEqual([
-      expect.objectContaining({ name: "Proxy", proxies: ["Group: backup", "Group: hk"] }),
+      expect.objectContaining({ name: "Proxy", proxies: ["全部节点", "Group: backup", "Group: hk"] }),
+      expect.objectContaining({ name: "全部节点", proxies: ["HK"] }),
       expect.objectContaining({ name: "Group: backup", proxies: ["HK"] }),
       expect.objectContaining({ name: "Group: hk", proxies: ["HK"] })
     ]);
@@ -78,7 +79,8 @@ describe("subscription renderer: text and Clash", () => {
 
     expect(parsed.proxies).toEqual([expect.objectContaining({ name: "HK", type: "ss" })]);
     expect(parsed["proxy-groups"]).toEqual([
-      expect.objectContaining({ name: "Proxy", proxies: ["Group: hk"] }),
+      expect.objectContaining({ name: "Proxy", proxies: ["全部节点", "Group: hk"] }),
+      expect.objectContaining({ name: "全部节点", proxies: ["HK"] }),
       expect.objectContaining({ name: "Group: hk", proxies: ["HK"] })
     ]);
     expect(parsed.rules).toEqual(["DOMAIN-SUFFIX,example.com,Proxy", "MATCH,Proxy"]);
@@ -107,7 +109,8 @@ describe("subscription renderer: text and Clash", () => {
 
     expect(parsed.proxies.map((proxy) => proxy.name)).toEqual(["HK", "HK 2"]);
     expect(parsed["proxy-groups"]).toEqual([
-      expect.objectContaining({ name: "Proxy", proxies: ["Group: backup", "Group: hk"] }),
+      expect.objectContaining({ name: "Proxy", proxies: ["全部节点", "Group: backup", "Group: hk"] }),
+      expect.objectContaining({ name: "全部节点", proxies: ["HK", "HK 2"] }),
       expect.objectContaining({ name: "Group: backup", proxies: ["HK 2"] }),
       expect.objectContaining({ name: "Group: hk", proxies: ["HK"] })
     ]);
@@ -157,7 +160,8 @@ describe("subscription renderer: text and Clash", () => {
     const parsed = YAML.parse(output.replace(/^#.*\n/, "")) as { "proxy-groups": Array<{ name: string; proxies: string[] }> };
 
     expect(parsed["proxy-groups"]).toEqual([
-      expect.objectContaining({ name: "Proxy", proxies: ["Group: 默认"] }),
+      expect.objectContaining({ name: "Proxy", proxies: ["全部节点", "Group: 默认"] }),
+      expect.objectContaining({ name: "全部节点", proxies: ["HK"] }),
       expect.objectContaining({ name: "Group: 默认", proxies: ["HK"] })
     ]);
   });

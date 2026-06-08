@@ -4,6 +4,8 @@ import { mergeConfig, moduleOverridesFor } from "./modules";
 import { textRulesForFormat } from "./rules";
 import { defaultGroupName, getNodeConfig, renderGroupName, stripInternalFields, uniqueStrings } from "./utils";
 
+const allNodesGroupName = "全部节点";
+
 export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
   // Clash 可直接消费内部通用配置，但渲染前必须去掉 __rawUri 等内部字段。
   const renderableNodes = ensureUniqueProxyNames(input.nodes
@@ -34,9 +36,10 @@ export function renderClashConfig(input: RenderSubscriptionBaseInput): string {
   return `# ${input.profileName}\n${YAML.stringify(config)}`;
 }
 
-// 主 Proxy 组先引用生成的分组选择器，空分组节点统一归入“默认”。
+// 主 Proxy 组先引用全部节点和生成的分组选择器，空分组节点统一归入“默认”。
 function buildProxyGroups(nodes: Array<{ proxy: Record<string, unknown>; groups: string[] }>, primaryProxyGroup: string) {
   const groups = new Map<string, string[]>();
+  const allProxyNames = uniqueStrings(nodes.map((node) => String(node.proxy.name)));
 
   for (const node of nodes) {
     const proxyName = String(node.proxy.name);
@@ -54,8 +57,10 @@ function buildProxyGroups(nodes: Array<{ proxy: Record<string, unknown>; groups:
 
   const groupNames = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b));
   const renderedGroupNames = groupNames.map(renderGroupName);
-  const mainProxies = renderedGroupNames;
+  const mainProxies = uniqueStrings([allNodesGroupName, ...renderedGroupNames]);
   const proxyGroups = [createProxyGroup(primaryProxyGroup, mainProxies)];
+
+  proxyGroups.push(createProxyGroup(allNodesGroupName, allProxyNames));
 
   for (const groupName of groupNames) {
     proxyGroups.push(createProxyGroup(renderGroupName(groupName), uniqueStrings(groups.get(groupName) ?? [])));
